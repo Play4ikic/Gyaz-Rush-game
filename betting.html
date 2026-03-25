@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <script src="economy.js"></script>
+<script src="betting.js"></script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FixOne Betting Arena</title>
+    <link rel="stylesheet" href="betting.css">
+</head>
+<body>
+
+    <div class="game-container">
+        <header>
+            <a href="index.html" class="back-link">← В МЕНЮ</a>
+            <h1 class="main-title">BETTING ARENA</h1>
+            <div id="user-balance" class="balance-board">100000 CY</div>
+        </header>
+
+       <div class="scoreboard">
+    <div class="team">
+        <img src="images/toxic.png" alt="Toxic" class="team-logo">
+        <div class="team-name">TOXIC</div>
+    </div>
+    <div class="vs">VS</div>
+    <div class="team">
+        <img src="images/cheer.png" alt="Cheer" class="team-logo">
+        <div class="team-name">CHEER</div>
+    </div>
+</div>
+                
+                <div class="log-panel">
+                    <div id="match-timer">00'</div>
+                    <div id="match-score">0 : 0</div>
+                </div>
+            </div>
+
+            <div class="right-side">
+                <div class="bet-section">
+                    <p>СУММА СТАВКИ</p>
+                    <input type="number" id="bet-amount" value="100" min="10">
+                </div>
+
+                <div class="bet-section">
+                    <p>КТО ПОБЕДИТ?</p>
+                    <div class="bet-options">
+                        <button onclick="selectBet('winner', 'toxic', this)">Toxic (x2)</button>
+                        <button onclick="selectBet('winner', 'cheer', this)">Cheer (x2)</button>
+                        <button onclick="selectBet('winner', 'draw', this)">Ничья (x2)</button>
+                    </div>
+                </div>
+
+                <div class="bet-section">
+                    <p>ТОТАЛ ГОЛОВ</p>
+                    <div class="bet-options">
+                        <button onclick="selectBet('total', 'under2', this)">0-2 гола (x2)</button>
+                        <button onclick="selectBet('total', 'over3', this)">3+ гола (x2)</button>
+                    </div>
+                </div>
+
+                <div class="bet-section">
+                    <p>ТОЧНЫЙ СЧЕТ (X10)</p>
+                    <div class="exact-row">
+                        <input type="number" id="score-toxic" placeholder="0">
+                        <span>:</span>
+                        <input type="number" id="score-cheer" placeholder="0">
+                        <button class="small-btn" onclick="selectBet('exact', 'true', this)">СТАВЛЮ</button>
+                    </div>
+                </div>
+
+                <button id="start-btn" onclick="confirmAndStart()">ПОДТВЕРДИТЬ ЭКСПРЕСС</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="betting.js"></script>
+</body>
+</html>
+<div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
+    <button onclick="this.innerText = toggleMute() ? '🔇' : '🎵'" style="background: none; border: none; font-size: 20px; cursor: pointer;">🎵</button>
+    <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="setVolume(this.value)" style="width: 60px; cursor: pointer;">
+</div>
+
+<script src="audio.js"></script>

@@ -1,0 +1,161 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: #0b0b0b;
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.game-container {
+    background: #151515;
+    width: 95vw;
+    max-width: 1200px;
+    height: 90vh;
+    border-radius: 25px;
+    padding: 25px;
+    border: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.main-title { color: #f1c40f; letter-spacing: 2px; font-size: 24px; }
+.balance-board { color: #2ecc71; font-size: 30px; font-weight: bold; }
+
+.back-link {
+    color: #e74c3c;
+    text-decoration: none;
+    border: 1px solid #e74c3c;
+    padding: 5px 15px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+/* ГЛАВНЫЙ МАКЕТ */
+.main-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    flex: 1;
+}
+
+/* ЛЕВО */
+.left-side {
+    flex: 1.2;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.scoreboard, .log-panel {
+    background: #1e1e1e;
+    border-radius: 20px;
+    border: 1px solid #333;
+    padding: 30px;
+}
+
+.scoreboard {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    text-align: center;
+}
+
+.team-logo { width: 100px; height: 100px; object-fit: contain; margin-bottom: 10px; }
+.vs { font-size: 32px; font-weight: bold; color: #e74c3c; }
+
+.log-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#match-score { font-size: 100px; font-weight: 900; line-height: 1; }
+#match-timer { color: #888; font-size: 20px; margin-bottom: 10px; }
+
+/* ПРАВО */
+.right-side {
+    flex: 1;
+    background: #1e1e1e;
+    border-radius: 20px;
+    padding: 20px;
+    border: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.bet-section {
+    background: #252525;
+    padding: 15px;
+    border-radius: 15px;
+}
+
+.bet-section p { font-size: 12px; color: #aaa; margin-bottom: 10px; font-weight: bold; }
+
+.bet-options { display: flex; gap: 10px; }
+
+/* КНОПКИ СТАВОК */
+button {
+    flex: 1;
+    background: #333;
+    color: white;
+    border: 1px solid #444;
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+/* ЭФФЕКТ НАЖАТИЯ (ЗОЛОТО) */
+button.selected {
+    background: #f1c40f !important;
+    color: black !important;
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.5);
+    border-color: white !important;
+}
+
+input {
+    width: 100%;
+    background: #000;
+    border: 1px solid #444;
+    color: #f1c40f;
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.exact-row { display: flex; align-items: center; gap: 10px; }
+.exact-row input { width: 60px; }
+
+#start-btn {
+    background: #e67e22;
+    color: white;
+    border: none;
+    padding: 20px;
+    font-size: 18px;
+    margin-top: auto;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(230, 126, 34, 0.3);
+}
+#match-score {
+    font-variant-numeric: tabular-nums; /* Цифры не будут прыгать при изменении */
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+

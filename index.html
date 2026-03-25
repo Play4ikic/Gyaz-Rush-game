@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>FixOne FC - Hub</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="top-nav">
+        <div class="logo">GYaz Rush</div>
+        <nav class="menu-tabs">
+            <div class="tab-item active" onclick="selectTab('news')">НОВОСТИ</div>
+            <div class="tab-item" onclick="selectTab('shop')">МАГАЗИН</div>
+            <div class="tab-item" onclick="selectTab('club')">КЛУБ</div>
+            <div class="tab-item" onclick="selectTab('draft')">DRAFT</div>
+            <div class="tab-item" onclick="selectTab('market')">РЫНОК</div>
+            <div class="tab-item" onclick="selectTab('betting')">СТАВКИ</div>
+        </nav>
+        <div id="shop-balance" class="balance-display">0 CY</div>
+    </header>
+
+    <main class="content-preview">
+        <div id="preview-box" class="preview-container">
+            <div class="info-side">
+                <h2 id="pre-title">НОВОСТИ</h2>
+                <p id="pre-desc">Загрузка последних событий...</p>
+                <a href="#" id="pre-link" class="go-btn">ПЕРЕЙТИ В РЕЖИМ →</a>
+            </div>
+            <div class="image-side">
+                <div class="img-wrapper">
+                    <img src="Prewie/news.png" id="pre-img" alt="Preview">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="audio-controls" style="position: fixed; bottom: 15px; right: 15px; z-index: 9999; display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.1);">
+        <button id="mute-btn" onclick="toggleMuteUI(this)" style="background: none; border: none; font-size: 20px; cursor: pointer; color: white; outline: none;">🎵</button>
+        <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="setVolume(this.value)" style="width: 70px; cursor: pointer; accent-color: #00ff88;">
+    </div>
+
+    <script src="economy.js"></script>
+    <script src="audio.js"></script>
+    <script src="script.js"></script>
+
+    <script>
+        // Вспомогательная функция для обновления иконки в интерфейсе
+        function toggleMuteUI(btn) {
+            const isMuted = toggleMute();
+            btn.innerText = isMuted ? '🔇' : '🎵';
+        }
+
+        // При загрузке страницы проверяем состояние звука
+        window.addEventListener('load', () => {
+            const btn = document.getElementById('mute-btn');
+            const isMuted = localStorage.getItem('gyaz_muted') === 'true';
+            btn.innerText = isMuted ? '🔇' : '🎵';
+        });
+    </script>
+</body>
+</html>

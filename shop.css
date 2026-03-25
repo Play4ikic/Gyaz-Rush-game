@@ -1,0 +1,86 @@
+body { margin: 0; background: #0b0b0b; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+.hidden { display: none !important; }
+
+/* ШАПКА И БАЛАНС */
+.shop-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 50px; background: #141414; border-bottom: 2px solid #333; }
+.back-btn { color: #f1c40f; text-decoration: none; font-weight: bold; transition: 0.3s; }
+.back-btn:hover { color: white; }
+
+/* Красивая плашка баланса */
+.balance-board { 
+    background: #f1c40f; 
+    color: black; 
+    padding: 8px 20px; 
+    border-radius: 10px; 
+    font-weight: 900; 
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.3);
+}
+
+/* МАГАЗИН */
+.shop-content { height: 80vh; display: flex; justify-content: center; align-items: center; }
+.pack-container { display: flex; gap: 30px; }
+
+.pack-card { background: #1a1a1a; padding: 30px; border-radius: 25px; text-align: center; border: 2px solid #333; transition: 0.4s; width: 220px; position: relative; cursor: pointer; }
+.pack-visual { height: 200px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+
+.pack-img { width: 100%; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); transition: 0.3s; }
+.pack-card:hover { transform: translateY(-10px); }
+.pack-card:hover .pack-img { transform: scale(1.1) rotate(3deg); }
+
+/* КНОПКИ */
+.buy-button { background: #f1c40f; border: none; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.3s; width: 100%; }
+.buy-button:hover { background: white; color: black; transform: scale(1.05); }
+
+/* СТИЛИ ПАКОВ */
+.gold-card:hover { border-color: #ffd700; box-shadow: 0 0 30px rgba(255, 215, 0, 0.3); }
+
+.champions-card { border-color: #0046ad; }
+.champions-card h2 { color: #00bfff; }
+.champions-card .buy-button { background: #0046ad; color: white; }
+.champions-card:hover { border-color: #00bfff; box-shadow: 0 0 30px rgba(0, 191, 255, 0.2); }
+
+.toty-card:hover { border-color: gold; box-shadow: 0 0 30px rgba(255, 215, 0, 0.2); }
+
+/* ЭФФЕКТ ВСПЫШКИ ДЛЯ GOLD PACK (Новое) */
+.flash-effect {
+    animation: goldFlash 0.8s ease-out forwards;
+}
+
+@keyframes goldFlash {
+    0% { 
+        filter: brightness(5) contrast(2) blur(10px); 
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    40% {
+        filter: brightness(2) contrast(1.2) blur(0px);
+    }
+    100% { 
+        filter: brightness(1) contrast(1); 
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ТВОИ ОРИГИНАЛЬНЫЕ ВИЗУАЛЬНЫЕ ЭФФЕКТЫ (БЕЗ ИЗМЕНЕНИЙ) */
+#video-reveal-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: black; z-index: 5000; display: flex; justify-content: center; align-items: center; }
+#pack-video { width: 100%; height: 100%; object-fit: cover; }
+#video-overlay { position: absolute; top: 50%; left: 0; width: 100%; transform: translateY(-50%); display: flex; justify-content: space-around; align-items: center; z-index: 5500; padding: 0 60px; box-sizing: border-box; }
+
+.reveal-text { opacity: 0; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease-out; transform: scale(0.5); display: flex; align-items: center; justify-content: center; }
+.show-text { opacity: 1 !important; transform: scale(1) !important; }
+
+.flag-reveal-icon { width: 350px; height: auto; filter: drop-shadow(0 0 30px rgba(0,0,0,0.8)); }
+#reveal-pos { font-size: 130px; font-weight: 900; color: #f1c40f; text-shadow: 0 0 50px black; margin-right: 80px; }
+.club-reveal-icon { width: 200px; height: 200px; object-fit: contain; filter: drop-shadow(0 0 40px gold); margin-bottom: 30px; margin-right: 60px; }
+
+#reveal-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 6000; }
+.overlay { position: absolute; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
+
+.reveal-container { display: flex; flex-direction: column; align-items: center; position: relative; z-index: 10; margin-right: 70px; margin-bottom: 30px; }
+.final-player-image { height: 500px; width: auto; object-fit: contain; filter: drop-shadow(0 0 60px rgba(0,0,0,1)); animation: pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+.claim-button { margin-top: 30px; padding: 18px 55px; background: #f1c40f; color: black; border: none; border-radius: 10px; font-weight: bold; font-size: 24px; cursor: pointer; transition: 0.3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+.claim-button:hover { background: white; transform: scale(1.05); }
+
+@keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }

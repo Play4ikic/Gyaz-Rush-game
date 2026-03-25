@@ -1,0 +1,242 @@
+/* 1. БАЗОВЫЕ НАСТРОЙКИ */
+body {
+    margin: 0;
+    padding: 0;
+    background: #0b0d11;
+    color: white;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    height: 100vh;
+    overflow: hidden; /* Чтобы не было лишних скроллов */
+}
+
+/* 2. ЗАДНИЙ ФОН (ТВОЯ КАРТИНКА) */
+.main-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('image/baground.jpg'); /* Твой путь */
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.3) blur(1px); /* Затемняем, чтобы интерфейс читался */
+    z-index: -1;
+    transition: 0.5s;
+}
+
+/* 3. ШАПКА (HEADER) */
+.squad-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 40px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    height: 60px;
+}
+
+.left-meta { display: flex; align-items: center; gap: 20px; }
+.back-link { color: #f1c40f; text-decoration: none; font-weight: bold; font-size: 14px; }
+.team-name { font-size: 20px; font-weight: 900; letter-spacing: 1px; }
+.balance-badge { 
+    border: 1px solid #f1c40f; 
+    color: #f1c40f; 
+    padding: 4px 12px; 
+    border-radius: 20px; 
+    font-size: 13px; 
+    font-weight: bold; 
+}
+
+/* 4. КОНТЕЙНЕР ПОЛЯ */
+.pitch-container {
+    height: 65vh; /* Обычная высота */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Когда инвентарь скрыт, поле увеличивается */
+.pitch-container.expanded {
+    height: 90vh;
+}
+
+.football-pitch {
+    width: 95%;
+    max-width: 850px;
+    height: 90%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding: 20px 0;
+    position: relative;
+}
+
+/* 5. РАССТАНОВКА ИГРОКОВ */
+.squad-row {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.players-line { gap: 20px; } /* Ряд из 4 полевых */
+.goalkeeper-row { margin-top: 10px; }
+
+/* 6. СЛОТ КАРТОЧКИ */
+.player-slot {
+    width: 95px;
+    height: 135px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.player-slot:hover {
+    border-color: #f1c40f;
+    background: rgba(241, 196, 15, 0.1);
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+/* Текст внутри пустого слота (FLD / GK) */
+.slot-label {
+    font-size: 18px;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.1);
+    font-style: italic;
+    text-transform: uppercase;
+}
+
+/* Картинка игрока на поле */
+.field-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Чтобы карточка не обрезалась */
+    pointer-events: auto;
+}
+
+/* 7. КНОПКА СКРЫТИЯ/ПОКАЗА */
+.toggle-inventory-btn {
+    position: fixed;
+    bottom: 25.5vh; /* Над панелью */
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111;
+    color: #f1c40f;
+    border: 1px solid #333;
+    padding: 6px 25px;
+    border-radius: 15px 15px 0 0;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: bold;
+    z-index: 100;
+    transition: 0.5s;
+    text-transform: uppercase;
+}
+
+.toggle-inventory-btn:hover {
+    background: #f1c40f;
+    color: black;
+}
+
+/* 8. НИЖНЯЯ ПАНЕЛЬ (КЛУБ) */
+.inventory-footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 25vh;
+    background: rgba(10, 12, 15, 0.95);
+    border-top: 2px solid #222;
+    transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Скрытие панели */
+.inventory-footer.hidden {
+    transform: translateY(100%);
+}
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 40px;
+}
+
+.inventory-header span {
+    font-size: 11px;
+    color: #888;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+/* Список игроков внизу */
+.inventory-scroll {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding: 0 40px 15px;
+    height: 100%;
+    align-items: center;
+}
+
+/* Мини-карточка внизу */
+.mini-card-img {
+    height: 110px;
+    width: auto;
+    cursor: pointer;
+    transition: 0.2s;
+    filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3));
+}
+
+.mini-card-img:hover {
+    transform: scale(1.1) rotate(2deg);
+}
+
+/* 9. КНОПКИ И ДОПЫ */
+.clear-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #333;
+    color: #777;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 5px 12px;
+    font-size: 10px;
+    transition: 0.3s;
+}
+
+.clear-btn:hover {
+    background: #ff4444;
+    color: white;
+    border-color: #ff4444;
+}
+
+/* Стилизация полосы прокрутки */
+.inventory-scroll::-webkit-scrollbar { height: 4px; }
+.inventory-scroll::-webkit-scrollbar-track { background: transparent; }
+.inventory-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+.inventory-scroll::-webkit-scrollbar-thumb:hover { background: #f1c40f; }
+
+/* Информация о формации */
+.formation-text {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 24px;
+    font-weight: 900;
+    color: white;
+    opacity: 0.05;
+}

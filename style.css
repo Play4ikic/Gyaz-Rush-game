@@ -1,0 +1,68 @@
+body {
+    margin: 0; background: #050505; color: white;
+    font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden;
+}
+
+/* ВЕРХНЯЯ ПАНЕЛЬ */
+.top-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 60px; background: rgba(15, 15, 15, 0.9);
+    backdrop-filter: blur(15px); border-bottom: 1px solid #333;
+}
+
+.logo { font-size: 24px; font-weight: 900; color: #f1c40f; letter-spacing: 2px; }
+
+.menu-tabs { display: flex; gap: 35px; }
+
+.tab-item {
+    font-size: 14px; font-weight: bold; text-transform: uppercase;
+    cursor: pointer; opacity: 0.4; transition: 0.3s;
+    padding: 8px 12px; border-radius: 4px;
+}
+
+.tab-item:hover, .tab-item.active {
+    opacity: 1; color: #f1c40f; background: rgba(241, 196, 15, 0.05);
+}
+
+.tab-item.active { border-bottom: 2px solid #f1c40f; border-radius: 0; }
+
+.balance-display {
+    border: 1px solid #2ecc71; padding: 6px 20px; border-radius: 20px;
+    color: #2ecc71; font-weight: bold;
+}
+
+/* ПРЕДПРОСМОТР */
+.content-preview {
+    height: calc(100vh - 80px); display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at center, #111 0%, #050505 100%);
+}
+
+.preview-container {
+    width: 85%; display: flex; align-items: center; gap: 80px;
+    transition: all 0.4s ease-out;
+}
+
+.info-side { flex: 1; }
+.info-side h2 { font-size: 60px; margin: 0 0 15px 0; font-weight: 900; color: #f1c40f; }
+.info-side p { font-size: 20px; color: #bbb; line-height: 1.6; margin-bottom: 40px; }
+
+/* ГЛАВНАЯ КНОПКА */
+.go-btn {
+    display: inline-block; padding: 20px 60px; background: #f1c40f;
+    color: black; text-decoration: none; font-weight: 900;
+    font-size: 18px; border-radius: 4px; transition: 0.3s;
+    text-transform: uppercase; box-shadow: 0 10px 25px rgba(241, 196, 15, 0.3);
+}
+
+.go-btn:hover {
+    background: white; transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(255, 255, 255, 0.2);
+}
+
+/* КАРТИНКА ПРЕДПРОСМОТРА */
+.image-side { flex: 1.2; }
+.img-wrapper {
+    width: 100%; height: 450px; border-radius: 15px; overflow: hidden;
+    border: 1px solid #444; box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+}
+#pre-img { width: 100%; height: 100%; object-fit: cover; }

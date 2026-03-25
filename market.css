@@ -1,0 +1,26 @@
+body { margin: 0; background: #0b0b0b; color: white; font-family: 'Segoe UI', sans-serif; }
+.market-wrapper { padding: 20px; }
+.market-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+.back-btn { color: #f1c40f; text-decoration: none; font-weight: bold; }
+
+.market-info { text-align: center; margin: 20px 0; line-height: 1.6; }
+.price-tag { padding: 5px 10px; border-radius: 5px; font-weight: bold; }
+.price-tag.toty { color: gold; border: 1px solid gold; }
+.price-tag.champions { color: #00bfff; border: 1px solid #00bfff; }
+
+.market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 25px; padding: 20px; }
+.market-card-item { background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; text-align: center; transition: 0.3s; }
+.market-card-item:hover { transform: translateY(-5px); border-color: #555; }
+
+.player-img { width: 100%; height: auto; border-radius: 10px; margin-bottom: 10px; }
+
+.sell-info { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.price-text { font-weight: bold; color: #2ecc71; font-size: 18px; }
+
+.sell-btn { 
+    width: 100%; padding: 10px; background: #e74c3c; color: white; 
+    border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; 
+}
+.sell-btn:hover { background: #c0392b; transform: scale(1.05); }
+
+.empty-msg { text-align: center; font-size: 18px; color: #666; width: 100%; grid-column: 1 / -1; }
