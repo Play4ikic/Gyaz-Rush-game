@@ -5,36 +5,39 @@
     <title>FixOne - Draft Battle</title>
     <link rel="stylesheet" href="draft.css">
     <style>
-        /* Добавим стиль для новой кнопки, чтобы она выделялась */
         .online-btn {
             background: linear-gradient(45deg, #00c6ff, #0072ff) !important;
             margin-top: 15px;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
             border: 2px solid #fff;
+            cursor: pointer;
+            font-weight: bold;
+            display: block;
+            width: 100%;
         }
-        .online-btn:hover {
-            box-shadow: 0 0 20px #00c6ff;
+        .difficulty-box {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 300px;
+            margin: 20px auto;
         }
     </style>
 </head>
 <body>
-    <script src="draft.js"></script>
-
-    <script type="module">
-        import { startOnlineSearch } from './online_draft.js';
-        // Делаем функцию доступной для кнопки onclick
-        window.startOnlineSearch = startOnlineSearch;
-    </script>
 
     <div id="setup-screen" class="screen">
         <h1 class="logo-text">READY FOR BATTLE?</h1>
         
-        <div class="difficulty-box" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
+        <div class="difficulty-box">
             <button class="battle-btn" onclick="startGame()">В БОЙ С БОТОМ (3000 CY)</button>
             
-            <button class="battle-btn online-btn" onclick="startOnlineSearch()">ОНЛАЙН БИТВА (ПОИСК...)</button>
+            <button id="online-search-btn" class="battle-btn online-btn">ОНЛАЙН БИТВА (ПОИСК)</button>
         </div>
 
-        <a href="index.html" class="back-link" style="margin-top: 20px; display: block;">НАЗАД В ХАБ</a>
+        <a href="hub.html" class="back-link">НАЗАД В ХАБ</a>
     </div>
 
     <div id="game-screen" class="screen hidden">
@@ -43,30 +46,32 @@
             <div id="timer-box">ТАЙМЕР: <span id="timer">7</span></div>
             <div class="coins-info">БАЛАНС: <span id="user-coins">0</span> CY</div>
         </header>
-
         <div class="battle-arena">
-            <div class="card-zone">
-                <h3>ТВОЙ ХОД</h3>
-                <div id="player-card-display" class="card-placeholder"></div>
-            </div>
+            <div id="player-card-display" class="card-placeholder"></div>
             <div class="vs-text">VS</div>
-            <div class="card-zone">
-                <h3>БОТ</h3>
-                <div id="bot-card-display" class="card-placeholder card-back"></div>
-            </div>
+            <div id="bot-card-display" class="card-placeholder card-back"></div>
         </div>
-
-        <div class="squad-selection">
-            <h3>ВЫБЕРИ КАРТУ (РАУНД <span id="round-num">1</span>/5):</h3>
-            <div id="squad-hand" class="hand-grid"></div>
-        </div>
+        <div id="squad-hand" class="hand-grid"></div>
     </div>
 
-    <div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
-        <button onclick="this.innerText = toggleMute() ? '🔇' : '🎵'" style="background: none; border: none; font-size: 20px; cursor: pointer; color: white;">🎵</button>
-        <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="setVolume(this.value)" style="width: 60px; cursor: pointer;">
+    <div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 100;">
+        <button onclick="toggleMute()" style="background:none; border:none; font-size:20px; cursor:pointer;">🎵</button>
     </div>
 
     <script src="audio.js"></script>
+    <script src="draft.js"></script>
+    
+    <script type="module">
+        import { startOnlineSearch } from './online_draft.js';
+        
+        // Привязываем функцию к кнопке вручную, чтобы точно сработало
+        const btn = document.getElementById('online-search-btn');
+        if (btn) {
+            btn.addEventListener('click', () => {
+                console.log("Поиск онлайн игры запущен...");
+                startOnlineSearch();
+            });
+        }
+    </script>
 </body>
 </html>
