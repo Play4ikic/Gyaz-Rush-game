@@ -1,19 +1,25 @@
+import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+
 const BALANCE_KEY = 'fixone_balance';
 
 export function getBalance() {
-    let bal = localStorage.getItem(BALANCE_KEY);
-    if (bal === null) {
-        localStorage.setItem(BALANCE_KEY, 20000);
-        return 20000;
-    }
-    return parseInt(bal);
+    const bal = localStorage.getItem(BALANCE_KEY);
+    return bal !== null ? parseInt(bal) : 20000;
 }
 
-export function updateBalance(amount) {
-    let current = getBalance();
-    let newBalance = current + amount;
+export async function updateBalance(amount) {
+    let newBalance = getBalance() + amount;
     if (newBalance < 0) return false;
+
     localStorage.setItem(BALANCE_KEY, newBalance);
+    
+    const user = JSON.parse(localStorage.getItem('gyaz_user'));
+    if (user) {
+        const db = getDatabase();
+        try {
+            await update(ref(db, 'users/' + user.uid), { balance: newBalance });
+        } catch(e) { console.warn("Firebase sync failed, saved locally."); }
+    }
     refreshBalanceDisplay();
     return true;
 }
@@ -26,6 +32,6 @@ export function refreshBalanceDisplay() {
     });
 }
 
-// Запуск отображения
-document.addEventListener('DOMContentLoaded', refreshBalanceDisplay);
+// Постоянное обновление интерфейса
 setInterval(refreshBalanceDisplay, 1000);
+document.addEventListener('DOMContentLoaded', refreshBalanceDisplay);

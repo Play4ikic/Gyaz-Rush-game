@@ -76,7 +76,6 @@ window.onload = () => {
     selectTab('news');
     if (typeof refreshBalanceDisplay === "function") refreshBalanceDisplay();
 };
-
 // Проверка авторизации при входе в Хаб
 window.addEventListener('DOMContentLoaded', () => {
     const localData = localStorage.getItem('gyaz_user');

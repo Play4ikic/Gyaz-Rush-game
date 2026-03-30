@@ -6,12 +6,17 @@
     <link rel="stylesheet" href="draft.css">
 </head>
 <body>
+    <script src="draft.js"></script>
+    <script type="module">
+        import { startOnlineSearch } from './online_draft.js';
+        // Делаем функцию доступной для кнопки onclick
+        window.startOnlineSearch = startOnlineSearch;
+    </script>
     <div id="setup-screen" class="screen">
         <h1 class="logo-text">READY FOR BATTLE?</h1>
         <div class="difficulty-box">
-            <button class="battle-btn" onclick="startGame()">В БОЙ ПРОТИВ БОТА</button>
-            <script type="module" src="online_draft.js"></script>
-            <button class="battle-btn" onclick="startOnlineSearch()">В БОЙ ОНЛАЙН</button>
+            <button class="battle-btn" onclick="startGame()">В БОЙ (Награда: 3000 CY)</button>
+            
         </div>
         <a href="index.html" class="back-link">НАЗАД В ХАБ</a>
     </div>
