@@ -1,6 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
-import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDq3-wPkua6nMUt3cetwwC_-4iVtx-7PiQ",
@@ -14,44 +13,21 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getDatabase(app);
 const provider = new GoogleAuthProvider();
 
 window.loginWithGoogle = function() {
-    signInWithPopup(auth, provider)
-        .then(async (result) => {
-            const user = result.user;
-            const userRef = ref(db, 'users/' + user.uid);
-            
-            // Проверяем, есть ли такой игрок в базе
-            const snapshot = await get(userRef);
-            
-            if (!snapshot.exists()) {
-                // РЕГИСТРАЦИЯ НОВОГО ИГРОКА
-                const newUser = {
-                    uid: user.uid,
-                    nickname: user.displayName || "Новый игрок",
-                    balance: 20000,
-                    inventory: [],
-                    squad: [null, null, null, null, null]
-                };
-                await set(userRef, newUser);
-                saveLocal(newUser);
-            } else {
-                // ВХОД СУЩЕСТВУЮЩЕГО
-                saveLocal(snapshot.val());
-            }
-            window.location.href = "hub.html";
-        })
-        .catch((error) => {
-            console.error("Ошибка входа:", error.code);
-            alert("Ошибка входа: " + error.message);
-        });
+    signInWithPopup(auth, provider).then((result) => {
+        const user = result.user;
+        // Создаем объект пользователя локально, если его нет
+        const userData = {
+            uid: user.uid,
+            nickname: user.displayName,
+            balance: 20000 // Стартовый баланс
+        };
+        localStorage.setItem('gyaz_user', JSON.stringify(userData));
+        localStorage.setItem('fixone_balance', 20000);
+        window.location.href = "hub.html";
+    }).catch((error) => {
+        alert("Ошибка входа! Проверь 'Authorized Domains' в Firebase. Код: " + error.code);
+    });
 };
-
-function saveLocal(userData) {
-    localStorage.setItem('gyaz_user', JSON.stringify(userData));
-    localStorage.setItem('fixone_balance', userData.balance);
-    localStorage.setItem('myPlayers', JSON.stringify(userData.inventory || []));
-    localStorage.setItem('activeSquad', JSON.stringify(userData.squad || [null, null, null, null, null]));
-}
