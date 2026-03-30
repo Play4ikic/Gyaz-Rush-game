@@ -1,7 +1,23 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
+async function loadUserData(uid) {
+    const db = getDatabase();
+    const snapshot = await get(ref(db, 'users/' + uid));
+    
+    if (snapshot.exists()) {
+        const data = snapshot.val();
+        
+        // Переносим всё из облака в браузер
+        if (data.balance !== undefined) localStorage.setItem('fixone_balance', data.balance);
+        if (data.inventory) localStorage.setItem('myPlayers', JSON.stringify(data.inventory));
+        if (data.squad) localStorage.setItem('activeSquad', JSON.stringify(data.squad));
+        
+        console.log("Данные успешно загружены из облака!");
+    }
+}
 const firebaseConfig = {
     apiKey: "AIzaSyDq3-wPkua6nMUt3cetwwC_-4iVtx-7PiQ",
     authDomain: "play4ik-473ef.firebaseapp.com",

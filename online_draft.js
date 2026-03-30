@@ -188,7 +188,7 @@ async function endMatch() {
     let reward = 0;
 
     if (myScore > oppScore) {
-        resultText = "ПОБЕДА В ОНЛАЙНЕ! +5000 CY";
+        resultText = "ПОБЕДА ! +5000 CY";
         reward = 5000;
     } else if (myScore < oppScore) {
         resultText = "ПОРАЖЕНИЕ.";

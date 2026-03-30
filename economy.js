@@ -1,9 +1,9 @@
-// 1. Константы (база данных)
+import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+
 const BALANCE_KEY = 'fixone_balance';
 const START_BALANCE = 20000;
 
-// 2. Функция: Получить текущий баланс из памяти
-function getBalance() {
+export function getBalance() {
     let bal = localStorage.getItem(BALANCE_KEY);
     if (bal === null) {
         localStorage.setItem(BALANCE_KEY, START_BALANCE);
@@ -12,37 +12,35 @@ function getBalance() {
     return parseInt(bal);
 }
 
-// 3. Функция: Изменить баланс (прибавить или отнять)
-function updateBalance(amount) {
+export async function updateBalance(amount) {
     let current = getBalance();
     let newBalance = current + amount;
     
-    // Если денег после вычитания станет меньше нуля — отмена
     if (newBalance < 0) return false; 
     
+    // 1. Сохраняем локально
     localStorage.setItem(BALANCE_KEY, newBalance);
     
-    // Сразу обновляем цифры на всех страницах
+    // 2. Отправляем в Firebase (чтобы на другом ПК баланс обновился)
+    const user = JSON.parse(localStorage.getItem('gyaz_user'));
+    if (user) {
+        const db = getDatabase();
+        await update(ref(db, 'users/' + user.uid), { balance: newBalance });
+        // Обновляем данные в локальном объекте пользователя
+        user.balance = newBalance;
+        localStorage.setItem('gyaz_user', JSON.stringify(user));
+    }
+    
     refreshBalanceDisplay();
     return true;
 }
 
-// 4. Функция: Обновить текст баланса на экране
-function refreshBalanceDisplay() {
+export function refreshBalanceDisplay() {
     const bal = getBalance();
-    // Ищем все возможные ID и классы, где может быть написан баланс
-    const elements = document.querySelectorAll('.balance-board, #shop-balance, #user-balance');
+    const elements = document.querySelectorAll('.balance-board, #shop-balance, #user-balance, #user-coins');
     elements.forEach(el => {
         el.innerText = bal.toLocaleString() + " CY";
     });
 }
 
-// 5. Запуск при загрузке страницы
 document.addEventListener('DOMContentLoaded', refreshBalanceDisplay);
-
-// 6. Авто-обновление при изменениях в других вкладках
-window.addEventListener('storage', (event) => {
-    if (event.key === BALANCE_KEY) {
-        refreshBalanceDisplay();
-    }
-});
