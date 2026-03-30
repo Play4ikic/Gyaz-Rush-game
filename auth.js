@@ -16,18 +16,27 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
 window.loginWithGoogle = function() {
-    signInWithPopup(auth, provider).then((result) => {
-        const user = result.user;
-        // Создаем объект пользователя локально, если его нет
-        const userData = {
-            uid: user.uid,
-            nickname: user.displayName,
-            balance: 20000 // Стартовый баланс
-        };
-        localStorage.setItem('gyaz_user', JSON.stringify(userData));
-        localStorage.setItem('fixone_balance', 20000);
-        window.location.href = "hub.html";
-    }).catch((error) => {
-        alert("Ошибка входа! Проверь 'Authorized Domains' в Firebase. Код: " + error.code);
-    });
+    console.log("Кнопка нажата, запуск окна Google...");
+    
+    signInWithPopup(auth, provider)
+        .then((result) => {
+            console.log("Вход успешен!");
+            const user = result.user;
+            const userData = {
+                uid: user.uid,
+                nickname: user.displayName,
+                balance: 20000
+            };
+            localStorage.setItem('gyaz_user', JSON.stringify(userData));
+            localStorage.setItem('fixone_balance', 20000);
+            window.location.href = "hub.html";
+        })
+        .catch((error) => {
+            console.error("Ошибка входа:", error.code, error.message);
+            if (error.code === 'auth/popup-blocked') {
+                alert("Браузер заблокировал окно! Разреши всплывающие окна в адресной строке сверху.");
+            } else {
+                alert("Ошибка: " + error.message);
+            }
+        });
 };
