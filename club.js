@@ -22,21 +22,29 @@ function renderClub() {
     const container = document.getElementById('club-inventory');
     if (!container) return;
     container.innerHTML = ""; 
-    
-    playerInventory.forEach((player, index) => {
+
+    // Загружаем игроков из ключа myPlayers (который мы видели в консоли)
+    const players = JSON.parse(localStorage.getItem('myPlayers')) || [];
+
+    players.forEach((player, index) => {
         const card = document.createElement('div');
         card.className = 'inventory-card-mini';
         
-        // Определяем папку, чтобы картинка была видна
-        let folder = player.folder || "Gold";
+        // Проверяем папку по рейтингу (подстрой под свои папки)
+        let folder = "Gold"; 
         if (player.rating >= 97) folder = "Toty";
-        else if (player.rating >= 90) folder = "Champions";
+        else if (player.rating >= 90) folder = "Champions"; // Твой Eldjan (92) попадет сюда
 
-        card.innerHTML = `<img src="${folder}/${player.file}" class="mini-card-img" onclick="addToSquad(${index})">`;
+        // Если картинка все равно не видна, проверь, что файл называется именно так, как в базе
+        card.innerHTML = `
+            <img src="${folder}/${player.file}" 
+                 alt="${player.name}" 
+                 style="width:70px; cursor:pointer;" 
+                 onclick="addToSquad(${index})">
+        `;
         container.appendChild(card);
     });
 }
-
 // --- 3. ОТОБРАЖЕНИЕ СОСТАВА НА ПОЛЕ ---
 function renderSquad() {
     activeSquad.forEach((player, i) => {
