@@ -1,83 +1,57 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-async function loadUserData(uid) {
-    const db = getDatabase();
-    const snapshot = await get(ref(db, 'users/' + uid));
-    
-    if (snapshot.exists()) {
-        const data = snapshot.val();
-        
-        // Переносим всё из облака в браузер
-        if (data.balance !== undefined) localStorage.setItem('fixone_balance', data.balance);
-        if (data.inventory) localStorage.setItem('myPlayers', JSON.stringify(data.inventory));
-        if (data.squad) localStorage.setItem('activeSquad', JSON.stringify(data.squad));
-        
-        console.log("Данные успешно загружены из облака!");
-    }
-}
 const firebaseConfig = {
     apiKey: "AIzaSyDq3-wPkua6nMUt3cetwwC_-4iVtx-7PiQ",
     authDomain: "play4ik-473ef.firebaseapp.com",
     projectId: "play4ik-473ef",
-    storageBucket: "play4ik-473ef.firebasestorage.app",
+    databaseURL: "https://play4ik-473ef-default-rtdb.firebaseio.com",
+    storageBucket: "play4ik-473ef.appspot.com",
     messagingSenderId: "115893557892",
-    appId: "1:115893557892:web:731ac77c3f00328c1200d1",
-    measurementId: "G-0FNY94SDH5"
+    appId: "1:115893557892:web:731ac77c3f00328c1200d1"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
+const provider = new GoogleAuthProvider();
 
-const loginBtn = document.getElementById('login-btn');
-const nickForm = document.getElementById('nick-form');
-const finishBtn = document.getElementById('finish-btn');
-
-// 1. Клик по кнопке Google
-loginBtn.addEventListener('click', () => {
-    const provider = new GoogleAuthProvider();
+window.loginWithGoogle = function() {
     signInWithPopup(auth, provider)
-        .then((result) => checkUser(result.user))
-        .catch((err) => alert("Ошибка: " + err.message));
-});
+        .then(async (result) => {
+            const user = result.user;
+            const userRef = ref(db, 'users/' + user.uid);
+            
+            // Проверяем, есть ли такой игрок в базе
+            const snapshot = await get(userRef);
+            
+            if (!snapshot.exists()) {
+                // РЕГИСТРАЦИЯ НОВОГО ИГРОКА
+                const newUser = {
+                    uid: user.uid,
+                    nickname: user.displayName || "Новый игрок",
+                    balance: 20000,
+                    inventory: [],
+                    squad: [null, null, null, null, null]
+                };
+                await set(userRef, newUser);
+                saveLocal(newUser);
+            } else {
+                // ВХОД СУЩЕСТВУЮЩЕГО
+                saveLocal(snapshot.val());
+            }
+            window.location.href = "hub.html";
+        })
+        .catch((error) => {
+            console.error("Ошибка входа:", error.code);
+            alert("Ошибка входа: " + error.message);
+        });
+};
 
-// 2. Проверка: новый игрок или старый?
-async function checkUser(user) {
-    const userRef = ref(db, 'users/' + user.uid);
-    const snapshot = await get(userRef);
-
-    if (snapshot.exists()) {
-        // Игрок уже есть в базе — сохраняем в браузер и заходим
-        localStorage.setItem('gyaz_user', JSON.stringify(snapshot.val()));
-        window.location.href = "index.html";
-    } else {
-        // Новый игрок — показываем поле для ника
-        loginBtn.style.display = 'none';
-        document.getElementById('status-msg').innerText = "Как тебя звать?";
-        nickForm.style.display = 'flex';
-    }
-}
-
-// 3. Завершение регистрации
-finishBtn.addEventListener('click', async () => {
-    const nick = document.getElementById('nickname-input').value.trim();
-    if (nick.length < 3) return alert("Ник слишком короткий!");
-
-    const user = auth.currentUser;
-    const userData = {
-        uid: user.uid,
-        nickname: nick,
-        balance: 10000, // Начальный подарок
-        level: 1
-    };
-
-    // Сохраняем в облако Firebase
-    await set(ref(db, 'users/' + user.uid), userData);
-    
-    // Сохраняем локально и входим
+function saveLocal(userData) {
     localStorage.setItem('gyaz_user', JSON.stringify(userData));
-    window.location.href = "index.html";
-});
+    localStorage.setItem('fixone_balance', userData.balance);
+    localStorage.setItem('myPlayers', JSON.stringify(userData.inventory || []));
+    localStorage.setItem('activeSquad', JSON.stringify(userData.squad || [null, null, null, null, null]));
+}
