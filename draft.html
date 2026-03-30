@@ -4,21 +4,37 @@
     <meta charset="UTF-8">
     <title>FixOne - Draft Battle</title>
     <link rel="stylesheet" href="draft.css">
+    <style>
+        /* Добавим стиль для новой кнопки, чтобы она выделялась */
+        .online-btn {
+            background: linear-gradient(45deg, #00c6ff, #0072ff) !important;
+            margin-top: 15px;
+            border: 2px solid #fff;
+        }
+        .online-btn:hover {
+            box-shadow: 0 0 20px #00c6ff;
+        }
+    </style>
 </head>
 <body>
     <script src="draft.js"></script>
+
     <script type="module">
         import { startOnlineSearch } from './online_draft.js';
         // Делаем функцию доступной для кнопки onclick
         window.startOnlineSearch = startOnlineSearch;
     </script>
+
     <div id="setup-screen" class="screen">
         <h1 class="logo-text">READY FOR BATTLE?</h1>
-        <div class="difficulty-box">
-            <button class="battle-btn" onclick="startGame()">В БОЙ (Награда: 3000 CY)</button>
+        
+        <div class="difficulty-box" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
+            <button class="battle-btn" onclick="startGame()">В БОЙ С БОТОМ (3000 CY)</button>
             
+            <button class="battle-btn online-btn" onclick="startOnlineSearch()">ОНЛАЙН БИТВА (ПОИСК...)</button>
         </div>
-        <a href="index.html" class="back-link">НАЗАД В ХАБ</a>
+
+        <a href="index.html" class="back-link" style="margin-top: 20px; display: block;">НАЗАД В ХАБ</a>
     </div>
 
     <div id="game-screen" class="screen hidden">
@@ -45,12 +61,12 @@
             <div id="squad-hand" class="hand-grid"></div>
         </div>
     </div>
-    <script src="draft.js"></script>
+
+    <div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
+        <button onclick="this.innerText = toggleMute() ? '🔇' : '🎵'" style="background: none; border: none; font-size: 20px; cursor: pointer; color: white;">🎵</button>
+        <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="setVolume(this.value)" style="width: 60px; cursor: pointer;">
+    </div>
+
+    <script src="audio.js"></script>
 </body>
 </html>
-<div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
-    <button onclick="this.innerText = toggleMute() ? '🔇' : '🎵'" style="background: none; border: none; font-size: 20px; cursor: pointer;">🎵</button>
-    <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="setVolume(this.value)" style="width: 60px; cursor: pointer;">
-</div>
-
-<script src="audio.js"></script>
