@@ -76,3 +76,38 @@ window.onload = () => {
     selectTab('news');
     if (typeof refreshBalanceDisplay === "function") refreshBalanceDisplay();
 };
+
+// Проверка авторизации при входе в Хаб
+window.addEventListener('DOMContentLoaded', () => {
+    const localData = localStorage.getItem('gyaz_user');
+    
+    if (!localData) {
+        // Если игрок не залогинен — отправляем на страницу входа
+        window.location.href = "auth.html";
+        return;
+    }
+
+    const userData = JSON.parse(localData);
+    
+    // Выводим никнейм в консоль для теста
+    console.log("Авторизован как: " + userData.nickname);
+
+    // Обновляем интерфейс данными из профиля
+    updateUIFromProfile(userData);
+});
+
+function updateUIFromProfile(data) {
+    // Давай заменим текст "Бизнес" на твой Никнейм
+    const businessLabel = document.querySelector('.business-label');
+    if (businessLabel) {
+        businessLabel.innerText = "ИГРОК: " + data.nickname.toUpperCase();
+    }
+
+    // Обновляем баланс из базы (если в базе 10,000, то и тут будет 10,000)
+    if (typeof updateBalanceDisplay === "function") {
+        // Если у тебя в economy.js есть функция обновления, вызываем её
+        // Либо просто напрямую:
+        const balanceEl = document.getElementById('shop-balance');
+        if (balanceEl) balanceEl.innerText = data.balance + " CY";
+    }
+}

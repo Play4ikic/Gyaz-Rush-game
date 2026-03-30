@@ -97,3 +97,19 @@ window.clearSquad = function() {
 };
 
 window.onload = () => { renderClub(); renderSquad(); };
+
+// Подключи функции Firebase в начале club.js (так же, как в auth.js)
+import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+
+function saveSquadToCloud(fullSquad) {
+    const user = JSON.parse(localStorage.getItem('gyaz_user'));
+    if (!user) return;
+
+    const db = getDatabase();
+    // Обновляем только поле squad в твоем профиле
+    update(ref(db, 'users/' + user.uid), {
+        squad: fullSquad
+    }).then(() => {
+        console.log("Состав сохранен в облаке!");
+    });
+}

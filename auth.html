@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Gyaz Rush - Вход</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .auth-wrapper { height: 100vh; display: flex; justify-content: center; align-items: center; background: #0a0a0a; font-family: sans-serif; }
+        .auth-card { background: #1a1a1a; padding: 40px; border-radius: 20px; text-align: center; border: 1px solid #333; width: 350px; }
+        .google-btn { 
+            background: #fff; color: #000; border: none; padding: 15px; width: 100%;
+            font-weight: bold; border-radius: 10px; cursor: pointer; display: flex; 
+            align-items: center; justify-content: center; gap: 10px; margin-top: 20px;
+            transition: 0.3s;
+        }
+        .google-btn:hover { background: #eee; transform: scale(1.02); }
+        #nick-form { display: none; flex-direction: column; gap: 15px; margin-top: 20px; }
+        input { background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 8px; text-align: center; font-size: 16px; }
+        .save-btn { background: #00ff88; color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <h1 style="color: white; margin-bottom: 10px;">GYAZ RUSH</h1>
+            <p id="status-msg" style="color: #888;">Войди, чтобы играть онлайн</p>
+            
+            <button id="login-btn" class="google-btn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+                ВОЙТИ ЧЕРЕЗ GOOGLE
+            </button>
+
+            <div id="nick-form">
+                <input type="text" id="nickname-input" placeholder="ПРИДУМАЙ НИКНЕЙМ" maxlength="12">
+                <button class="save-btn" id="finish-btn">НАЧАТЬ ИГРУ</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="auth.js"></script>
+</body>
+</html>
