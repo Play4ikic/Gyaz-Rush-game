@@ -1,127 +1,73 @@
 import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-// Загружаем данные
 let playerInventory = JSON.parse(localStorage.getItem('myPlayers')) || [];
 let activeSquad = JSON.parse(localStorage.getItem('activeSquad')) || [null, null, null, null, null];
 
-// --- 1. СИНХРОНИЗАЦИЯ С ОБЛАКОМ ---
 async function syncCloud() {
     const user = JSON.parse(localStorage.getItem('gyaz_user'));
     if (!user) return;
-
     const db = getDatabase();
     await update(ref(db, 'users/' + user.uid), {
         inventory: playerInventory,
         squad: activeSquad
     });
-    console.log("Клуб синхронизирован с Firebase!");
 }
 
-// --- 2. ОТОБРАЖЕНИЕ ИНВЕНТАРЯ (ИСПРАВЛЕНО ВИЗУАЛЬНО) ---
+// ГЛАВНАЯ ФУНКЦИЯ: ОТОБРАЖЕНИЕ КАРТОЧЕК
 function renderClub() {
     const container = document.getElementById('club-inventory');
     if (!container) return;
     container.innerHTML = ""; 
 
-    // Загружаем игроков из ключа myPlayers (который мы видели в консоли)
-    const players = JSON.parse(localStorage.getItem('myPlayers')) || [];
-
-    players.forEach((player, index) => {
+    playerInventory.forEach((player, index) => {
         const card = document.createElement('div');
         card.className = 'inventory-card-mini';
         
-        // Проверяем папку по рейтингу (подстрой под свои папки)
-        let folder = "Gold"; 
+        // Логика папок: 97+ это Toty, 90+ это Champions
+        let folder = "Gold";
         if (player.rating >= 97) folder = "Toty";
-        else if (player.rating >= 90) folder = "Champions"; // Твой Eldjan (92) попадет сюда
+        else if (player.rating >= 90) folder = "Champions";
 
-        // Если картинка все равно не видна, проверь, что файл называется именно так, как в базе
+        // Если картинка не грузится, выводим ошибку в консоль
         card.innerHTML = `
             <img src="${folder}/${player.file}" 
-                 alt="${player.name}" 
-                 style="width:70px; cursor:pointer;" 
-                 onclick="addToSquad(${index})">
+                 class="mini-card-img" 
+                 onclick="addToSquad(${index})"
+                 onerror="console.error('Ошибка пути: ${folder}/${player.file}')">
         `;
         container.appendChild(card);
     });
 }
-// --- 3. ОТОБРАЖЕНИЕ СОСТАВА НА ПОЛЕ ---
+
 function renderSquad() {
     activeSquad.forEach((player, i) => {
         const slot = document.getElementById(`slot-${i}`);
         if (!slot) return;
-        
         if (player) {
-            let folder = player.folder || "Gold";
-            if (player.rating >= 97) folder = "Toty";
-            else if (player.rating >= 90) folder = "Champions";
-
+            let folder = player.rating >= 97 ? "Toty" : (player.rating >= 90 ? "Champions" : "Gold");
             slot.innerHTML = `<img src="${folder}/${player.file}" class="field-card-img" onclick="handleSlotClick(${i})">`;
-            slot.className = "player-slot has-player";
         } else {
-            const positions = ['GK', 'FLD', 'FLD', 'FLD', 'FLD'];
-            slot.innerHTML = `<div class="slot-label">${positions[i]}</div>`;
-            slot.className = "player-slot";
+            slot.innerHTML = `<div class="slot-label">${i === 0 ? 'GK' : 'FLD'}</div>`;
         }
     });
-    updateAvg();
 }
 
-// --- 4. ЛОГИКА ДОБАВЛЕНИЯ И УДАЛЕНИЯ ---
-window.addToSquad = function(inventoryIndex) {
-    const player = playerInventory[inventoryIndex];
-    const isAlreadyOnField = activeSquad.some(p => p && p.file === player.file);
-    
-    if (isAlreadyOnField) return alert("Этот игрок уже в составе!");
-
-    let targetSlot = -1;
-    if (player.pos === "GK") {
-        if (!activeSquad[0]) targetSlot = 0;
-        else return alert("Позиция вратаря уже занята!");
-    } else {
-        targetSlot = activeSquad.findIndex((p, idx) => idx > 0 && p === null);
-        if (targetSlot === -1) return alert("Все места для полевых игроков заняты!");
-    }
-
-    activeSquad[targetSlot] = player;
-    localStorage.setItem('activeSquad', JSON.stringify(activeSquad));
-    
-    renderSquad();
-    syncCloud(); 
-};
-
-window.handleSlotClick = function(index) {
-    if (activeSquad[index]) {
-        activeSquad[index] = null;
-        localStorage.setItem('activeSquad', JSON.stringify(activeSquad));
-        renderSquad();
-        syncCloud(); 
-    }
-};
-
-window.clearSquad = function() {
-    if(!confirm("Очистить весь состав?")) return;
-    activeSquad = [null, null, null, null, null];
+window.addToSquad = function(idx) {
+    const p = playerInventory[idx];
+    if (activeSquad.some(s => s && s.file === p.file)) return;
+    let slot = p.pos === "GK" ? 0 : activeSquad.findIndex((s, i) => i > 0 && s === null);
+    if (slot === -1) return;
+    activeSquad[slot] = p;
     localStorage.setItem('activeSquad', JSON.stringify(activeSquad));
     renderSquad();
-    syncCloud(); 
+    syncCloud();
 };
 
-function updateAvg() {
-    const onField = activeSquad.filter(p => p !== null);
-    const badge = document.getElementById('avg-rating');
-    if (!badge) return;
-    const sum = onField.reduce((acc, p) => acc + (Number(p.rating) || 0), 0);
-    badge.innerText = `AVG: ${onField.length > 0 ? Math.round(sum / onField.length) : 0}`;
-}
-
-// Скрыть/Показать инвентарь
-window.toggleInventory = function() {
-    const panel = document.getElementById('inventory-panel');
-    panel.classList.toggle('hidden');
+window.handleSlotClick = (i) => {
+    activeSquad[i] = null;
+    localStorage.setItem('activeSquad', JSON.stringify(activeSquad));
+    renderSquad();
+    syncCloud();
 };
 
-window.onload = () => { 
-    renderClub(); 
-    renderSquad(); 
-};
+window.onload = () => { renderClub(); renderSquad(); };
