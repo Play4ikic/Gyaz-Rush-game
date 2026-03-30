@@ -5,23 +5,30 @@ const START_BALANCE = 20000;
 
 export function getBalance() {
     let bal = localStorage.getItem(BALANCE_KEY);
-    // Если в памяти пусто, ставим 20к, если нет - берем то, что есть (твои 13180)
-    return bal !== null ? parseInt(bal) : START_BALANCE;
+    if (bal === null) {
+        localStorage.setItem(BALANCE_KEY, START_BALANCE);
+        return START_BALANCE;
+    }
+    return parseInt(bal);
 }
 
 export async function updateBalance(amount) {
     let current = getBalance();
     let newBalance = current + amount;
+    
     if (newBalance < 0) return false; 
     
+    // 1. Сохраняем локально
     localStorage.setItem(BALANCE_KEY, newBalance);
     
+    // 2. Отправляем в Firebase (чтобы на другом ПК баланс обновился)
     const user = JSON.parse(localStorage.getItem('gyaz_user'));
     if (user) {
         const db = getDatabase();
-        try {
-            await update(ref(db, 'users/' + user.uid), { balance: newBalance });
-        } catch(e) { console.log("Firebase sync skip"); }
+        await update(ref(db, 'users/' + user.uid), { balance: newBalance });
+        // Обновляем данные в локальном объекте пользователя
+        user.balance = newBalance;
+        localStorage.setItem('gyaz_user', JSON.stringify(user));
     }
     
     refreshBalanceDisplay();
@@ -30,13 +37,10 @@ export async function updateBalance(amount) {
 
 export function refreshBalanceDisplay() {
     const bal = getBalance();
-    // Ищем id="shop-balance", который у тебя в hub.html
-    const elements = document.querySelectorAll('#shop-balance, .balance-display, .balance-board');
+    const elements = document.querySelectorAll('.balance-board, #shop-balance, #user-balance, #user-coins');
     elements.forEach(el => {
         el.innerText = bal.toLocaleString() + " CY";
     });
 }
 
-// Запускаем обновление сразу и повторяем каждые 500мс для надежности
-setInterval(refreshBalanceDisplay, 500);
 document.addEventListener('DOMContentLoaded', refreshBalanceDisplay);
