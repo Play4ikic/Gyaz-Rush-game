@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getDatabase, ref, update, get } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+import { getDatabase, ref, update, get, onValue } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-// Твой конфиг Firebase (оставляем тот же)
 const firebaseConfig = {
     apiKey: "AIzaSyDq3-wPkua6nMUt3cetwwC_-4iVtx-7PiQ",
     authDomain: "play4ik-473ef.firebaseapp.com",
@@ -15,53 +14,67 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// --- НАСТРОЙКИ КОНСТАНТ ---
-const BALANCE_KEY = 'fixone_balance';
+const BALANCE_KEY = 'fixone_balance'; // ЕДИНЫЙ КЛЮЧ ДЛЯ ВСЕГО
 const BIZ_VAL_KEY = 'gyaz_biz_val';
 const BIZ_TIME_KEY = 'gyaz_biz_time';
+const BIZ_MAX = 6000;
+const BIZ_INCOME = 20;
 
-const BIZ_MAX = 6000;      // Лимит бизнеса
-const BIZ_INCOME = 20;     // Доход в секунду
+// --- 1. СИНХРОНИЗАЦИЯ ПРИ ЗАХОДЕ ---
+async function syncWithFirebase() {
+    const user = JSON.parse(localStorage.getItem('gyaz_user'));
+    if (user && user.uid) {
+        const userRef = ref(db, 'users/' + user.uid);
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            if (data.balance !== undefined) {
+                // Если в базе денег больше или они отличаются - обновляем локально
+                localStorage.setItem(BALANCE_KEY, data.balance);
+                refreshBalanceDisplay();
+                console.log("Баланс синхронизирован из Firebase:", data.balance);
+            }
+        }
+    }
+}
 
-// --- 1. ЛОГИКА ОБЩЕГО БАЛАНСА ---
-
+// --- 2. ЛОГИКА БАЛАНСА ---
 export function getBalance() {
     const bal = localStorage.getItem(BALANCE_KEY);
-    return bal !== null ? parseInt(bal) : 20000; // 20k стартовых, если новый игрок
+    // Если в локале пусто, пробуем вернуть 20000, но syncWithFirebase это исправит
+    return bal !== null ? parseInt(bal) : 20000;
 }
 
 export async function updateBalance(amount) {
     let current = getBalance();
     let newBalance = current + amount;
     
-    if (newBalance < 0) return false; // Нельзя уходить в минус
+    if (newBalance < 0) return false;
 
-    // Сохраняем локально
+    // Сначала сохраняем локально, чтобы игрок сразу видел изменения
     localStorage.setItem(BALANCE_KEY, newBalance);
+    refreshBalanceDisplay();
     
-    // Синхронизируем с Firebase
+    // Затем отправляем в облако
     const user = JSON.parse(localStorage.getItem('gyaz_user'));
     if (user && user.uid) {
         try {
             await update(ref(db, 'users/' + user.uid), { balance: newBalance });
-        } catch(e) { console.warn("Firebase Sync Error"); }
+        } catch(e) { console.warn("Firebase Sync Fail"); }
     }
-    
-    refreshBalanceDisplay();
     return true;
 }
 
 export function refreshBalanceDisplay() {
     const bal = getBalance();
-    // Ищем все элементы на страницах: магазин, биржа, драфт
-    const elements = document.querySelectorAll('#shop-balance, .balance-board, .balance-display, #user-coins');
+    // Добавляем все возможные ID и классы, которые ты используешь
+    const elements = document.querySelectorAll('#shop-balance, .balance-board, .balance-display, #user-coins, #balance-text');
     elements.forEach(el => {
         el.innerText = bal.toLocaleString() + " CY";
     });
 }
 
-// --- 2. ЛОГИКА БИЗНЕСА (ПРИБЫЛЬ) ---
-
+// --- 3. ЛОГИКА БИЗНЕСА ---
 let currentBizMoney = parseInt(localStorage.getItem(BIZ_VAL_KEY)) || 0;
 let lastUpdate = parseInt(localStorage.getItem(BIZ_TIME_KEY)) || Date.now();
 
@@ -75,12 +88,10 @@ function updateBizLogic() {
             if (currentBizMoney > BIZ_MAX) currentBizMoney = BIZ_MAX;
         }
         lastUpdate = now;
-        
         localStorage.setItem(BIZ_VAL_KEY, currentBizMoney);
         localStorage.setItem(BIZ_TIME_KEY, lastUpdate);
     }
 
-    // Вывод на экран бизнеса
     const display = document.getElementById('business-display');
     if (display) {
         display.innerText = Math.floor(currentBizMoney).toLocaleString() + " / " + BIZ_MAX + " CY";
@@ -88,32 +99,26 @@ function updateBizLogic() {
     }
 }
 
-// Глобальная функция для кнопки "Собрать"
+// Глобальная кнопка сбора
 window.collectBusinessMoney = async function() {
     if (currentBizMoney >= 1) {
-        const amountToCollect = Math.floor(currentBizMoney);
-        const success = await updateBalance(amountToCollect);
-        
-        if (success) {
+        const toAdd = Math.floor(currentBizMoney);
+        const ok = await updateBalance(toAdd);
+        if (ok) {
             currentBizMoney = 0;
             lastUpdate = Date.now();
             localStorage.setItem(BIZ_VAL_KEY, 0);
             localStorage.setItem(BIZ_TIME_KEY, lastUpdate);
             updateBizLogic();
-            console.log("Прибыль собрана!");
         }
-    } else {
-        alert("Пока нечего собирать!");
     }
 };
 
-// --- ИНИЦИАЛИЗАЦИЯ ---
-
-// Запуск циклов
+// --- СТАРТ ---
+syncWithFirebase(); // Запускаем синхронизацию сразу при загрузке скрипта
 setInterval(updateBizLogic, 1000);
 setInterval(refreshBalanceDisplay, 1000);
 
-// При загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     refreshBalanceDisplay();
     updateBizLogic();
