@@ -1,61 +1,57 @@
-import { updateBalance } from './economy.js'; // Важно: путь к файлу экономики
+// Настройки
+const BIZ_MAX = 6000;
+const BIZ_INCOME = 20; 
 
-// Настройки бизнеса FixOne
-const BIZ_MAX = 6000;      // Максимум накопления
-const BIZ_INCOME = 20;     // Доход в секунду (72,000 в час)
-
+// Загрузка
 let currentBizMoney = parseInt(localStorage.getItem('gyaz_biz_val')) || 0;
 let lastUpdate = parseInt(localStorage.getItem('gyaz_biz_time')) || Date.now();
 
 function updateBiz() {
     const now = Date.now();
-    const elapsedSeconds = Math.floor((now - lastUpdate) / 1000);
+    const seconds = Math.floor((now - lastUpdate) / 1000);
 
-    if (elapsedSeconds >= 1) {
-        // Начисляем прибыль за прошедшее время (даже если вкладка была закрыта)
+    if (seconds >= 1) {
+        // Начисляем деньги
         if (currentBizMoney < BIZ_MAX) {
-            let profit = elapsedSeconds * BIZ_INCOME;
-            currentBizMoney += profit;
-            
+            currentBizMoney += seconds * BIZ_INCOME;
             if (currentBizMoney > BIZ_MAX) currentBizMoney = BIZ_MAX;
         }
-        
         lastUpdate = now;
         
-        // Сохраняем состояние бизнеса
+        // Сохраняем
         localStorage.setItem('gyaz_biz_val', currentBizMoney);
         localStorage.setItem('gyaz_biz_time', lastUpdate);
     }
 
-    // Обновляем визуальную шкалу бизнеса
+    // Вывод на экран
     const display = document.getElementById('business-display');
     if (display) {
-        display.innerText = Math.floor(currentBizMoney).toLocaleString() + " / " + BIZ_MAX + " CY";
+        display.innerText = currentBizMoney + " / " + BIZ_MAX + " CY";
         
-        // Красим в красный, если склад забит
+        // Красим, если накопилось
         display.style.color = (currentBizMoney >= BIZ_MAX) ? "#ff4444" : "#00ff88";
-        display.style.fontWeight = "bold";
+    } else {
+        console.error("ОШИБКА: Элемент с id='business-display' не найден на странице!");
     }
 }
 
-// ГЛОБАЛЬНАЯ ФУНКЦИЯ СБОРА (для кнопки onclick)
-window.collectBusinessMoney = async function() {
+// Функция сбора (клик по кнопке)
+function collectBusinessMoney() {
     if (currentBizMoney > 0) {
-        const added = await updateBalance(Math.floor(currentBizMoney));
-        
-        if (added) {
-            console.log(`Собрано из бизнеса: ${currentBizMoney} CY`);
+        // Вызываем твою функцию из economy.js
+        if (typeof updateBalance === 'function') {
+            updateBalance(currentBizMoney);
             currentBizMoney = 0;
             lastUpdate = Date.now();
             localStorage.setItem('gyaz_biz_val', 0);
             localStorage.setItem('gyaz_biz_time', lastUpdate);
             updateBiz();
         }
-    } else {
-        alert("Бизнес пока не принес прибыли!");
     }
 }
 
-// Запуск цикла
+// Запуск каждую секунду
 setInterval(updateBiz, 1000);
+
+// Сразу запускаем один раз при загрузке
 updateBiz();
