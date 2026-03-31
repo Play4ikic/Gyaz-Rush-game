@@ -19,6 +19,7 @@
             transition: 0.2s;
             margin-right: 15px;
             min-width: 120px;
+            user-select: none; /* Чтобы текст не выделялся при кликах */
         }
         .business-container:hover {
             background: rgba(0, 255, 136, 0.15);
@@ -69,7 +70,10 @@
                 <span class="business-label">Бизнес (Собрать)</span>
                 <span id="business-display" class="business-money">0 / 6000 CY</span>
             </div>
-            <div id="shop-balance" class="balance-display" style="background: #00ff88; color: #000; padding: 8px 15px; border-radius: 8px; font-weight: bold;">0 CY</div>
+            
+            <div id="shop-balance" class="balance-display" style="background: #00ff88; color: #000; padding: 8px 15px; border-radius: 8px; font-weight: bold; min-width: 80px; text-align: center;">
+                0 CY
+            </div>
         </div>
     </header>
 
@@ -93,13 +97,13 @@
         <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="setVolume(this.value)" style="width: 80px; cursor: pointer; accent-color: #00ff88;">
     </div>
 
-    <script src="economy.js"></script>
-    <script src="business.js"></script>
+    <script type="module" src="economy.js"></script>
+    <script type="module" src="business.js"></script>
     <script src="audio.js"></script>
     <script src="script.js"></script>
 
     <script>
-        // Интерфейс звука
+        // Интерфейс звука (без изменений)
         function toggleMuteUI(btn) {
             const isMuted = toggleMute();
             btn.innerText = isMuted ? '🔇' : '🎵';
@@ -108,7 +112,7 @@
         window.addEventListener('load', () => {
             const btn = document.getElementById('mute-btn');
             const isMuted = localStorage.getItem('gyaz_muted') === 'true';
-            btn.innerText = isMuted ? '🔇' : '🎵';
+            if(btn) btn.innerText = isMuted ? '🔇' : '🎵';
         });
     </script>
 </body>

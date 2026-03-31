@@ -1,48 +1,62 @@
 import { updateBalance } from './economy.js';
 
-const BIZ_MAX = 6000;
-const BIZ_INCOME = 20; 
+// Настройки FixOne Business
+const CONFIG = {
+    MAX: 6000,
+    PER_SECOND: 20,
+    VAL_KEY: 'gyaz_biz_val',
+    TIME_KEY: 'gyaz_biz_time'
+};
 
-// ЗАГРУЗКА: берем время из памяти, чтобы деньги копились, пока тебя нет
-let currentBizMoney = parseInt(localStorage.getItem('gyaz_biz_val')) || 0;
-let lastUpdate = parseInt(localStorage.getItem('gyaz_biz_time')) || Date.now();
+// Загружаем прогресс
+let currentPool = parseInt(localStorage.getItem(CONFIG.VAL_KEY)) || 0;
+let lastTick = parseInt(localStorage.getItem(CONFIG.TIME_KEY)) || Date.now();
 
-function updateBiz() {
+function tick() {
     const now = Date.now();
-    // Считаем разницу между "сейчас" и "последним обновлением"
-    const seconds = Math.floor((now - lastUpdate) / 1000);
+    const diffSeconds = Math.floor((now - lastTick) / 1000);
 
-    if (seconds >= 1) {
-        if (currentBizMoney < BIZ_MAX) {
-            currentBizMoney += seconds * BIZ_INCOME;
-            if (currentBizMoney > BIZ_MAX) currentBizMoney = BIZ_MAX;
+    if (diffSeconds >= 1) {
+        // Если прошло время, начисляем
+        if (currentPool < CONFIG.MAX) {
+            currentPool += diffSeconds * CONFIG.PER_SECOND;
+            if (currentPool > CONFIG.MAX) currentPool = CONFIG.MAX;
         }
-        // Обновляем время последней проверки
-        lastUpdate = now;
         
-        localStorage.setItem('gyaz_biz_val', currentBizMoney);
-        localStorage.setItem('gyaz_biz_time', lastUpdate);
+        // Запоминаем время этого тика
+        lastTick = now;
+        
+        // Сохраняем состояние бизнеса
+        localStorage.setItem(CONFIG.VAL_KEY, currentPool);
+        localStorage.setItem(CONFIG.TIME_KEY, lastTick);
     }
 
+    // Рисуем в HTML
     const display = document.getElementById('business-display');
     if (display) {
-        display.innerText = Math.floor(currentBizMoney) + " / " + BIZ_MAX + " CY";
-        display.style.color = (currentBizMoney >= BIZ_MAX) ? "#ff4444" : "#00ff88";
+        display.innerText = Math.floor(currentPool).toLocaleString() + " / " + CONFIG.MAX + " CY";
+        display.style.color = (currentPool >= CONFIG.MAX) ? "#ff4444" : "#00ff88";
     }
 }
 
-// Глобальная функция для кнопки
+// Кнопка сбора (Доступна из HTML)
 window.collectBusinessMoney = function() {
-    if (currentBizMoney >= 1) {
-        const amount = Math.floor(currentBizMoney);
-        updateBalance(amount); // Отправляем в файл экономики
+    if (currentPool >= 1) {
+        const toAdd = Math.floor(currentPool);
         
-        currentBizMoney = 0;
-        lastUpdate = Date.now();
-        localStorage.setItem('gyaz_biz_val', 0);
-        localStorage.setItem('gyaz_biz_time', lastUpdate);
+        // Вызываем новую экономику
+        updateBalance(toAdd);
+        
+        // Сбрасываем бизнес
+        currentPool = 0;
+        lastTick = Date.now();
+        localStorage.setItem(CONFIG.VAL_KEY, 0);
+        localStorage.setItem(CONFIG.TIME_KEY, lastTick);
+        
+        console.log(`Собрано прибыли: ${toAdd} CY`);
     }
 };
 
-setInterval(updateBiz, 1000);
-updateBiz();
+// Запуск счетчика
+setInterval(tick, 1000);
+tick();

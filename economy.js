@@ -12,35 +12,46 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const BALANCE_KEY = 'fixone_balance';
 
+// Ключ в LocalStorage
+const STORAGE_KEY = 'fixone_balance';
+
+// 1. Получить баланс (всегда возвращает число)
 export function getBalance() {
-    const bal = localStorage.getItem(BALANCE_KEY);
-    return (bal === null || bal === "undefined") ? 20000 : parseInt(bal);
+    const val = localStorage.getItem(STORAGE_KEY);
+    return (val === null || val === "undefined") ? 20000 : parseInt(val);
 }
 
+// 2. Изменить баланс (прибавить или отнять)
 export async function updateBalance(amount) {
-    let newBalance = getBalance() + amount;
-    if (newBalance < 0) return false;
-
-    localStorage.setItem(BALANCE_KEY, newBalance);
-    refreshBalanceDisplay();
+    const current = getBalance();
+    const newTotal = current + amount;
     
-    const userStr = localStorage.getItem('gyaz_user');
-    if (userStr) {
-        const user = JSON.parse(userStr);
+    if (newTotal < 0) return false; // Недостаточно средств
+
+    // Сохраняем локально (мгновенно)
+    localStorage.setItem(STORAGE_KEY, newTotal);
+    refreshUI();
+
+    // Отправляем в Firebase (фоном)
+    const user = JSON.parse(localStorage.getItem('gyaz_user'));
+    if (user && user.uid) {
         try {
-            await update(ref(db, 'users/' + user.uid), { balance: newBalance });
-        } catch(e) { console.warn("Firebase offline"); }
+            await update(ref(db, `users/${user.uid}`), { balance: newTotal });
+        } catch(e) { console.warn("Ошибка синхронизации с сервером"); }
     }
     return true;
 }
 
-export function refreshBalanceDisplay() {
-    const bal = getBalance();
-    const elements = document.querySelectorAll('#shop-balance, .balance-board, .balance-display, #user-coins');
-    elements.forEach(el => { el.innerText = bal.toLocaleString() + " CY"; });
+// 3. Обновить цифры на всех страницах
+export function refreshUI() {
+    const amount = getBalance();
+    const targets = document.querySelectorAll('#shop-balance, .balance-board, .balance-display, #user-coins');
+    targets.forEach(el => {
+        el.innerText = amount.toLocaleString() + " CY";
+    });
 }
 
-setInterval(refreshBalanceDisplay, 1000);
-document.addEventListener('DOMContentLoaded', refreshBalanceDisplay);
+// Авто-обновление при загрузке и каждые 2 секунды
+document.addEventListener('DOMContentLoaded', refreshUI);
+setInterval(refreshUI, 2000);
