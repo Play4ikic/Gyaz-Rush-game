@@ -1,3 +1,5 @@
+import { updateBalance, refreshBalanceDisplay } from './economy.js';
+
 const PRICES = { 
     gold: 5000, 
     champions: 50000, 
@@ -35,43 +37,39 @@ const championsPlayers = [
 
 let currentDroppedPlayer = null;
 
-function openPack(type, videoFile) {
+// ОСНОВНАЯ ФУНКЦИЯ ОТКРЫТИЯ
+window.openPack = async function(type, videoFile) {
     const price = PRICES[type];
     let pool = (type === 'gold') ? goldPlayers : (type === 'champions' ? championsPlayers : totyPlayers);
 
-    if (typeof updateBalance === 'function' && updateBalance(-price)) {
+    // Списываем деньги через Firebase (ждем результат)
+    const success = await updateBalance(-price);
+
+    if (success) {
         currentDroppedPlayer = pool[Math.floor(Math.random() * pool.length)];
 
-        // ЛОГИКА ДЛЯ GOLD PACK (Без видео)
         if (type === 'gold') {
             showInstantReveal();
         } else {
-            // ЛОГИКА ДЛЯ КРУТЫХ ПАКОВ (С видео)
             startVideoReveal(videoFile);
         }
     } else {
         alert("Эльджан, не хватает CY!");
     }
-}
+};
 
-// Мгновенное открытие для золотого пака
 function showInstantReveal() {
     const revealScreen = document.getElementById('reveal-screen');
     const playerImg = document.getElementById('card-res-img');
 
     playerImg.src = `${currentDroppedPlayer.folder}/${currentDroppedPlayer.file}`;
-    
-    // Добавляем класс для эффекта вспышки
     playerImg.classList.add('flash-effect');
     revealScreen.classList.remove('hidden');
 
     setupClaimButton();
-    
-    // Убираем вспышку через секунду, чтобы можно было открыть снова
     setTimeout(() => playerImg.classList.remove('flash-effect'), 1000);
 }
 
-// Обычное открытие с видео
 function startVideoReveal(videoFile) {
     const videoContainer = document.getElementById('video-reveal-container');
     const video = document.getElementById('pack-video');
@@ -115,13 +113,14 @@ function saveToInventory(player) {
     let inventory = JSON.parse(localStorage.getItem('myPlayers')) || [];
     inventory.push(player);
     localStorage.setItem('myPlayers', JSON.stringify(inventory));
-    
-    // Alert удален, просто закрываем экран выпадения
     closeReveal();
 }
 
-function closeReveal() {
+window.closeReveal = function() {
     document.getElementById('reveal-screen').classList.add('hidden');
     document.getElementById('video-reveal-container').classList.add('hidden');
     currentDroppedPlayer = null;
-}
+};
+
+// При загрузке обновляем баланс на экране
+document.addEventListener('DOMContentLoaded', refreshBalanceDisplay);

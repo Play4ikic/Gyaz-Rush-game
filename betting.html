@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="ru">
-    <script src="economy.js"></script>
-<script src="betting.js"></script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FixOne Betting Arena</title>
     <link rel="stylesheet" href="betting.css">
+    <script type="module" src="economy.js"></script>
+    <script type="module" src="betting.js"></script>
 </head>
 <body>
 
@@ -14,24 +14,27 @@
         <header>
             <a href="index.html" class="back-link">← В МЕНЮ</a>
             <h1 class="main-title">BETTING ARENA</h1>
-            <div id="user-balance" class="balance-board">100000 CY</div>
+            <div id="balance-display" class="balance-board">Загрузка...</div>
         </header>
 
-       <div class="scoreboard">
-    <div class="team">
-        <img src="images/toxic.png" alt="Toxic" class="team-logo">
-        <div class="team-name">TOXIC</div>
-    </div>
-    <div class="vs">VS</div>
-    <div class="team">
-        <img src="images/cheer.png" alt="Cheer" class="team-logo">
-        <div class="team-name">CHEER</div>
-    </div>
-</div>
+        <div class="main-content" style="display: flex; gap: 20px; justify-content: space-around; flex-wrap: wrap;">
+            
+            <div class="left-side">
+                <div class="scoreboard">
+                    <div class="team">
+                        <img src="images/toxic.png" alt="Toxic" class="team-logo">
+                        <div class="team-name">TOXIC</div>
+                    </div>
+                    <div class="vs">VS</div>
+                    <div class="team">
+                        <img src="images/cheer.png" alt="Cheer" class="team-logo">
+                        <div class="team-name">CHEER</div>
+                    </div>
+                </div>
                 
-                <div class="log-panel">
-                    <div id="match-timer">00'</div>
-                    <div id="match-score">0 : 0</div>
+                <div class="log-panel" style="text-align: center; margin-top: 20px;">
+                    <div id="match-timer" style="font-size: 40px; color: #00ff88;">00'</div>
+                    <div id="match-score" style="font-size: 60px; font-weight: bold;">0 : 0</div>
                 </div>
             </div>
 
@@ -60,25 +63,26 @@
 
                 <div class="bet-section">
                     <p>ТОЧНЫЙ СЧЕТ (X10)</p>
-                    <div class="exact-row">
-                        <input type="number" id="score-toxic" placeholder="0">
+                    <div class="exact-row" style="display: flex; align-items: center; gap: 10px;">
+                        <input type="number" id="score-toxic" placeholder="0" style="width: 50px;">
                         <span>:</span>
-                        <input type="number" id="score-cheer" placeholder="0">
-                        <button class="small-btn" onclick="selectBet('exact', 'true', this)">СТАВЛЮ</button>
+                        <input type="number" id="score-cheer" placeholder="0" style="width: 50px;">
+                        <button class="small-btn" onclick="toggleExact()">СТАВЛЮ</button>
                     </div>
                 </div>
 
-                <button id="start-btn" onclick="confirmAndStart()">ПОДТВЕРДИТЬ ЭКСПРЕСС</button>
+                <button id="start-btn" onclick="confirmAndStart()" style="width: 100%; margin-top: 20px; padding: 15px; background: #00ff88; color: black; border: none; font-weight: bold; cursor: pointer;">
+                    ПОДТВЕРДИТЬ ЭКСПРЕСС
+                </button>
             </div>
         </div>
     </div>
 
-    <script src="betting.js"></script>
+    <div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
+        <button onclick="this.innerText = (typeof toggleMute === 'function' && toggleMute()) ? '🔇' : '🎵'" style="background: none; border: none; font-size: 20px; cursor: pointer;">🎵</button>
+        <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="if(typeof setVolume === 'function') setVolume(this.value)" style="width: 60px; cursor: pointer;">
+    </div>
+
+    <script src="audio.js"></script>
 </body>
 </html>
-<div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
-    <button onclick="this.innerText = toggleMute() ? '🔇' : '🎵'" style="background: none; border: none; font-size: 20px; cursor: pointer;">🎵</button>
-    <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="setVolume(this.value)" style="width: 60px; cursor: pointer;">
-</div>
-
-<script src="audio.js"></script>

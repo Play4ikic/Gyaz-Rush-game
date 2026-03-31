@@ -1,3 +1,5 @@
+import { updateBalance } from './economy.js';
+
 // 1. БАЗА КАРТ (Золотые)
 const ALL_GAME_CARDS = [
     { name: 'Ayla', rating: 30, pos: 'GK', club: 'icon', file: 'Ayla-30.png', folder: 'Gold' },
@@ -30,7 +32,6 @@ const championsPlayers = [
     { name: 'Nazrin', rating: 88, pos: 'DF', club: 'toxic', file: 'Nazrin-88.png', folder: 'Champions' }
 ];
 
-const BALANCE_KEY = 'fixone_balance'; 
 let activeSquad = JSON.parse(localStorage.getItem('activeSquad')) || [null, null, null, null, null];
 
 let round = 1;
@@ -40,10 +41,10 @@ let selectedPlayerCard = null;
 let timerInterval;
 
 let usedPlayerIndexes = []; 
-let botHand = [];           
+let botHand = [];           
 
 // ЗАПУСК ИГРЫ
-function startGame() {
+window.startGame = function() {
     const validPlayers = activeSquad.filter(p => p !== null);
     
     if (validPlayers.length < 5) {
@@ -58,16 +59,11 @@ function startGame() {
     botScore = 0;
     round = 1;
 
-    // ОБЪЕДИНЯЕМ ВСЕ СПИСКИ В ОДИН (Теперь бот видит всё!)
     let fullBotPool = [...ALL_GAME_CARDS, ...totyPlayers, ...championsPlayers];
-
-    // Выбираем 5 случайных УНИКАЛЬНЫХ карт для бота
     let tempPool = [...fullBotPool];
     for (let i = 0; i < 5; i++) {
-        if (tempPool.length === 0) break;
         const randomIndex = Math.floor(Math.random() * tempPool.length);
-        const picked = tempPool.splice(randomIndex, 1)[0]; // Удаляем, чтобы не было повторов
-        botHand.push(picked);
+        botHand.push(tempPool.splice(randomIndex, 1)[0]);
     }
 
     document.getElementById('setup-screen').classList.add('hidden');
@@ -82,10 +78,8 @@ function renderHand() {
 
     activeSquad.forEach((player, index) => {
         if (!player) return;
-
-        const folder = player.folder || (player.rating > 96 ? 'Toty' : 'Champions');
         const img = document.createElement('img');
-        img.src = `${folder}/${player.file}`;
+        img.src = `${player.folder}/${player.file}`;
         
         if (usedPlayerIndexes.includes(index)) {
             img.classList.add('used-card');
@@ -93,9 +87,8 @@ function renderHand() {
             img.style.pointerEvents = "none";
         } else {
             img.onclick = () => {
-                selectedPlayerCard = { ...player, sIndex: index, folder: folder };
-                document.getElementById('player-card-display').innerHTML = `<img src="${folder}/${player.file}">`;
-                
+                selectedPlayerCard = { ...player, sIndex: index };
+                document.getElementById('player-card-display').innerHTML = `<img src="${player.folder}/${player.file}">`;
                 document.querySelectorAll('#squad-hand img').forEach(i => i.style.border = "none");
                 img.style.border = "3px solid #00ff88";
                 img.style.borderRadius = "10px";
@@ -135,8 +128,7 @@ function processBattle() {
     botDisplay.classList.remove('card-back');
 
     const botCard = botHand[round - 1]; 
-    const botFolder = botCard.folder; // Папка берется из настроек самой карты бота
-    botDisplay.innerHTML = `<img src="${botFolder}/${botCard.file}">`;
+    botDisplay.innerHTML = `<img src="${botCard.folder}/${botCard.file}">`;
 
     if (selectedPlayerCard) {
         usedPlayerIndexes.push(selectedPlayerCard.sIndex);
@@ -158,11 +150,12 @@ function processBattle() {
     }, 2500);
 }
 
-function endGame() {
+async function endGame() {
     let message = "";
     if (playerScore > botScore) {
         const reward = 3000;
-        if (window.updateBalance) window.updateBalance(reward);
+        // Используем новую функцию из economy.js
+        await updateBalance(reward);
         message = `ПОБЕДА! Ты заработал ${reward} CY!`;
     } else if (playerScore === botScore) {
         message = "НИЧЬЯ! Почти получилось.";

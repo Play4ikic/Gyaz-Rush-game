@@ -1,3 +1,5 @@
+import { updateBalance, refreshBalanceDisplay } from './economy.js';
+
 // 1. Состояние игры
 let currentBets = { winner: null, total: null, exact: false };
 let gameState = {
@@ -14,7 +16,7 @@ const GOAL_PROBABILITY = 0.25;
 const MATCH_DURATION_MS = 20000; // 20 секунд на матч
 const TICK_RATE = MATCH_DURATION_MS / 90; 
 
-// БЛОКИРОВКА НАВИГАЦИИ (чтобы не убежали во время матча)
+// БЛОКИРОВКА НАВИГАЦИИ
 function toggleNavigation(isLocked) {
     const backBtn = document.querySelector('.back-btn'); 
     if (isLocked) {
@@ -33,29 +35,26 @@ function toggleNavigation(isLocked) {
 }
 
 // 2. Выбор ставки (интерфейс)
-function selectBet(type, value, element) {
+window.selectBet = function(type, value, element) {
     if (gameState.isMatchRunning) return; 
 
-    // Снимаем выделение с других кнопок в этой категории
     const parent = element.parentElement;
     const buttons = parent.querySelectorAll('button');
     buttons.forEach(btn => btn.classList.remove('selected'));
     
-    // Если нажали на уже выбранную — отменяем выбор
     if (currentBets[type] === value) {
         currentBets[type] = null;
     } else {
         element.classList.add('selected');
         currentBets[type] = value;
     }
-}
+};
 
-// Переключатель для точного счета
-function toggleExact() {
+window.toggleExact = function() {
     if (gameState.isMatchRunning) return;
     currentBets.exact = !currentBets.exact;
     document.getElementById('exact-btn').classList.toggle('selected');
-}
+};
 
 // 3. Симуляция матча
 function startSimulation() {
@@ -90,15 +89,14 @@ function startSimulation() {
 }
 
 // 4. Проверка результатов (ЛОГИКА ЭКСПРЕССА)
-function checkResults(betAmount) {
+async function checkResults(betAmount) {
     const { scoreToxic, scoreCheer } = gameState;
     const totalGoals = scoreToxic + scoreCheer;
     
     let isWin = true; 
     let finalMultiplier = 1; 
-    let betCount = 0; // Считаем, сколько событий выбрано
+    let betCount = 0;
 
-    // ПРОВЕРКА ПОБЕДИТЕЛЯ
     if (currentBets.winner) {
         betCount++;
         let wonWinner = false;
@@ -110,7 +108,6 @@ function checkResults(betAmount) {
         else isWin = false;
     }
 
-    // ПРОВЕРКА ТОТАЛА
     if (isWin && currentBets.total) {
         betCount++;
         let wonTotal = false;
@@ -121,7 +118,6 @@ function checkResults(betAmount) {
         else isWin = false;
     }
 
-    // ПРОВЕРКА ТОЧНОГО СЧЕТА
     if (isWin && currentBets.exact) {
         betCount++;
         const inputToxic = parseInt(document.getElementById('score-toxic').value) || 0;
@@ -134,15 +130,15 @@ function checkResults(betAmount) {
         }
     }
 
-    // ИТОГ
     if (isWin && betCount > 0) {
         const winAmount = Math.floor(betAmount * finalMultiplier);
-        updateBalance(winAmount); 
-        alert(`🔥 ПОБЕДА! Экспресс зашел! Коэффициент: x${finalMultiplier}. Выигрыш: ${winAmount} CY`);
+        // Зачисляем выигрыш в банк
+        await updateBalance(winAmount); 
+        alert(`🔥 ПОБЕДА! Коэффициент: x${finalMultiplier}. Выигрыш: ${winAmount} CY`);
     } else if (betCount === 0) {
-        alert("Ты не выбрал ни одного исхода! Ставка просто сгорела.");
+        alert("Ты не выбрал ни одного исхода!");
     } else {
-        alert(`❌ ПРОИГРЫШ. Одно из событий экспресса не совпало. Итог матча: ${scoreToxic}:${scoreCheer}`);
+        alert(`❌ ПРОИГРЫШ. Итог матча: ${scoreToxic}:${scoreCheer}`);
     }
 }
 
@@ -164,7 +160,7 @@ function finishMatch() {
 }
 
 // 6. Главная кнопка Старта
-function confirmAndStart() {
+window.confirmAndStart = async function() {
     const amountInput = document.getElementById('bet-amount');
     const betAmount = parseInt(amountInput.value) || 0;
 
@@ -175,23 +171,23 @@ function confirmAndStart() {
         return;
     }
 
-    // Вычитаем ставку (функция из economy.js)
-    if (updateBalance(-betAmount)) {
-        toggleNavigation(true);
+    // Списываем ставку из банка
+    const success = await updateBalance(-betAmount);
 
+    if (success) {
+        toggleNavigation(true);
         amountInput.style.borderColor = "#444";
         gameState.scoreToxic = 0;
         gameState.scoreCheer = 0;
         gameState.minute = 0;
         gameState.isMatchRunning = true;
-
         startSimulation();
     } else {
         amountInput.style.borderColor = "red";
         alert("Эльджан, недостаточно CY!");
     }
-}
+};
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (typeof refreshBalanceDisplay === "function") refreshBalanceDisplay();
+    refreshBalanceDisplay();
 });
