@@ -1,38 +1,48 @@
 import { updateBalance } from './economy.js';
 
 const BIZ_MAX = 6000;
-const BIZ_INCOME = 20;
+const BIZ_INCOME = 20; 
 
-function processBiz() {
-    let currentBiz = parseInt(localStorage.getItem('gyaz_biz_val')) || 0;
-    let lastTime = parseInt(localStorage.getItem('gyaz_biz_time')) || Date.now();
-    
+// ЗАГРУЗКА: берем время из памяти, чтобы деньги копились, пока тебя нет
+let currentBizMoney = parseInt(localStorage.getItem('gyaz_biz_val')) || 0;
+let lastUpdate = parseInt(localStorage.getItem('gyaz_biz_time')) || Date.now();
+
+function updateBiz() {
     const now = Date.now();
-    const diff = Math.floor((now - lastTime) / 1000);
+    // Считаем разницу между "сейчас" и "последним обновлением"
+    const seconds = Math.floor((now - lastUpdate) / 1000);
 
-    if (diff >= 1) {
-        if (currentBiz < BIZ_MAX) {
-            currentBiz += diff * BIZ_INCOME;
-            if (currentBiz > BIZ_MAX) currentBiz = BIZ_MAX;
+    if (seconds >= 1) {
+        if (currentBizMoney < BIZ_MAX) {
+            currentBizMoney += seconds * BIZ_INCOME;
+            if (currentBizMoney > BIZ_MAX) currentBizMoney = BIZ_MAX;
         }
-        localStorage.setItem('gyaz_biz_val', currentBiz);
-        localStorage.setItem('gyaz_biz_time', now);
+        // Обновляем время последней проверки
+        lastUpdate = now;
+        
+        localStorage.setItem('gyaz_biz_val', currentBizMoney);
+        localStorage.setItem('gyaz_biz_time', lastUpdate);
     }
 
     const display = document.getElementById('business-display');
     if (display) {
-        display.innerText = currentBiz + " / " + BIZ_MAX + " CY";
+        display.innerText = Math.floor(currentBizMoney) + " / " + BIZ_MAX + " CY";
+        display.style.color = (currentBizMoney >= BIZ_MAX) ? "#ff4444" : "#00ff88";
     }
 }
 
-// Кнопка сбора
+// Глобальная функция для кнопки
 window.collectBusinessMoney = function() {
-    let currentBiz = parseInt(localStorage.getItem('gyaz_biz_val')) || 0;
-    if (currentBiz > 0) {
-        updateBalance(currentBiz); // ОТПРАВЛЯЕМ В ОБЩУЮ КАССУ
+    if (currentBizMoney >= 1) {
+        const amount = Math.floor(currentBizMoney);
+        updateBalance(amount); // Отправляем в файл экономики
+        
+        currentBizMoney = 0;
+        lastUpdate = Date.now();
         localStorage.setItem('gyaz_biz_val', 0);
-        localStorage.setItem('gyaz_biz_time', Date.now());
+        localStorage.setItem('gyaz_biz_time', lastUpdate);
     }
-}
+};
 
-setInterval(processBiz, 1000);
+setInterval(updateBiz, 1000);
+updateBiz();
