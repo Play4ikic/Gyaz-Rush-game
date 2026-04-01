@@ -2,46 +2,91 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FixOne FC - Hub</title>
     <link rel="icon" href="favicon.png" type="image/png">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Стили прелоадера */
+        /* СТИЛИ ПРЕЛОАДЕРА */
         #preloader {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #000; z-index: 9999; display: flex; 
-            flex-direction: column; align-items: center; justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             transition: opacity 0.5s ease;
         }
-        
-        /* Стили бизнеса и навигации */
+
+        .loader-bar {
+            width: 250px;
+            height: 10px;
+            background: #222;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #444;
+            margin-top: 20px;
+        }
+
+        #load-progress {
+            width: 0%;
+            height: 100%;
+            background: #e1b12c;
+            transition: 0.3s;
+        }
+
+        /* ОСТАЛЬНЫЕ СТИЛИ ХАБА */
         .business-container {
-            display: flex; flex-direction: column; align-items: flex-end;
-            background: rgba(0, 255, 136, 0.05); border: 1px solid rgba(0, 255, 136, 0.3);
-            padding: 5px 15px; border-radius: 12px; cursor: pointer;
-            transition: 0.2s; margin-right: 15px; min-width: 120px; user-select: none;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            padding: 5px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-right: 15px;
+            min-width: 120px;
+            user-select: none;
         }
         .business-container:hover {
-            background: rgba(0, 255, 136, 0.15); border-color: #00ff88; transform: translateY(-2px);
+            background: rgba(0, 255, 136, 0.15);
+            border-color: #00ff88;
+            transform: translateY(-2px);
         }
         .business-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
         .business-money { color: #00ff88; font-weight: bold; font-family: monospace; font-size: 14px; }
-        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); }
+        
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+        }
         .right-side { display: flex; align-items: center; }
     </style>
 </head>
 <body>
 
     <div id="preloader">
-        <div class="logo-text" style="color: #e1b12c; font-size: 30px; margin-bottom: 20px; font-weight: bold; font-family: sans-serif;">FIXONE LOADING...</div>
-        <div style="width: 250px; height: 10px; background: #222; border-radius: 10px; overflow: hidden; border: 1px solid #444;">
-            <div id="load-progress" style="width: 0%; height: 100%; background: #e1b12c; transition: 0.3s;"></div>
+        <div class="logo-text" style="color: #e1b12c; font-size: 30px; font-weight: bold; font-family: sans-serif;">FIXONE LOADING...</div>
+        <div class="loader-bar">
+            <div id="load-progress"></div>
         </div>
         <div id="load-status" style="color: #555; margin-top: 10px; font-size: 14px; font-family: sans-serif;">0%</div>
     </div>
 
     <header class="top-nav">
         <div class="logo" style="font-weight: 900; color: #fff; letter-spacing: 2px;">GYaz Rush</div>
+        
         <nav class="menu-tabs">
             <div class="tab-item active" onclick="selectTab('news')">НОВОСТИ</div>
             <div class="tab-item" onclick="selectTab('shop')">МАГАЗИН</div>
@@ -56,7 +101,10 @@
                 <span class="business-label">Бизнес (Собрать)</span>
                 <span id="business-display" class="business-money">0 / 6000 CY</span>
             </div>
-            <div id="shop-balance" class="balance-display" style="background: #00ff88; color: #000; padding: 8px 15px; border-radius: 8px; font-weight: bold; min-width: 80px; text-align: center;">0 CY</div>
+            
+            <div id="shop-balance" class="balance-display" style="background: #00ff88; color: #000; padding: 8px 15px; border-radius: 8px; font-weight: bold; min-width: 80px; text-align: center;">
+                0 CY
+            </div>
         </div>
     </header>
 
@@ -75,37 +123,64 @@
         </div>
     </main>
 
-    <div class="audio-controls" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1);">
+    <div class="audio-controls" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
         <button id="mute-btn" onclick="toggleMuteUI(this)" style="background: none; border: none; font-size: 20px; cursor: pointer; color: white; outline: none;">🎵</button>
-        <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="setVolume(this.value)" style="width: 80px; accent-color: #00ff88;">
+        <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="setVolume(this.value)" style="width: 80px; cursor: pointer; accent-color: #00ff88;">
     </div>
-
-    <script>
-        function startPreloader() {
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += Math.random() * 15; // Симуляция загрузки
-                if (progress > 100) progress = 100;
-                
-                document.getElementById('load-progress').style.width = progress + '%';
-                document.getElementById('load-status').innerText = Math.floor(progress) + '%';
-                
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        const pre = document.getElementById('preloader');
-                        pre.style.opacity = '0';
-                        setTimeout(() => pre.style.display = 'none', 500);
-                    }, 500);
-                }
-            }, 150);
-        }
-        startPreloader();
-    </script>
 
     <script type="module" src="economy.js"></script>
     <script type="module" src="business.js"></script>
     <script src="audio.js"></script>
     <script src="script.js"></script>
+
+    <script>
+        function handlePreloader() {
+            const preloader = document.getElementById('preloader');
+            
+            // Если в этой сессии уже была загрузка — удаляем её сразу
+            if (sessionStorage.getItem('gyaz_first_load')) {
+                preloader.style.display = 'none';
+                return;
+            }
+
+            // Если сессия новая — запускаем анимацию
+            let progress = 0;
+            const progressLine = document.getElementById('load-progress');
+            const statusText = document.getElementById('load-status');
+
+            const interval = setInterval(() => {
+                progress += Math.random() * 12; // Скорость загрузки
+                if (progress > 100) progress = 100;
+                
+                if (progressLine) progressLine.style.width = progress + '%';
+                if (statusText) statusText.innerText = Math.floor(progress) + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    
+                    // Запоминаем, что загрузка пройдена
+                    sessionStorage.setItem('gyaz_first_load', 'true');
+
+                    setTimeout(() => {
+                        preloader.style.opacity = '0';
+                        setTimeout(() => {
+                            preloader.style.display = 'none';
+                        }, 500);
+                    }, 600);
+                }
+            }, 100);
+        }
+
+        // Запуск при загрузке страницы
+        window.addEventListener('DOMContentLoaded', handlePreloader);
+
+        // UI звука
+        function toggleMuteUI(btn) {
+            if (typeof toggleMute === 'function') {
+                const isMuted = toggleMute();
+                btn.innerText = isMuted ? '🔇' : '🎵';
+            }
+        }
+    </script>
 </body>
 </html>
