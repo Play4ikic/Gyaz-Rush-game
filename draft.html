@@ -6,125 +6,96 @@
     <title>FixOne - Draft Battle</title>
     <link rel="stylesheet" href="draft.css">
     <style>
-        /* Принудительные стили для стабильности отображения */
-        body { background: #000; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; color: white; }
-        .screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: 0.5s; }
+        body { background: #000; margin: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; color: white; }
+        .screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .hidden { display: none !important; }
-        
-        .difficulty-box { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 20px; 
-            width: 100%; 
-            max-width: 350px; 
+
+        /* НОВАЯ КНОПКА FIXONE */
+        .fixone-btn-container {
+            position: relative;
+            margin-top: 20px;
         }
 
-        .battle-btn {
-            width: 100%;
-            padding: 18px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 50px;
+        .main-battle-btn {
+            background: linear-gradient(135deg, #e1b12c 0%, #f1c40f 100%);
+            color: #000;
+            padding: 20px 60px;
+            font-size: 22px;
+            font-weight: 900;
             border: none;
+            border-radius: 12px;
             cursor: pointer;
             text-transform: uppercase;
-            transition: 0.3s;
+            letter-spacing: 2px;
+            box-shadow: 0 0 25px rgba(225, 177, 44, 0.5);
+            transition: all 0.3s ease;
         }
 
-        .bot-btn { background: #e1b12c; color: #000; box-shadow: 0 0 15px rgba(225, 177, 44, 0.4); }
-        .bot-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
-        
-        .online-btn { 
-            background: linear-gradient(45deg, #0097e6, #8c7ae6); 
-            color: white; 
-            border: 2px solid white;
-            box-shadow: 0 0 20px rgba(0, 151, 230, 0.6);
+        .main-battle-btn:hover {
+            transform: scale(1.05) translateY(-3px);
+            box-shadow: 0 10px 30px rgba(225, 177, 44, 0.7);
+            filter: brightness(1.1);
         }
-        .online-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
 
-        /* Стили для карточек во время боя */
+        .main-battle-btn:active { transform: scale(0.98); }
+
+        .price-tag {
+            display: block;
+            font-size: 14px;
+            margin-top: 10px;
+            color: #e1b12c;
+            font-weight: bold;
+        }
+
+        /* Арена боя */
         .card-placeholder {
-            width: 130px;
-            height: 185px;
-            border: 2px dashed #444;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255,255,255,0.05);
-            overflow: hidden;
+            width: 130px; height: 185px;
+            border: 2px dashed #444; border-radius: 10px;
+            background: rgba(255,255,255,0.05); overflow: hidden;
         }
-        .card-placeholder img { width: 100%; height: 100%; object-fit: contain; }
-        .card-back { background: url('images/card-back.png') center/cover, #111 !important; border: 2px solid #555; }
+        .card-placeholder img { width: 100%; height: 100%; object-fit: cover; }
+        .card-back { background: #111; border: 2px solid #555; position: relative; }
+        .card-back::after { content: "FIXONE"; color: #333; position: absolute; top: 45%; left: 15%; font-weight: 900; transform: rotate(-20deg); }
 
-        .hand-grid img { 
-            width: 75px; 
-            margin: 5px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            transition: 0.2s; 
-        }
-        .hand-grid img:hover { transform: translateY(-5px); }
+        .hand-grid img { width: 75px; margin: 5px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
         .used-card { filter: grayscale(1) opacity(0.3) !important; pointer-events: none; }
-        
-        .back-link { color: #888; text-decoration: none; margin-top: 30px; font-size: 14px; }
-        .back-link:hover { color: #fff; }
     </style>
 </head>
 <body>
 
     <div id="setup-screen" class="screen">
-        <h1 class="logo-text" style="font-size: 45px; margin-bottom: 10px; letter-spacing: 2px;">READY FOR BATTLE?</h1>
-        <p style="color: #aaa; margin-bottom: 40px;">Выбери режим игры</p>
+        <h1 style="font-size: 50px; margin-bottom: 5px; color: #fff;">DRAFT BATTLE</h1>
+        <p style="color: #666; margin-bottom: 30px;">СОБЕРИ СОСТАВ И ВЫИГРАЙ 3000 CY</p>
         
-        <div class="difficulty-box">
-            <button class="battle-btn bot-btn" onclick="startGame()">В БОЙ ПРОТИВ БОТА</button>
-            
-            <button class="battle-btn online-btn" onclick="alert('Онлайн режим в разработке!')">ОНЛАЙН БИТВА</button>
+        <div class="fixone-btn-container">
+            <button id="start-battle-trigger" class="main-battle-btn">В БОЙ</button>
+            <span class="price-tag">СТОИМОСТЬ: 3000 CY</span>
         </div>
 
-        <a href="index.html" class="back-link">← НАЗАД В ХАБ</a>
+        <a href="index.html" style="color: #444; text-decoration: none; margin-top: 40px; font-size: 14px;">НАЗАД В ХАБ</a>
     </div>
 
     <div id="game-screen" class="screen hidden" style="justify-content: flex-start; padding-top: 30px;">
-        <header class="game-header" style="width: 90%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
-            <div class="score" style="font-size: 20px; font-weight: bold; background: #222; padding: 10px 20px; border-radius: 10px;">
-                ИГРОК <span id="p-score" style="color: #00ff88;">0</span> : <span id="b-score" style="color: #ff4d4d;">0</span> ВРАГ
+        <header style="width: 90%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+            <div style="font-size: 20px; background: #222; padding: 10px 20px; border-radius: 8px;">
+                <span id="p-score">0</span> : <span id="b-score">0</span>
             </div>
-            
-            <div id="timer-box" style="font-size: 24px; color: #e1b12c; font-weight: bold;">
-                ⏱ <span id="timer">7</span>
-            </div>
-            
-            <div class="coins-info" style="font-size: 18px; color: #fff;">
-                💰 <span id="user-coins">0</span> CY
-            </div>
+            <div style="font-size: 24px; color: #e1b12c; font-weight: bold;">⏱ <span id="timer">7</span></div>
+            <div style="font-size: 18px;">💰 <span id="user-coins-display">0</span> CY</div>
         </header>
 
-        <div class="battle-arena" style="display: flex; align-items: center; gap: 40px; margin-bottom: 50px;">
-            <div class="player-side">
-                <p style="font-size: 12px; color: #888; margin-bottom: 5px;">ТВОЙ ВЫБОР</p>
-                <div id="player-card-display" class="card-placeholder"></div>
-            </div>
-
-            <div class="vs-text" style="font-size: 40px; font-weight: 900; font-style: italic; color: #444;">VS</div>
-            
-            <div class="bot-side">
-                <p style="font-size: 12px; color: #888; margin-bottom: 5px;">ВЫБОР БОТА</p>
-                <div id="bot-card-display" class="card-placeholder card-back"></div>
-            </div>
+        <div style="display: flex; align-items: center; gap: 40px; margin-bottom: 50px;">
+            <div id="player-card-display" class="card-placeholder"></div>
+            <div style="font-size: 40px; font-weight: 900; color: #333;">VS</div>
+            <div id="bot-card-display" class="card-placeholder card-back"></div>
         </div>
 
-        <div class="squad-selection">
-            <h3 style="margin-bottom: 15px; letter-spacing: 1px;">РАУНД <span id="round-num" style="color: #e1b12c;">1</span> / 5</h3>
-            <div id="squad-hand" class="hand-grid" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 500px;">
-                </div>
+        <div>
+            <h3 style="margin-bottom: 15px;">РАУНД <span id="round-num">1</span> / 5</h3>
+            <div id="squad-hand" class="hand-grid" style="display: flex; flex-wrap: wrap; justify-content: center; max-width: 500px;"></div>
         </div>
     </div>
 
-    <script src="audio.js"></script>
-    
     <script type="module" src="draft.js"></script>
-
 </body>
 </html>
