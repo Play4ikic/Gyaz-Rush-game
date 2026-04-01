@@ -38,27 +38,16 @@ let timerInterval;
 let usedPlayerIndexes = []; 
 let botHand = [];           
 
-// ФУНКЦИЯ ЗАПУСКА
-window.startGame = async function() {
+window.startGameBot = function() {
     activeSquad = JSON.parse(localStorage.getItem('activeSquad')) || [];
     const validPlayers = activeSquad.filter(p => p !== null);
     
     if (validPlayers.length < 5) {
-        alert("Эльджан, сначала расставь 5 игроков в Клубе!");
+        alert("Сначала расставь всех 5 игроков в Клубе!");
         window.location.href = "club.html";
         return;
     }
 
-    // СПИСЫВАЕМ ДЕНЬГИ ЗА ВХОД
-    const entryFee = 3000;
-    const canAfford = await updateBalance(-entryFee);
-    
-    if (!canAfford) {
-        alert("Недостаточно CY для входа в Драфт!");
-        return;
-    }
-
-    // Инициализация игры
     botHand = [];
     usedPlayerIndexes = [];
     playerScore = 0;
@@ -73,7 +62,6 @@ window.startGame = async function() {
 
     document.getElementById('setup-screen').classList.add('hidden');
     document.getElementById('game-screen').classList.remove('hidden');
-    
     startRound();
 };
 
@@ -89,9 +77,9 @@ function renderHand() {
         } else {
             img.onclick = () => {
                 selectedPlayerCard = { ...player, sIndex: index };
-                document.getElementById('player-card-display').innerHTML = `<img src="${player.folder}/${player.file}">`;
+                document.getElementById('player-card-display').innerHTML = `<img src="${player.folder}/${player.file}" style="width:100%">`;
                 document.querySelectorAll('#squad-hand img').forEach(i => i.style.border = "none");
-                img.style.border = "3px solid #e1b12c";
+                img.style.border = "3px solid #00ff88";
             };
         }
         hand.appendChild(img);
@@ -124,7 +112,7 @@ function processBattle() {
     const botDisplay = document.getElementById('bot-card-display');
     botDisplay.classList.remove('card-back');
     const botCard = botHand[round - 1]; 
-    botDisplay.innerHTML = `<img src="${botCard.folder}/${botCard.file}">`;
+    botDisplay.innerHTML = `<img src="${botCard.folder}/${botCard.file}" style="width:100%">`;
 
     if (selectedPlayerCard) {
         usedPlayerIndexes.push(selectedPlayerCard.sIndex);
@@ -133,34 +121,28 @@ function processBattle() {
     } else {
         botScore++;
     }
-
     document.getElementById('p-score').innerText = playerScore;
     document.getElementById('b-score').innerText = botScore;
-
     setTimeout(() => { round++; startRound(); }, 2500);
 }
 
 async function endGame() {
-    let msg = "";
     if (playerScore > botScore) {
         await updateBalance(3000);
-        msg = "ПОБЕДА! +3000 CY";
-    } else if (playerScore === botScore) msg = "НИЧЬЯ!";
-    else msg = "БОТ ВЫИГРАЛ...";
-    
-    alert(msg);
+        alert("ПОБЕДА! +3000 CY");
+    } else if (playerScore === botScore) {
+        alert("НИЧЬЯ!");
+    } else {
+        alert("БОТ ВЫИГРАЛ...");
+    }
     window.location.href = "index.html";
 }
 
-// ПРИВЯЗКА НОВОЙ КНОПКИ
 document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('start-battle-trigger');
-    if (btn) {
-        btn.addEventListener('click', window.startGame);
-    }
+    const btn = document.getElementById('start-bot-btn');
+    if (btn) btn.addEventListener('click', window.startGameBot);
     
-    // Показываем баланс игрока на экране драфта
     const bal = localStorage.getItem('fixone_balance') || "0";
-    const display = document.getElementById('user-coins-display');
-    if (display) display.innerText = parseInt(bal).toLocaleString();
+    const coinEl = document.getElementById('user-coins');
+    if (coinEl) coinEl.innerText = parseInt(bal).toLocaleString();
 });
