@@ -8,7 +8,7 @@
     <style>
         /* Твои оригинальные стили */
         body { background: #000; margin: 0; font-family: sans-serif; overflow: hidden; color: white; }
-        .screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: 0.3s; }
         .hidden { display: none !important; }
         
         .difficulty-box { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 350px; }
@@ -20,61 +20,87 @@
         }
 
         .bot-btn { background: #e1b12c; color: #000; box-shadow: 0 0 15px rgba(225, 177, 44, 0.4); }
+        .bot-btn:hover { transform: scale(1.05); }
+
         .online-btn { 
             background: linear-gradient(45deg, #0097e6, #8c7ae6); 
             color: white; border: 2px solid white;
             box-shadow: 0 0 20px rgba(0, 151, 230, 0.6);
         }
+        .online-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
 
-        .card-placeholder { width: 120px; height: 170px; border: 2px dashed #333; margin: 0 auto; }
-        .card-back { background: #111; }
-        .hand-grid img { width: 70px; margin: 5px; border-radius: 5px; cursor: pointer; }
-        .used-card { filter: grayscale(1) opacity(0.3); pointer-events: none; }
+        /* Арена боя */
+        .card-placeholder { width: 120px; height: 170px; border: 2px dashed #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+        .card-back { background: #111; border: 2px solid #444; }
+        .vs-text { font-size: 30px; font-weight: bold; color: white; }
+
+        .hand-grid img { width: 70px; margin: 5px; border-radius: 5px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+        .used-card { filter: grayscale(1) opacity(0.3) !important; pointer-events: none; }
     </style>
 </head>
 <body>
 
     <div id="setup-screen" class="screen">
-        <h1 style="font-size: 40px; margin-bottom: 40px;">READY FOR BATTLE?</h1>
+        <h1 class="logo-text" style="font-size: 40px; margin-bottom: 40px;">READY FOR BATTLE?</h1>
         
         <div class="difficulty-box">
-            <button class="battle-btn bot-btn" onclick="if(window.startGameBot) window.startGameBot(); else alert('Ошибка: Скрипт бота не загружен!')">
+            <button class="battle-btn bot-btn" onclick="runBotGame()">
                 В БОЙ (3000 CY)
             </button>
             
-            <button class="battle-btn online-btn" onclick="alert('Онлайн режим в разработке или online_draft.js не загружен')">
+            <button class="battle-btn online-btn" onclick="runOnlineGame()">
                 ОНЛАЙН БИТВА
             </button>
         </div>
 
-        <a href="index.html" style="color: #555; text-decoration: none; margin-top: 30px;">НАЗАД В ХАБ</a>
+        <a href="index.html" style="color: #555; text-decoration: none; margin-top: 30px; font-size: 14px;">НАЗАД В ХАБ</a>
     </div>
 
     <div id="game-screen" class="screen hidden" style="justify-content: flex-start; padding-top: 20px;">
-        <header style="width: 90%; display: flex; justify-content: space-between; margin-bottom: 30px;">
-            <div>ИГРОК <span id="p-score">0</span> : <span id="b-score">0</span> ВРАГ</div>
-            <div>ТАЙМЕР: <span id="timer">7</span></div>
-            <div>БАЛАНС: <span id="user-coins">0</span> CY</div>
+        <header style="width: 90%; display: flex; justify-content: space-between; margin-bottom: 30px; font-weight: bold;">
+            <div class="score">ИГРОК <span id="p-score" style="color:#00ff88;">0</span> : <span id="b-score" style="color:#ff4d4d;">0</span> ВРАГ</div>
+            <div id="timer-box">⏱ <span id="timer">7</span></div>
+            <div class="coins-info">💰 <span id="user-coins">0</span> CY</div>
         </header>
 
-        <div style="display: flex; align-items: center; gap: 30px; margin-bottom: 40px; justify-content: center;">
+        <div class="battle-arena" style="display: flex; align-items: center; gap: 30px; margin-bottom: 40px; justify-content: center;">
             <div id="player-card-display" class="card-placeholder"></div>
-            <div style="font-size: 30px; font-weight: bold;">VS</div>
+            <div class="vs-text">VS</div>
             <div id="bot-card-display" class="card-placeholder card-back"></div>
         </div>
 
-        <div>
-            <h3>РАУНД <span id="round-num">1</span>/5</h3>
-            <div id="squad-hand" class="hand-grid" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
+        <div class="squad-selection">
+            <h3 style="margin-bottom: 15px;">РАУНД <span id="round-num" style="color:#e1b12c;">1</span> / 5</h3>
+            <div id="squad-hand" class="hand-grid" style="display: flex; flex-wrap: wrap; justify-content: center; max-width: 500px;"></div>
         </div>
     </div>
 
+    <script>
+        // Функция запуска бота
+        function runBotGame() {
+            if (window.startGameBot) {
+                window.startGameBot();
+            } else {
+                console.error("Ошибка: draft.js еще не загружен.");
+                alert("Ошибка загрузки игры против бота. Проверь консоль (F12).");
+            }
+        }
+
+        // Функция запуска онлайна
+        function runOnlineGame() {
+            if (window.startOnlineSearch) {
+                window.startOnlineSearch();
+            } else {
+                console.error("Ошибка: online_draft.js еще не загружен.");
+                alert("Онлайн режим еще загружается или в online_draft.js есть ошибка.");
+            }
+        }
+    </script>
+
     <script src="audio.js"></script>
     
-    <script type="module">
-        import './draft.js';
-        console.log("Модуль draft.js успешно импортирован");
-    </script>
+    <script type="module" src="draft.js"></script>
+    <script type="module" src="online_draft.js"></script>
 
 </body>
 </html>
