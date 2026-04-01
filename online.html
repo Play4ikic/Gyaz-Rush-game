@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>GYaz Rush - Online Players</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #0b0b0b;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .online-card {
+            max-width: 500px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        h2 {
+            text-align: center;
+            color: #e1b12c;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+        }
+
+        /* Стили таблицы */
+        .player-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .player-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: 0.3s;
+        }
+
+        .player-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nickname {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .status-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Индикаторы */
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .online-dot {
+            background: #00ff88;
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        .offline-dot {
+            background: #555;
+        }
+
+        .status-text {
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 900;
+        }
+
+        .online-text { color: #00ff88; }
+        .offline-text { color: #555; }
+
+        .me-tag {
+            font-size: 10px;
+            background: #e1b12c;
+            color: black;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="online-card">
+        <h2>Список Игроков</h2>
+        
+        <div id="players-container">
+            <p style="text-align: center; color: #444;">Загрузка данных...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update, onDisconnect } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDq3-wPkua6nMUt3cetwwC_-4iVtx-7PiQ",
+            authDomain: "play4ik-473ef.firebaseapp.com",
+            projectId: "play4ik-473ef",
+            databaseURL: "https://play4ik-473ef-default-rtdb.firebaseio.com", 
+            appId: "1:115893557892:web:731ac77c3f00328c1200d1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Данные пользователя
+        let userData = JSON.parse(localStorage.getItem('gyaz_user')) || { uid: "guest", nickname: "Player" };
+
+        // 1. Ставим статус "В сети"
+        if (userData.uid !== "guest") {
+            const myStatusRef = ref(db, `all_players/${userData.uid}`);
+            update(myStatusRef, { nickname: userData.nickname, online: true });
+            onDisconnect(myStatusRef).update({ online: false });
+        }
+
+        // 2. Слушаем всех игроков и рисуем таблицу
+        const playersRef = ref(db, 'all_players');
+        onValue(playersRef, (snapshot) => {
+            const container = document.getElementById('players-container');
+            container.innerHTML = "";
+
+            if (snapshot.exists()) {
+                const players = snapshot.val();
+                Object.keys(players).forEach(id => {
+                    const p = players[id];
+                    const isOnline = p.online === true;
+                    
+                    const row = document.createElement('div');
+                    row.className = 'player-row';
+                    
+                    row.innerHTML = `
+                        <div class="player-info">
+                            <span class="nickname">${p.nickname}</span>
+                            ${id === userData.uid ? '<span class="me-tag">ВЫ</span>' : ''}
+                        </div>
+                        <div class="status-box">
+                            <span class="status-text ${isOnline ? 'online-text' : 'offline-text'}">
+                                ${isOnline ? 'В сети' : 'Оффлайн'}
+                            </span>
+                            <div class="dot ${isOnline ? 'online-dot' : 'offline-dot'}"></div>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            } else {
+                container.innerHTML = "<p style='text-align:center; color:#444;'>Игроков пока нет</p>";
+            }
+        });
+    </script>
+</body>
+</html>

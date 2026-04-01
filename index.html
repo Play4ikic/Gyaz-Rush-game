@@ -3,95 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <title>FixOne FC - Hub</title>
-    <link rel="icon" href="favicon.png" type="image/png">
-    <link rel="stylesheet" href="style.css">
     <style>
-        /* Стили для бизнеса */
-        .business-container {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            background: rgba(0, 255, 136, 0.05);
-            border: 1px solid rgba(0, 255, 136, 0.3);
-            padding: 5px 15px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: 0.2s;
-            margin-right: 15px;
-            min-width: 120px;
-            user-select: none;
-        }
-        .business-container:hover {
-            background: rgba(0, 255, 136, 0.15);
-            border-color: #00ff88;
-            transform: translateY(-2px);
-        }
-        .business-label { font-size: 10px; color: #aaa; text-transform: uppercase; }
-        .business-money { color: #00ff88; font-weight: bold; font-family: monospace; font-size: 14px; }
-
-        /* Навигация */
-        .top-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(10px);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        .menu-tabs { display: flex; gap: 15px; }
-        .tab-item { cursor: pointer; color: #888; font-weight: bold; transition: 0.3s; padding: 5px 10px; }
-        .tab-item:hover, .tab-item.active { color: #fff; text-shadow: 0 0 10px #fff; }
-        .right-side { display: flex; align-items: center; }
-
-        /* Окно "ЛЮДИ" (Модальное) */
-        #people-screen {
+        /* Добавим стиль для модального окна */
+        .modal-overlay {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            background: rgba(0,0,0,0.9);
+            z-index: 10000;
+            display: none; /* Скрыто по умолчанию */
             justify-content: center;
+            align-items: center;
         }
-        .hidden { display: none !important; }
-        
-        #online-list {
+        .modal-content {
             width: 90%;
-            max-width: 400px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
+            max-width: 500px;
+            background: #111;
             border-radius: 20px;
-            padding: 20px;
-            max-height: 60vh;
-            overflow-y: auto;
+            border: 1px solid #333;
+            overflow: hidden;
+            position: relative;
         }
-
-        .online-user-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .close-btn {
-            margin-top: 25px;
-            padding: 12px 40px;
-            background: #ff4d4d;
+        .close-modal {
+            position: absolute;
+            top: 10px; right: 15px;
             color: white;
-            border: none;
-            border-radius: 50px;
-            font-weight: bold;
+            font-size: 24px;
             cursor: pointer;
+            z-index: 11;
         }
     </style>
 </head>
 <body>
-
     <header class="top-nav">
         <div class="logo" style="font-weight: 900; color: #fff; letter-spacing: 2px;">GYaz Rush</div>
         
@@ -102,7 +45,7 @@
             <div class="tab-item" onclick="selectTab('draft')">DRAFT</div>
             <div class="tab-item" onclick="selectTab('market')">РЫНОК</div>
             <div class="tab-item" onclick="selectTab('betting')">СТАВКИ</div>
-            <div class="tab-item" style="color: #e1b12c;" onclick="togglePeople(true)">ЛЮДИ</div>
+            <div class="tab-item" onclick="openOnline()" style="color: #e1b12c;">ЛЮДИ</div>
         </nav>
 
         <div class="right-side">
@@ -110,64 +53,32 @@
                 <span class="business-label">Бизнес (Собрать)</span>
                 <span id="business-display" class="business-money">0 / 6000 CY</span>
             </div>
-            
-            <div id="shop-balance" class="balance-display" style="background: #00ff88; color: #000; padding: 8px 15px; border-radius: 8px; font-weight: bold; min-width: 80px; text-align: center;">
-                0 CY
-            </div>
+            <div id="shop-balance" class="balance-display">0 CY</div>
         </div>
     </header>
 
-    <div id="people-screen" class="hidden">
-        <h2 style="color: #e1b12c; font-style: italic; font-size: 32px; margin-bottom: 10px;">ONLINE PLAYERS</h2>
-        <div id="online-list">
-            <p style="color: #666; text-align: center;">Поиск активных игроков...</p>
+    <div id="online-modal" class="modal-overlay" onclick="closeOnline(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close-modal" onclick="closeOnline()">&times;</span>
+            <iframe src="online.html" style="width: 100%; height: 500px; border: none;"></iframe>
         </div>
-        <button class="close-btn" onclick="togglePeople(false)">ЗАКРЫТЬ</button>
     </div>
 
-    <main class="content-preview">
-        <div id="preview-box" class="preview-container">
-            <div class="info-side">
-                <h2 id="pre-title">НОВОСТИ</h2>
-                <p id="pre-desc">Загрузка последних событий...</p>
-                <a href="#" id="pre-link" class="go-btn">ПЕРЕЙТИ В РЕЖИМ →</a>
-            </div>
-            <div class="image-side">
-                <div class="img-wrapper">
-                    <img src="Prewie/news.png" id="pre-img" alt="Preview">
-                </div>
-            </div>
-        </div>
-    </main>
+    <main class="content-preview">...</main>
 
-    <div class="audio-controls" style="position: fixed; bottom: 20px; right: 20px; z-index: 999; display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1);">
-        <button id="mute-btn" onclick="toggleMuteUI(this)" style="background: none; border: none; font-size: 20px; cursor: pointer; color: white;">🎵</button>
-        <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="setVolume(this.value)" style="width: 80px; accent-color: #00ff88;">
-    </div>
+    <script>
+        function openOnline() {
+            document.getElementById('online-modal').style.display = 'flex';
+        }
+
+        function closeOnline(event) {
+            document.getElementById('online-modal').style.display = 'none';
+        }
+    </script>
 
     <script type="module" src="economy.js"></script>
     <script type="module" src="business.js"></script>
-    <script type="module" src="online_status.js"></script> <script src="audio.js"></script>
+    <script src="audio.js"></script>
     <script src="script.js"></script>
-
-    <script>
-        // Функция открытия/закрытия списка людей
-        function togglePeople(show) {
-            const screen = document.getElementById('people-screen');
-            if (show) screen.classList.remove('hidden');
-            else screen.classList.add('hidden');
-        }
-
-        function toggleMuteUI(btn) {
-            const isMuted = toggleMute();
-            btn.innerText = isMuted ? '🔇' : '🎵';
-        }
-
-        window.addEventListener('load', () => {
-            const btn = document.getElementById('mute-btn');
-            const isMuted = localStorage.getItem('gyaz_muted') === 'true';
-            if(btn) btn.innerText = isMuted ? '🔇' : '🎵';
-        });
-    </script>
 </body>
 </html>
