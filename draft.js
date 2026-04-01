@@ -1,4 +1,4 @@
-import { updateBalance } from './economy.js';
+import { updateBalance, refreshBalanceDisplay } from './economy.js';
 
 // 1. БАЗА КАРТ (Золотые)
 const ALL_GAME_CARDS = [
@@ -32,33 +32,35 @@ const championsPlayers = [
     { name: 'Nazrin', rating: 88, pos: 'DF', club: 'toxic', file: 'Nazrin-88.png', folder: 'Champions' }
 ];
 
-let activeSquad = JSON.parse(localStorage.getItem('activeSquad')) || [null, null, null, null, null];
-
+// Состояние игры
+let activeSquad = JSON.parse(localStorage.getItem('activeSquad')) || [];
 let round = 1;
 let playerScore = 0;
 let botScore = 0;
 let selectedPlayerCard = null;
 let timerInterval;
-
 let usedPlayerIndexes = []; 
 let botHand = [];           
 
 // ЗАПУСК ИГРЫ
 window.startGame = function() {
+    activeSquad = JSON.parse(localStorage.getItem('activeSquad')) || [];
     const validPlayers = activeSquad.filter(p => p !== null);
     
     if (validPlayers.length < 5) {
-        alert("Эльджан, сначала расставь всех 5 игроков в Клубе!");
+        alert("Нужно расставить всех 5 игроков в Клубе!");
         window.location.href = "club.html";
         return;
     }
 
+    // Обнуляем игру
     botHand = [];
     usedPlayerIndexes = [];
     playerScore = 0;
     botScore = 0;
     round = 1;
 
+    // Генерируем руку бота
     let fullBotPool = [...ALL_GAME_CARDS, ...totyPlayers, ...championsPlayers];
     let tempPool = [...fullBotPool];
     for (let i = 0; i < 5; i++) {
@@ -66,12 +68,13 @@ window.startGame = function() {
         botHand.push(tempPool.splice(randomIndex, 1)[0]);
     }
 
+    // Переключаем экраны
     document.getElementById('setup-screen').classList.add('hidden');
     document.getElementById('game-screen').classList.remove('hidden');
+    
     startRound();
 }
 
-// ОТРИСОВКА РУКИ ИГРОКА
 function renderHand() {
     const hand = document.getElementById('squad-hand');
     hand.innerHTML = "";
@@ -138,7 +141,7 @@ function processBattle() {
         if (pRating > bRating) playerScore++;
         else if (bRating > pRating) botScore++;
     } else {
-        botScore++; 
+        botScore++; // Если игрок не выбрал карту, балл боту
     }
 
     document.getElementById('p-score').innerText = playerScore;
@@ -154,7 +157,6 @@ async function endGame() {
     let message = "";
     if (playerScore > botScore) {
         const reward = 3000;
-        // Используем новую функцию из economy.js
         await updateBalance(reward);
         message = `ПОБЕДА! Ты заработал ${reward} CY!`;
     } else if (playerScore === botScore) {
@@ -166,3 +168,12 @@ async function endGame() {
     alert(message);
     window.location.href = "index.html";
 }
+
+// ПРИНУДИТЕЛЬНАЯ ПРИВЯЗКА КНОПКИ (На случай если onclick в HTML не сработал)
+document.addEventListener('DOMContentLoaded', () => {
+    const startBtn = document.querySelector('.start-match-btn'); // Проверь класс кнопки в HTML
+    if (startBtn) {
+        startBtn.addEventListener('click', window.startGame);
+    }
+    refreshBalanceDisplay();
+});
