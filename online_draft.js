@@ -14,7 +14,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// --- СОСТОЯНИЕ ---
+// --- ДАННЫЕ И СОСТОЯНИЕ ---
 let userData = JSON.parse(localStorage.getItem('gyaz_user')) || { uid: "guest_" + Math.floor(Math.random()*1000), nickname: "Player", balance: 0 };
 let activeSquad = JSON.parse(localStorage.getItem('activeSquad')) || [null, null, null, null, null];
 let matchId = null;
@@ -29,60 +29,86 @@ let timerInterval;
 let searchTimeoutInterval;
 let usedIndexes = [];
 
-// --- ПОИСК ---
+// --- ФУНКЦИЯ ПОИСКА ---
 window.startOnlineSearch = async function() {
     if (isSearching) return;
 
     const validPlayers = activeSquad.filter(p => p !== null);
     if (validPlayers.length < 5) {
-        alert("Сначала выбери всех 5 игроков в Клубе!");
+        alert(" сначала выбери всех 5 игроков в Клубе!");
         return;
     }
 
     isSearching = true;
     const statusText = document.querySelector('.logo-text');
+    
+    // 1. ЗАПУСКАЕМ ТАЙМЕР СРАЗУ (Визуально)
     let timeLeft = 20;
+    if (statusText) statusText.innerText = `ПОИСК СОПЕРНИКА (0:${timeLeft})...`;
     
     clearInterval(searchTimeoutInterval);
     searchTimeoutInterval = setInterval(() => {
         timeLeft--;
-        if (statusText) statusText.innerText = `ПОИСК СОПЕРНИКА (0:${timeLeft < 10 ? '0'+timeLeft : timeLeft})...`;
-        if (timeLeft <= 0) stopSearch("Время вышло. Никого нет в сети.");
+        const currentStatus = document.querySelector('.logo-text');
+        if (currentStatus) {
+            currentStatus.innerText = `ПОИСК СОПЕРНИКА (0:${timeLeft < 10 ? '0'+timeLeft : timeLeft})...`;
+        }
+        if (timeLeft <= 0) {
+            stopSearch("Время вышло. Никого нет в сети.");
+        }
     }, 1000);
 
+    // 2. РАБОТА С FIREBASE
     try {
         const queueRef = ref(db, 'queue');
         const snapshot = await get(queueRef);
 
         if (!snapshot.exists()) {
+            // Режим ХОСТА
             const newMatchRef = push(ref(db, 'matches'));
             matchId = newMatchRef.key;
             myRole = "host";
-            await set(queueRef, { matchId, hostId: userData.uid, hostName: userData.nickname });
+            
+            await set(queueRef, { 
+                matchId, 
+                hostId: userData.uid, 
+                hostName: userData.nickname 
+            });
+            
             listenForOpponent();
         } else {
+            // Режим ГОСТЯ
             const data = snapshot.val();
-            if (data.hostId === userData.uid) { isSearching = false; return; }
+            if (data.hostId === userData.uid) {
+                isSearching = false;
+                return;
+            }
+
             matchId = data.matchId;
             myRole = "guest";
+            
             await remove(queueRef); 
             await update(ref(db, `matches/${matchId}`), {
                 guestId: userData.uid,
                 guestName: userData.nickname,
                 status: "playing"
             });
+            
             clearInterval(searchTimeoutInterval);
             initGameUI();
         }
     } catch (err) {
-        stopSearch("Ошибка сети.");
+        console.error("Ошибка Firebase:", err);
+        stopSearch("Ошибка сети. Проверь интернет.");
     }
 };
 
 async function stopSearch(reason) {
     clearInterval(searchTimeoutInterval);
     isSearching = false;
-    await remove(ref(db, 'queue'));
+    const queueRef = ref(db, 'queue');
+    await remove(queueRef);
+    
     const statusText = document.querySelector('.logo-text');
     if (statusText) statusText.innerText = "READY FOR BATTLE?";
     if (reason) alert(reason);
@@ -99,30 +125,9 @@ function listenForOpponent() {
     });
 }
 
-// ЕДИНАЯ ФУНКЦИЯ ЗАПУСКА ИНТЕРФЕЙСА
-async function initGameUI() {
-    const matchRef = ref(db, `matches/${matchId}`);
-    const snap = await get(matchRef);
-    const data = snap.val();
-
-    const myName = userData.nickname || "Игрок";
-    const enemyName = (myRole === "host") ? (data.guestName || "Враг") : (data.hostName || "Враг");
-
-    // Показываем интро
-    if (window.showBattleIntro) {
-        window.showBattleIntro(myName, enemyName, () => {
-            setupGameElements(myName, enemyName);
-        });
-    } else {
-        setupGameElements(myName, enemyName);
-    }
-}
-
-function setupGameElements(myName, enemyName) {
+function initGameUI() {
     document.getElementById('setup-screen').classList.add('hidden');
     document.getElementById('game-screen').classList.remove('hidden');
-    document.getElementById('p-name').innerText = myName.toUpperCase();
-    document.getElementById('opp-name').innerText = enemyName.toUpperCase();
     
     const coinEl = document.getElementById('user-coins');
     if (coinEl) coinEl.innerText = userData.balance || 0;
@@ -154,14 +159,12 @@ function startRound() {
         }
     }, 1000);
 
-    // Следим за картой соперника (отключаем старый слушатель перед созданием нового)
     const oppPath = myRole === "host" ? `matches/${matchId}/round${round}/guestCard` : `matches/${matchId}/round${round}/hostCard`;
-    const oppCardRef = ref(db, oppPath);
-    off(oppCardRef); // Чистим старое
-    onValue(oppCardRef, (snap) => {
+    onValue(ref(db, oppPath), (snap) => {
         if (snap.exists()) oppCard = snap.val();
     });
 }
+
 
 function renderHand() {
     const hand = document.getElementById('squad-hand');
@@ -175,7 +178,8 @@ function renderHand() {
         img.src = `${folder}/${player.file}`;
         
         if (usedIndexes.includes(index)) {
-            img.classList.add('used-card');
+            img.style.opacity = "0.2";
+            img.style.pointerEvents = "none";
         } else {
             img.onclick = () => {
                 if (myCard) return;
@@ -223,11 +227,16 @@ async function endGame() {
     let reward = playerScore > oppScore ? 5000 : (playerScore === oppScore ? 1500 : 500);
     alert(`МАТЧ ОКОНЧЕН! Счёт: ${playerScore}:${oppScore}. Награда: ${reward} CY`);
 
+    const userRef = ref(db, 'users/' + userData.uid);
     userData.balance = (Number(userData.balance) || 0) + reward;
-    localStorage.setItem('gyaz_user', JSON.stringify(userData));
+    
+    try {
+        await update(userRef, { balance: userData.balance });
+        localStorage.setItem('gyaz_user', JSON.stringify(userData));
+    } catch (e) { console.error("Ошибка сохранения баланса"); }
 
     if (myRole === "host") {
-        setTimeout(() => remove(ref(db, `matches/${matchId}`)), 3000);
+        setTimeout(() => remove(ref(db, `matches/${matchId}`)), 5000);
     }
     window.location.href = "index.html";
 }

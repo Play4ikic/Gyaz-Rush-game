@@ -16,63 +16,35 @@ body {
     align-items: center; 
     justify-content: center; 
     height: 100vh; 
-    width: 100%;
     background: radial-gradient(circle, #1a1a1a, #000); 
-    position: relative;
 }
 
-/* СТИЛИ ДЛЯ ИНТРО (Фикс: теперь оно перекрывает всё) */
-#intro-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 9999; /* Самый верхний слой */
-    background: #000;
-}
-
-.intro-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 50px;
-    width: 100%;
-    height: 100%;
-}
-
-.intro-name {
-    font-size: 60px;
+/* ЗАГОЛОВОК И КНОПКА "В БОЙ" */
+.logo-text {
+    font-size: 50px;
     font-weight: 900;
-    text-transform: uppercase;
     font-style: italic;
-    text-shadow: 0 0 30px rgba(255,255,255,0.4);
+    letter-spacing: 5px;
+    margin-bottom: 20px;
+    color: white;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
 }
 
-.left-name { color: #0097e6; animation: slideInLeft 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-.right-name { color: #e74c3c; animation: slideInRight 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-.intro-vs { font-size: 80px; color: #f1c40f; font-weight: 900; animation: zoomInVS 0.5s 0.4s both; }
-
-@keyframes slideInLeft {
-    from { transform: translateX(-1000px) skewX(-20deg); opacity: 0; }
-    to { transform: translateX(0) skewX(-10deg); opacity: 1; }
-}
-@keyframes slideInRight {
-    from { transform: translateX(1000px) skewX(-20deg); opacity: 0; }
-    to { transform: translateX(0) skewX(-10deg); opacity: 1; }
-}
-@keyframes zoomInVS {
-    from { transform: scale(5); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-/* ЗАГОЛОВОК И КНОПКИ */
-.logo-text { font-size: 50px; font-weight: 900; font-style: italic; letter-spacing: 5px; margin-bottom: 20px; color: white; text-shadow: 0 0 20px rgba(255, 255, 255, 0.2); }
+.difficulty-box { margin-top: 30px; }
 
 .battle-btn {
-    padding: 25px 70px; font-size: 26px; font-weight: 900; text-transform: uppercase; cursor: pointer;
-    background: linear-gradient(135deg, #f1c40f 0%, #d4af37 100%); color: black; border: none;
-    border-radius: 50px; box-shadow: 0 0 30px rgba(241, 196, 15, 0.3); transition: 0.3s; animation: pulse 2s infinite;
+    padding: 25px 70px;
+    font-size: 26px;
+    font-weight: 900;
+    text-transform: uppercase;
+    cursor: pointer;
+    background: linear-gradient(135deg, #f1c40f 0%, #d4af37 100%);
+    color: black;
+    border: none;
+    border-radius: 50px;
+    box-shadow: 0 0 30px rgba(241, 196, 15, 0.3);
+    transition: 0.3s;
+    animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
@@ -81,9 +53,25 @@ body {
     100% { transform: scale(1); box-shadow: 0 0 20px rgba(241, 196, 15, 0.4); }
 }
 
+.battle-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 50px rgba(241, 196, 15, 0.9);
+}
+
+.back-link {
+    margin-top: 30px;
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.back-link:hover { color: #f1c40f; }
+
 /* ИГРОВОЙ ХЕДЕР */
 .game-header { 
-    width: 100%; 
+    width: 95%; 
     display: flex; 
     justify-content: space-between; 
     align-items: center; 
@@ -92,20 +80,26 @@ body {
     border-bottom: 2px solid #222; 
     position: absolute; 
     top: 0; 
-    box-sizing: border-box;
+    font-size: 18px; 
 }
 
-/* АРЕНА БИТВЫ (Фикс: подняли чуть выше) */
+#timer { font-size: 32px; color: #e74c3c; font-weight: bold; }
+.score { font-weight: 900; letter-spacing: 2px; }
+
+/* АРЕНА БИТВЫ */
 .battle-arena { 
     display: flex; 
     align-items: center; 
-    gap: 60px; 
-    margin-top: -50px; 
+    gap: 80px; 
+    margin-bottom: 120px; 
 }
 
+.card-zone { text-align: center; }
+.card-zone h3 { font-size: 14px; color: #555; margin-bottom: 15px; text-transform: uppercase; }
+
 .card-placeholder { 
-    width: 160px; 
-    height: 230px; 
+    width: 170px; 
+    height: 240px; 
     border: 2px dashed #333; 
     border-radius: 15px; 
     display: flex; 
@@ -113,43 +107,66 @@ body {
     justify-content: center; 
     overflow: hidden; 
     background: rgba(255,255,255,0.02);
+    transition: 0.3s;
 }
 
-.card-placeholder img { width: 100%; height: 100%; object-fit: contain; animation: cardAppear 0.4s ease-out; }
-.card-back { background: #1a1a1a url('https://www.transparenttextures.com/patterns/carbon-fibre.png'); border: 2px solid #444; }
-.vs-text { font-size: 50px; color: #f1c40f; font-weight: 900; font-style: italic; }
+.card-placeholder img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: contain; 
+    animation: cardAppear 0.4s ease-out;
+}
 
-/* ВЫБОР КАРТ (Фикс: теперь они точно видны) */
+@keyframes cardAppear {
+    from { transform: scale(0.5) rotateY(90deg); opacity: 0; }
+    to { transform: scale(1) rotateY(0deg); opacity: 1; }
+}
+
+.card-back { 
+    background: #1a1a1a url('https://www.transparenttextures.com/patterns/carbon-fibre.png'); 
+    border: 2px solid #333; 
+}
+
+.vs-text { font-size: 60px; color: #f1c40f; font-weight: 900; font-style: italic; opacity: 0.8; }
+
+/* ВЫБОР КАРТ (ИНВЕНТАРЬ) */
 .squad-selection { 
     width: 100%; 
     position: absolute; 
     bottom: 0; 
-    background: rgba(0,0,0,0.9); 
-    padding: 15px 0; 
+    background: rgba(10,10,10,0.95); 
+    padding: 20px 0; 
     border-top: 2px solid #f1c40f; 
     text-align: center; 
-    z-index: 10;
 }
+
+.squad-selection h3 { font-size: 12px; color: #888; margin-bottom: 10px; }
 
 .hand-grid { 
     display: flex; 
     justify-content: center; 
-    gap: 15px; 
-    padding: 0 10px;
+    gap: 20px; 
 }
 
 .hand-grid img { 
-    width: 85px; 
+    width: 90px; 
     height: auto;
     cursor: pointer; 
-    transition: 0.2s ease;
+    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
 }
 
-.hand-grid img:hover { transform: translateY(-15px) scale(1.1); }
+.hand-grid img:hover { 
+    transform: translateY(-20px) scale(1.1); 
+}
 
+/* КАРТА ПОСЛЕ ИСПОЛЬЗОВАНИЯ */
 .used-card { 
-    filter: grayscale(1) brightness(0.3) !important; 
+    filter: grayscale(1) brightness(0.2) !important; 
     pointer-events: none; 
-    transform: scale(0.9); 
+    transform: scale(0.85); 
     opacity: 0.5;
 }
+
+/* БАЛАНС */
+.coins-info { color: #f1c40f; font-weight: bold; }
