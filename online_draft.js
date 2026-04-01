@@ -223,19 +223,48 @@ function processBattle() {
 }
 
 async function endGame() {
-    let reward = playerScore > oppScore ? 5000 : (playerScore === oppScore ? 1500 : 500);
+    // 1. Определяем награду
+    let reward = 0;
+    if (playerScore > oppScore) {
+        reward = 5000; // Награда за победу
+    } else if (playerScore === oppScore) {
+        reward =500; // Награда за ничью
+    } else {
+        reward =0;  // Награда за участие
+    }
+
     alert(`МАТЧ ОКОНЧЕН! Счёт: ${playerScore}:${oppScore}. Награда: ${reward} CY`);
 
-    const userRef = ref(db, 'users/' + userData.uid);
-    userData.balance = (Number(userData.balance) || 0) + reward;
-    
-    try {
-        await update(userRef, { balance: userData.balance });
-        localStorage.setItem('gyaz_user', JSON.stringify(userData));
-    } catch (e) { console.error("Ошибка сохранения баланса"); }
+    // 2. Обновляем локальный баланс (тот, что в fixone_balance)
+    let currentBalance = parseInt(localStorage.getItem('fixone_balance')) || 0;
+    const newBalance = currentBalance + reward;
+    localStorage.setItem('fixone_balance', newBalance.toString());
 
-    if (myRole === "host") {
-        setTimeout(() => remove(ref(db, `matches/${matchId}`)), 5000);
+    // 3. Обновляем данные в Firebase (для онлайн-профиля)
+    if (userData && userData.uid) {
+        const userRef = ref(db, 'users/' + userData.uid);
+        try {
+            // Обновляем баланс в облаке, чтобы он не обнулился
+            await update(userRef, { 
+                balance: newBalance,
+                nickname: userData.nickname || "Player"
+            });
+            
+            // Обновляем основной объект юзера в памяти
+            userData.balance = newBalance;
+            localStorage.setItem('gyaz_user', JSON.stringify(userData));
+        } catch (e) { 
+            console.error("Ошибка сохранения в Firebase:", e); 
+        }
     }
+
+    // 4. Очистка матча (только для хоста)
+    if (myRole === "host" && matchId) {
+        setTimeout(() => {
+            remove(ref(db, `matches/${matchId}`)).catch(e => console.log("Матч уже удален"));
+        }, 5000);
+    }
+
+    // 5. Уходим в главное меню
     window.location.href = "index.html";
 }

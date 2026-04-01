@@ -118,6 +118,23 @@ function processBattle() {
 
 function endGame() {
     let win = playerScore > botScore;
-    alert(win ? "ПОБЕДА!" : "КОНЕЦ МАТЧА");
+    let reward = 0;
+
+    if (win) {
+        reward = 3000;
+        alert(`ПОБЕДА! Вы выиграли ${reward} CY!`);
+    } else if (playerScore === botScore) {
+        reward = 500; // Бонус за ничью
+        alert(`НИЧЬЯ! Утешительный приз: ${reward} CY`);
+    } else {
+        alert("КОНЕЦ МАТЧА. Попробуйте еще раз!");
+    }
+
+    // Если есть награда, обновляем баланс в localStorage
+    if (reward > 0) {
+        let currentBalance = parseInt(localStorage.getItem('fixone_balance')) || 0;
+        localStorage.setItem('fixone_balance', (currentBalance + reward).toString());
+    }
+
     window.location.href = "index.html";
 }
