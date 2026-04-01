@@ -1,32 +1,12 @@
-import { updateBalance, refreshBalanceDisplay } from './economy.js';
+import { updateBalance } from './economy.js';
 
+// Карты (кратко для примера, оставь свои полные списки)
 const ALL_GAME_CARDS = [
-    { name: 'Ayla', rating: 30, pos: 'GK', club: 'icon', file: 'Ayla-30.png', folder: 'Gold' },
-    { name: 'Raul', rating: 3, pos: 'ST', club: 'icon', file: 'Raul-3.png', folder: 'Gold' },
-    { name: 'Selim', rating: 68, pos: 'CB', club: 'icon', file: 'Selim-68.png', folder: 'Gold' },
-    { name: 'Chaxangir', rating: 68, pos: 'CB', club: 'icon', file: 'Chaxangir-68.png', folder: 'Gold' },
-    { name: 'Bayturan', rating: 85, pos: 'ST', club: 'icon', file: 'Bayturan-85.png', folder: 'Gold' },
     { name: 'Eldjan', rating: 92, pos: 'RW', club: 'toxic', file: 'Elcan-92.png', folder: 'Gold' },
-    { name: 'Nazrin', rating: 82, pos: 'CB', club: 'toxic', file: 'Nazrin-82.png', folder: 'Gold' },
     { name: 'Turqay', rating: 92, pos: 'ST', club: 'cheer', file: 'Turqay-92.png', folder: 'Gold' },
     { name: 'Tuncay', rating: 90, pos: 'CB', club: 'icon', file: 'Tuncay-90.png', folder: 'Gold' },
+    { name: 'Nazrin', rating: 82, pos: 'CB', club: 'toxic', file: 'Nazrin-82.png', folder: 'Gold' },
     { name: 'Bugday', rating: 87, pos: 'GK', club: 'cheer', file: 'Bugday-87.png', folder: 'Gold' }
-];
-
-const totyPlayers = [
-    { name: 'Eldjan', rating: 97, pos: 'RW', club: 'toxic', file: 'Elcan-97.png', folder: 'Toty' },
-    { name: 'Turqay', rating: 97, pos: 'ST', club: 'cheer', file: 'Turqay-97.png', folder: 'Toty' },
-    { name: 'Tuncay', rating: 97, pos: 'DF', club: 'icon', file: 'Tuncay-97.png', folder: 'Toty' },
-    { name: 'Bugday', rating: 95, pos: 'GK', club: 'cheer', file: 'Bugday-95.png', folder: 'Toty' },
-    { name: 'Nazrin', rating: 91, pos: 'DF', club: 'toxic', file: 'Nazrin-91.png', folder: 'Toty' }
-];
-
-const championsPlayers = [
-    { name: 'Eldjan', rating: 96, pos: 'RW', club: 'toxic', file: 'Elcan-96.png', folder: 'Champions' },
-    { name: 'Turqay', rating: 96, pos: 'ST', club: 'cheer', file: 'Turqay-96.png', folder: 'Champions' },
-    { name: 'Tuncay', rating: 91, pos: 'DF', club: 'icon', file: 'Tuncay-91.png', folder: 'Champions' },
-    { name: 'Bugday', rating: 90, pos: 'GK', club: 'cheer', file: 'Bugday-90.png', folder: 'Champions' },
-    { name: 'Nazrin', rating: 88, pos: 'DF', club: 'toxic', file: 'Nazrin-88.png', folder: 'Champions' }
 ];
 
 let activeSquad = [];
@@ -38,30 +18,32 @@ let timerInterval;
 let usedPlayerIndexes = []; 
 let botHand = [];           
 
+// ПРИВЯЗКА К ОКНУ - ЭТО САМОЕ ВАЖНОЕ
 window.startGameBot = function() {
+    console.log("Запуск игры против бота...");
     activeSquad = JSON.parse(localStorage.getItem('activeSquad')) || [];
-    const validPlayers = activeSquad.filter(p => p !== null);
     
-    if (validPlayers.length < 5) {
-        alert("Сначала расставь всех 5 игроков в Клубе!");
+    if (activeSquad.filter(p => p !== null).length < 5) {
+        alert("Расставь 5 игроков в Клубе!");
         window.location.href = "club.html";
         return;
     }
 
-    botHand = [];
-    usedPlayerIndexes = [];
-    playerScore = 0;
-    botScore = 0;
-    round = 1;
-
-    let fullPool = [...ALL_GAME_CARDS, ...totyPlayers, ...championsPlayers];
+    // Сброс и запуск
+    round = 1; playerScore = 0; botScore = 0; usedPlayerIndexes = []; botHand = [];
+    
+    let pool = [...ALL_GAME_CARDS];
     for (let i = 0; i < 5; i++) {
-        const rnd = Math.floor(Math.random() * fullPool.length);
-        botHand.push(fullPool.splice(rnd, 1)[0]);
+        botHand.push(pool[Math.floor(Math.random() * pool.length)]);
     }
 
     document.getElementById('setup-screen').classList.add('hidden');
     document.getElementById('game-screen').classList.remove('hidden');
+    
+    // Обновляем баланс визуально
+    const bal = localStorage.getItem('fixone_balance') || "0";
+    document.getElementById('user-coins').innerText = bal;
+
     startRound();
 };
 
@@ -72,14 +54,13 @@ function renderHand() {
         if (!player) return;
         const img = document.createElement('img');
         img.src = `${player.folder}/${player.file}`;
-        if (usedPlayerIndexes.includes(index)) {
-            img.classList.add('used-card');
-        } else {
+        if (usedPlayerIndexes.includes(index)) img.classList.add('used-card');
+        else {
             img.onclick = () => {
                 selectedPlayerCard = { ...player, sIndex: index };
                 document.getElementById('player-card-display').innerHTML = `<img src="${player.folder}/${player.file}" style="width:100%">`;
                 document.querySelectorAll('#squad-hand img').forEach(i => i.style.border = "none");
-                img.style.border = "3px solid #00ff88";
+                img.style.border = "2px solid gold";
             };
         }
         hand.appendChild(img);
@@ -118,31 +99,17 @@ function processBattle() {
         usedPlayerIndexes.push(selectedPlayerCard.sIndex);
         if (Number(selectedPlayerCard.rating) > Number(botCard.rating)) playerScore++;
         else if (Number(botCard.rating) > Number(selectedPlayerCard.rating)) botScore++;
-    } else {
-        botScore++;
-    }
+    } else botScore++;
+
     document.getElementById('p-score').innerText = playerScore;
     document.getElementById('b-score').innerText = botScore;
-    setTimeout(() => { round++; startRound(); }, 2500);
+    setTimeout(() => { round++; startRound(); }, 2000);
 }
 
 async function endGame() {
     if (playerScore > botScore) {
         await updateBalance(3000);
-        alert("ПОБЕДА! +3000 CY");
-    } else if (playerScore === botScore) {
-        alert("НИЧЬЯ!");
-    } else {
-        alert("БОТ ВЫИГРАЛ...");
-    }
+        alert("Победа! +3000 CY");
+    } else alert("Игра окончена!");
     window.location.href = "index.html";
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('start-bot-btn');
-    if (btn) btn.addEventListener('click', window.startGameBot);
-    
-    const bal = localStorage.getItem('fixone_balance') || "0";
-    const coinEl = document.getElementById('user-coins');
-    if (coinEl) coinEl.innerText = parseInt(bal).toLocaleString();
-});
