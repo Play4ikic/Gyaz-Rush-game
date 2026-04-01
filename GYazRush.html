@@ -26,17 +26,33 @@
         const bgMusic = new Audio();
         bgMusic.volume = 0.3;
 
-        function playNext() {
+        // Функция для запуска конкретного трека по индексу
+        function playTrack(index) {
+            currentTrackIndex = index;
             bgMusic.src = playlist[currentTrackIndex];
-            bgMusic.play().catch(() => console.log("Кликни по игре!"));
+            bgMusic.currentTime = 0; // Начинаем сначала
+            bgMusic.play().catch(() => console.log("Кликни по игре для активации звука!"));
+        }
+
+        function playNext() {
             currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+            playTrack(currentTrackIndex);
         }
 
         bgMusic.onended = playNext;
 
-        // Запуск при первом клике по ВСЕЙ игре
+        // --- ДОБАВЛЯЕМ УПРАВЛЕНИЕ КЛАВИШАМИ 1-8 ---
+        document.addEventListener('keydown', (event) => {
+            const key = parseInt(event.key);
+            if (key >= 1 && key <= 8) {
+                console.log("Переключаю на трек:", key);
+                playTrack(key - 1);
+            }
+        });
+
+        // Запуск при первом клике
         document.addEventListener('click', () => {
-            if (!bgMusic.src) playNext();
+            if (!bgMusic.src) playTrack(0);
         }, { once: true });
     </script>
 
