@@ -1,10 +1,13 @@
 const playlist = [
-    "Music/6am - Channel Tres (EAFC 24 SOUNDTRACK).mp3",
-    "Music/Going Kokomo - Royel Otis (EAFC 24 SOUNDTRACK).mp3",
-    "Music/Mamgobhozi - Major Lazer & Major League Djz (ft. Brenda Fassie) (EAFC 24 SOUNDTRACK).mp3",
-    "Music/seasidedemo - SEB (FIFA 22 Official Soundtrack).mp3",
-    "Music/Worms - Ashnikko (EAFC 24 SOUNDTRACK).mp3"
-];
+            "Music/Drive - moa moa (FIFA 23 Official Soundtrack).m4a",
+            "Music/Marwa Loud - Bad Boy (Lyrics).m4a",
+            "Music/Ojitos Lindos - Bad Bunny (ft. Bomba Estereo) (FIFA 23 Official Soundtrack).m4a",
+            "Music/6am - Channel Tres (EAFC 24 SOUNDTRACK).mp3",
+            "Music/Going Kokomo - Royel Otis (EAFC 24 SOUNDTRACK).mp3",
+            "Music/Mamgobhozi - Major Lazer & Major League Djz (ft. Brenda Fassie) (EAFC 24 SOUNDTRACK).mp3",
+            "Music/seasidedemo - SEB (FIFA 22 Official Soundtrack).mp3",
+            "Music/Worms - Ashnikko (EAFC 24 SOUNDTRACK).mp3"
+        ];
 
 let currentTrackIndex = parseInt(localStorage.getItem('gyaz_track_index')) || 0;
 let savedTime = parseFloat(localStorage.getItem('gyaz_music_time')) || 0;
