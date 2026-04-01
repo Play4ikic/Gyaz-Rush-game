@@ -2,12 +2,11 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FixOne FC - Hub</title>
     <link rel="icon" href="favicon.png" type="image/png">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Стили для блока бизнеса и баланса */
+        /* Стили для нового блока бизнеса */
         .business-container {
             display: flex;
             flex-direction: column;
@@ -20,16 +19,25 @@
             transition: 0.2s;
             margin-right: 15px;
             min-width: 120px;
+            user-select: none;
         }
         .business-container:hover {
             background: rgba(0, 255, 136, 0.15);
             border-color: #00ff88;
             transform: translateY(-2px);
         }
-        .business-label { font-size: 10px; color: #aaa; text-transform: uppercase; }
-        .business-money { color: #00ff88; font-weight: bold; font-family: monospace; font-size: 14px; }
-
-        /* Навигация */
+        .business-label {
+            font-size: 10px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .business-money {
+            color: #00ff88;
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 14px;
+        }
         .top-nav {
             display: flex;
             justify-content: space-between;
@@ -37,19 +45,26 @@
             padding: 10px 20px;
             background: rgba(0,0,0,0.8);
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            z-index: 100;
+        }
+        .right-side {
+            display: flex;
+            align-items: center;
         }
 
-        /* Модальное окно (Окно ЛЮДИ) */
+        /* СТИЛИ ДЛЯ НАЛОЖЕНИЯ (MODAL) */
         .modal-overlay {
             position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 10000;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
             display: none; /* Скрыто по умолчанию */
             justify-content: center;
             align-items: center;
+            z-index: 10000;
         }
         .modal-content {
             width: 90%;
@@ -58,24 +73,25 @@
             border-radius: 20px;
             border: 1px solid #333;
             position: relative;
-            box-shadow: 0 0 30px rgba(0,0,0,1);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
+            overflow: hidden;
         }
-        .close-modal {
+        .close-btn {
             position: absolute;
-            top: 10px; right: 20px;
-            color: white;
-            font-size: 30px;
+            top: 15px;
+            right: 20px;
+            color: #fff;
+            font-size: 24px;
             cursor: pointer;
-            z-index: 10001;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
-
     <header class="top-nav">
-        <div class="logo" style="font-weight: 900; color: #fff; letter-spacing: 2px; font-size: 20px;">GYaz Rush</div>
+        <div class="logo" style="font-weight: 900; color: #fff; letter-spacing: 2px;">GYaz Rush</div>
         
-        <nav class="menu-tabs" style="display: flex; gap: 15px;">
+        <nav class="menu-tabs">
             <div class="tab-item active" onclick="selectTab('news')">НОВОСТИ</div>
             <div class="tab-item" onclick="selectTab('shop')">МАГАЗИН</div>
             <div class="tab-item" onclick="selectTab('club')">КЛУБ</div>
@@ -85,22 +101,22 @@
             <div class="tab-item" onclick="openOnline()" style="color: #e1b12c; font-weight: bold;">ЛЮДИ</div>
         </nav>
 
-        <div class="right-side" style="display: flex; align-items: center;">
+        <div class="right-side">
             <div class="business-container" onclick="collectBusinessMoney()">
                 <span class="business-label">Бизнес (Собрать)</span>
                 <span id="business-display" class="business-money">0 / 6000 CY</span>
             </div>
             
-            <div id="shop-balance" class="balance-display" style="background: #00ff88; color: #000; padding: 8px 15px; border-radius: 8px; font-weight: bold;">
+            <div id="shop-balance" class="balance-display" style="background: #00ff88; color: #000; padding: 8px 15px; border-radius: 8px; font-weight: bold; min-width: 80px; text-align: center;">
                 0 CY
             </div>
         </div>
     </header>
 
-    <div id="online-modal" class="modal-overlay">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeOnline()">&times;</span>
-            <iframe src="online.html" style="width: 100%; height: 500px; border: none; border-radius: 20px;"></iframe>
+    <div id="online-modal" class="modal-overlay" onclick="closeOnline()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close-btn" onclick="closeOnline()">&times;</span>
+            <iframe src="online.html" style="width: 100%; height: 500px; border: none;"></iframe>
         </div>
     </div>
 
@@ -119,9 +135,9 @@
         </div>
     </main>
 
-    <div class="audio-controls" style="position: fixed; bottom: 20px; right: 20px; z-index: 999; display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 30px;">
-        <button id="mute-btn" onclick="toggleMuteUI(this)" style="background: none; border: none; font-size: 20px; cursor: pointer; color: white;">🎵</button>
-        <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="setVolume(this.value)" style="width: 80px; accent-color: #00ff88;">
+    <div class="audio-controls" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <button id="mute-btn" onclick="toggleMuteUI(this)" style="background: none; border: none; font-size: 20px; cursor: pointer; color: white; outline: none;">🎵</button>
+        <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="setVolume(this.value)" style="width: 80px; cursor: pointer; accent-color: #00ff88;">
     </div>
 
     <script type="module" src="economy.js"></script>
@@ -130,7 +146,7 @@
     <script src="script.js"></script>
 
     <script>
-        // Функции открытия модалки
+        // Функции для управления окном "ЛЮДИ"
         function openOnline() {
             document.getElementById('online-modal').style.display = 'flex';
         }
@@ -139,12 +155,19 @@
             document.getElementById('online-modal').style.display = 'none';
         }
 
+        // Интерфейс звука
         function toggleMuteUI(btn) {
             if (typeof toggleMute === 'function') {
                 const isMuted = toggleMute();
                 btn.innerText = isMuted ? '🔇' : '🎵';
             }
         }
+
+        window.addEventListener('load', () => {
+            const btn = document.getElementById('mute-btn');
+            const isMuted = localStorage.getItem('gyaz_muted') === 'true';
+            if(btn) btn.innerText = isMuted ? '🔇' : '🎵';
+        });
     </script>
 </body>
 </html>
