@@ -170,10 +170,22 @@ async function endGame() {
 }
 
 // ПРИНУДИТЕЛЬНАЯ ПРИВЯЗКА КНОПКИ (На случай если onclick в HTML не сработал)
+// ПРИНУДИТЕЛЬНАЯ ПРИВЯЗКА КНОПКИ
 document.addEventListener('DOMContentLoaded', () => {
-    const startBtn = document.querySelector('.start-match-btn'); // Проверь класс кнопки в HTML
+    // Ищем кнопку по классу, который реально есть в твоем HTML
+    const startBtn = document.querySelector('.bot-btn'); 
+    
     if (startBtn) {
-        startBtn.addEventListener('click', window.startGame);
+        startBtn.addEventListener('click', () => {
+            console.log("Клик зафиксирован через AddEventListener");
+            window.startGame();
+        });
+    } else {
+        console.error("Кнопка .bot-btn не найдена в HTML!");
     }
-    refreshBalanceDisplay();
+    
+    // Обновляем баланс при входе
+    if (typeof refreshBalanceDisplay === 'function') {
+        refreshBalanceDisplay();
+    }
 });
