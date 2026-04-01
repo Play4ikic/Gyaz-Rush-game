@@ -14,8 +14,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// --- ПЕРЕМЕННЫЕ СОСТОЯНИЯ ---
-let userData = JSON.parse(localStorage.getItem('gyaz_user')) || { uid: "guest", nickname: "Player", balance: 0 };
+// --- ДАННЫЕ И СОСТОЯНИЕ ---
+let userData = JSON.parse(localStorage.getItem('gyaz_user')) || { uid: "guest_" + Math.floor(Math.random()*1000), nickname: "Player", balance: 0 };
 let activeSquad = JSON.parse(localStorage.getItem('activeSquad')) || [null, null, null, null, null];
 let matchId = null;
 let myRole = ""; 
@@ -29,65 +29,77 @@ let timerInterval;
 let searchTimeoutInterval;
 let usedIndexes = [];
 
-// --- ЗАПУСК ПОИСКА (Глобальная функция) ---
+// --- ФУНКЦИЯ ПОИСКА ---
 window.startOnlineSearch = async function() {
     if (isSearching) return;
 
     const validPlayers = activeSquad.filter(p => p !== null);
     if (validPlayers.length < 5) {
-        alert("Эльджан, сначала выбери всех 5 игроков в Клубе!");
+        alert(" сначала выбери всех 5 игроков в Клубе!");
         return;
     }
 
     isSearching = true;
     const statusText = document.querySelector('.logo-text');
-    if (statusText) statusText.innerText = "ПОИСК СОПЕРНИКА (0:20)...";
     
-    const queueRef = ref(db, 'queue');
-    const snapshot = await get(queueRef);
-
-    if (!snapshot.exists()) {
-        // Создаем матч как Хост
-        const newMatchRef = push(ref(db, 'matches'));
-        matchId = newMatchRef.key;
-        myRole = "host";
-        
-        await set(queueRef, { 
-            matchId, 
-            hostId: userData.uid, 
-            hostName: userData.nickname 
-        });
-        
-        listenForOpponent();
-
-        let timeLeft = 20;
-        searchTimeoutInterval = setInterval(async () => {
-            timeLeft--;
-            if (statusText) statusText.innerText = `ПОИСК СОПЕРНИКА (0:${timeLeft < 10 ? '0'+timeLeft : timeLeft})...`;
-            
-            if (timeLeft <= 0) {
-                stopSearch("Время вышло. Никого нет в сети.");
-            }
-        }, 1000);
-    } else {
-        // Присоединяемся как Гость
-        const data = snapshot.val();
-        if (data.hostId === userData.uid) {
-            isSearching = false;
-            return;
+    // 1. ЗАПУСКАЕМ ТАЙМЕР СРАЗУ (Визуально)
+    let timeLeft = 20;
+    if (statusText) statusText.innerText = `ПОИСК СОПЕРНИКА (0:${timeLeft})...`;
+    
+    clearInterval(searchTimeoutInterval);
+    searchTimeoutInterval = setInterval(() => {
+        timeLeft--;
+        const currentStatus = document.querySelector('.logo-text');
+        if (currentStatus) {
+            currentStatus.innerText = `ПОИСК СОПЕРНИКА (0:${timeLeft < 10 ? '0'+timeLeft : timeLeft})...`;
         }
+        if (timeLeft <= 0) {
+            stopSearch("Время вышло. Никого нет в сети.");
+        }
+    }, 1000);
 
-        matchId = data.matchId;
-        myRole = "guest";
-        
-        await remove(queueRef); 
-        await update(ref(db, `matches/${matchId}`), {
-            guestId: userData.uid,
-            guestName: userData.nickname,
-            status: "playing"
-        });
-        
-        initGameUI();
+    // 2. РАБОТА С FIREBASE
+    try {
+        const queueRef = ref(db, 'queue');
+        const snapshot = await get(queueRef);
+
+        if (!snapshot.exists()) {
+            // Режим ХОСТА
+            const newMatchRef = push(ref(db, 'matches'));
+            matchId = newMatchRef.key;
+            myRole = "host";
+            
+            await set(queueRef, { 
+                matchId, 
+                hostId: userData.uid, 
+                hostName: userData.nickname 
+            });
+            
+            listenForOpponent();
+        } else {
+            // Режим ГОСТЯ
+            const data = snapshot.val();
+            if (data.hostId === userData.uid) {
+                isSearching = false;
+                return;
+            }
+
+            matchId = data.matchId;
+            myRole = "guest";
+            
+            await remove(queueRef); 
+            await update(ref(db, `matches/${matchId}`), {
+                guestId: userData.uid,
+                guestName: userData.nickname,
+                status: "playing"
+            });
+            
+            clearInterval(searchTimeoutInterval);
+            initGameUI();
+        }
+    } catch (err) {
+        console.error("Ошибка Firebase:", err);
+        stopSearch("Ошибка сети. Проверь интернет.");
     }
 };
 
@@ -99,7 +111,7 @@ async function stopSearch(reason) {
     
     const statusText = document.querySelector('.logo-text');
     if (statusText) statusText.innerText = "READY FOR BATTLE?";
-    alert(reason);
+    if (reason) alert(reason);
 }
 
 function listenForOpponent() {
@@ -116,7 +128,10 @@ function listenForOpponent() {
 function initGameUI() {
     document.getElementById('setup-screen').classList.add('hidden');
     document.getElementById('game-screen').classList.remove('hidden');
-    document.getElementById('user-coins').innerText = userData.balance || 0;
+    
+    const coinEl = document.getElementById('user-coins');
+    if (coinEl) coinEl.innerText = userData.balance || 0;
+    
     startRound();
 }
 
@@ -146,9 +161,7 @@ function startRound() {
 
     const oppPath = myRole === "host" ? `matches/${matchId}/round${round}/guestCard` : `matches/${matchId}/round${round}/hostCard`;
     onValue(ref(db, oppPath), (snap) => {
-        if (snap.exists()) {
-            oppCard = snap.val();
-        }
+        if (snap.exists()) oppCard = snap.val();
     });
 }
 
@@ -159,9 +172,7 @@ function renderHand() {
     activeSquad.forEach((player, index) => {
         if (!player) return;
         
-        // Определяем папку если её нет в объекте игрока
         const folder = player.folder || (player.rating > 96 ? 'Toty' : (player.rating > 89 ? 'Champions' : 'Gold'));
-        
         const img = document.createElement('img');
         img.src = `${folder}/${player.file}`;
         
@@ -218,8 +229,10 @@ async function endGame() {
     const userRef = ref(db, 'users/' + userData.uid);
     userData.balance = (Number(userData.balance) || 0) + reward;
     
-    await update(userRef, { balance: userData.balance });
-    localStorage.setItem('gyaz_user', JSON.stringify(userData));
+    try {
+        await update(userRef, { balance: userData.balance });
+        localStorage.setItem('gyaz_user', JSON.stringify(userData));
+    } catch (e) { console.error("Ошибка сохранения баланса"); }
 
     if (myRole === "host") {
         setTimeout(() => remove(ref(db, `matches/${matchId}`)), 5000);
