@@ -76,7 +76,7 @@ function startRound() {
     selectedPlayerCard = null;
     renderHand();
     
-    let timeLeft = 7;
+    let timeLeft = 10;
     document.getElementById('timer').innerText = timeLeft;
     clearInterval(timerInterval);
     timerInterval = setInterval(() => {
@@ -108,8 +108,8 @@ function processBattle() {
 
 async function endGame() {
     if (playerScore > botScore) {
-        await updateBalance(3000);
-        alert("Победа! +3000 CY");
+        await updateBalance(5000);
+        alert("Победа! +5000 CY");
     } else alert("Игра окончена!");
     window.location.href = "index.html";
 }

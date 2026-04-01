@@ -164,6 +164,29 @@ function startRound() {
         if (snap.exists()) oppCard = snap.val();
     });
 }
+// В online_draft.js замени функцию initGameUI
+async function initGameUI() {
+    const matchRef = ref(db, `matches/${matchId}`);
+    const snap = await get(matchRef);
+    const data = snap.val();
+
+    const myName = userData.nickname || "Игрок";
+    const enemyName = (myRole === "host") ? data.guestName : data.hostName;
+
+    // Сначала показываем интро
+    window.showBattleIntro(myName, enemyName, () => {
+        // После интро показываем игровой экран
+        document.getElementById('setup-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+
+        // Ставим имена в хедер
+        document.getElementById('p-name').innerText = myName.toUpperCase();
+        document.getElementById('opp-name').innerText = enemyName.toUpperCase();
+        
+        document.getElementById('user-coins').innerText = userData.balance || 0;
+        startRound();
+    });
+}
 
 function renderHand() {
     const hand = document.getElementById('squad-hand');
