@@ -18,33 +18,40 @@ bgMusic.volume = 0.3;
 bgMusic.muted = isMuted;
 
 // --- НОВАЯ ФУНКЦИЯ ПЕРЕКЛЮЧЕНИЯ ПО КЛАВИШАМ ---
+// --- ОБНОВЛЕННАЯ ФУНКЦИЯ ПЕРЕКЛЮЧЕНИЯ: CTRL + ЦИФРА ---
 document.addEventListener('keydown', (event) => {
-    const key = parseInt(event.key);
-    
-    if (key >= 1 && key <= 8) {
-        console.log("Нажата цифра:", key);
+    // Проверяем, нажата ли клавиша Ctrl (или Cmd на Mac) вместе с цифрой
+    if (event.ctrlKey) {
+        const key = parseInt(event.key);
         
-        // 1. Останавливаем текущий трек
-        bgMusic.pause();
-        
-        // 2. Меняем индекс (вычитаем 1, так как массив начинается с 0)
-        currentTrackIndex = key - 1;
-        
-        // 3. Ставим новый файл и сбрасываем время
-        bgMusic.src = playlist[currentTrackIndex];
-        bgMusic.currentTime = 0;
-        
-        // 4. Запускаем
-        bgMusic.play().catch(err => {
-            console.error("Браузер заблокировал звук. Кликни по экрану!");
-        });
+        // Проверяем, что нажата цифра от 1 до 8
+        if (key >= 1 && key <= 8) {
+            // Отменяем стандартное действие браузера (например, переключение вкладок)
+            event.preventDefault(); 
+            
+            console.log("Переключение трека через Ctrl +", key);
+            
+            // 1. Останавливаем текущий трек
+            bgMusic.pause();
+            
+            // 2. Меняем индекс (вычитаем 1, так как индекс массива начинается с 0)
+            currentTrackIndex = key - 1;
+            
+            // 3. Устанавливаем новый файл
+            bgMusic.src = playlist[currentTrackIndex];
+            bgMusic.currentTime = 0;
+            
+            // 4. Запускаем
+            bgMusic.play().catch(err => {
+                console.error("Нужен клик по странице для активации звука!");
+            });
 
-        // Сохраняем состояние
-        localStorage.setItem('gyaz_track_index', currentTrackIndex);
-        localStorage.setItem('gyaz_music_time', 0);
+            // Сохраняем состояние в память
+            localStorage.setItem('gyaz_track_index', currentTrackIndex);
+            localStorage.setItem('gyaz_music_time', 0);
+        }
     }
 });
-
 function syncAndPlay() {
     if (!bgMusic.src) {
         bgMusic.src = playlist[currentTrackIndex];
