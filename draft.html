@@ -3,147 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FixOne - Draft Battle</title>
-    <link rel="stylesheet" href="draft.css">
+    <title>GYaz Rush - Football Draft 1v1</title>
     <style>
-        body { background: #000; margin: 0; font-family: sans-serif; overflow: hidden; color: white; }
-        .screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: 0.3s; }
+        /* БАЗОВЫЕ СТИЛИ */
+        body { 
+            margin: 0; 
+            background: #050505; 
+            color: white; 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            overflow: hidden; 
+        }
+
         .hidden { display: none !important; }
-        
-        .difficulty-box { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 350px; }
 
-        .battle-btn {
-            width: 100%; padding: 18px; font-size: 18px; font-weight: bold;
-            border-radius: 50px; border: none; cursor: pointer;
-            text-transform: uppercase; transition: 0.3s;
+        /* ЭКРАН МЕНЮ (SETUP) */
+        #setup-screen { 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
         }
 
-        .bot-btn { background: #e1b12c; color: #000; box-shadow: 0 0 15px rgba(225, 177, 44, 0.4); }
-        .bot-btn:hover { transform: scale(1.05); }
-
-        .online-btn { 
-            background: linear-gradient(45deg, #0097e6, #8c7ae6); 
-            color: white; border: 2px solid white;
-            box-shadow: 0 0 20px rgba(0, 151, 230, 0.6);
+        .logo-text { 
+            font-size: 50px; 
+            color: #e1b12c; 
+            margin-bottom: 40px; 
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 0 0 30px rgba(225, 177, 44, 0.4);
         }
-        .online-btn:hover { transform: scale(1.05); }
 
-        .card-placeholder { width: 120px; height: 170px; border: 2px dashed #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-        .card-back { background: #111; border: 2px solid #444; }
-        .vs-text { font-size: 30px; font-weight: bold; color: white; }
+        .menu-btn { 
+            padding: 18px 50px; 
+            font-size: 20px; 
+            cursor: pointer; 
+            border: none; 
+            border-radius: 8px; 
+            background: #e1b12c; 
+            color: #000;
+            font-weight: 900; 
+            margin: 12px;
+            transition: 0.3s;
+            width: 280px;
+            text-transform: uppercase;
+        }
 
-        .hand-grid img { width: 70px; margin: 5px; border-radius: 5px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
-        .used-card { filter: grayscale(1) opacity(0.3) !important; pointer-events: none; }
+        .menu-btn:hover { 
+            transform: scale(1.05); 
+            background: #f1c40f; 
+            box-shadow: 0 0 20px rgba(225, 177, 44, 0.6);
+        }
 
-        /* --- СТИЛИ ДЛЯ МОДАЛЬНОГО ОКНА 1v1 --- */
-        #online-modal {
-            display: none; 
+        /* МОДАЛЬНОЕ ОКНО ОНЛАЙНА */
+        #online-modal { 
             position: fixed; 
             top: 0; left: 0; 
             width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.85); 
-            z-index: 9999; 
+            background: rgba(0,0,0,0.95); 
+            display: none; 
             justify-content: center; 
-            align-items: center;
-            backdrop-filter: blur(5px);
+            align-items: center; 
+            z-index: 1000; 
         }
-        .modal-content {
-            position: relative;
-            width: 90%;
-            max-width: 500px;
-            background: #0b0b0b;
+
+        .modal-content { 
+            position: relative; 
+            background: #111; 
+            padding: 10px; 
+            border-radius: 20px; 
             border: 2px solid #e1b12c;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 0 30px rgba(225, 177, 44, 0.2);
         }
+
         .close-btn {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            background: #e1b12c;
-            color: black;
+            top: -50px;
+            right: 0;
+            background: #ff4757;
+            color: white;
             border: none;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 5px;
             cursor: pointer;
-            z-index: 10;
+            font-weight: bold;
+        }
+
+        iframe { 
+            border: none; 
+            border-radius: 10px; 
+            background: #0b0b0b; 
+        }
+
+        /* ИГРОВОЙ ЭКРАН (АРЕНА) */
+        #game-screen { 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding-top: 30px; 
+            background: url('stadium_bg.jpg') center/cover; /* Если есть фон стадиона */
+        }
+
+        .hud {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .timer-circle {
+            width: 60px; height: 60px;
+            border: 4px solid #e1b12c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .score-board {
+            font-size: 40px;
+            font-weight: 900;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 30px;
+            border-radius: 15px;
+            border-bottom: 3px solid #e1b12c;
+        }
+
+        #battle-area { 
+            display: flex; 
+            gap: 50px; 
+            margin-top: 20px; 
+        }
+
+        .card-slot { 
+            width: 200px; 
+            height: 290px; 
+            border: 3px dashed rgba(225, 177, 44, 0.3); 
+            border-radius: 15px; 
+            position: relative;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .card-back { 
+            background: #1a1a1a url('card_back.png') center/contain no-repeat; 
+            border: 3px solid #e1b12c;
+        }
+
+        /* РУКА ИГРОКА (КАРТЫ) */
+        #squad-hand { 
+            position: fixed; 
+            bottom: 30px; 
+            display: flex; 
+            gap: 15px; 
+            padding: 10px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        #squad-hand img { 
+            width: 110px; 
+            cursor: pointer; 
+            transition: transform 0.2s, filter 0.2s; 
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
+        }
+
+        #squad-hand img:hover { 
+            transform: translateY(-20px) scale(1.1); 
         }
     </style>
 </head>
 <body>
 
+    <div id="setup-screen">
+        <h1 class="logo-text">GYAZ RUSH</h1>
+        <button class="menu-btn" onclick="alert('Скоро появится!')">ОДИНОЧНЫЙ ДРАФТ</button>
+        <button class="menu-btn" onclick="openOnlineModal()" style="background: #e1b12c; color: #000;">БИТВА 1v1 ONLINE</button>
+    </div>
+
+    <div id="game-screen" class="hidden">
+        <div class="hud">
+            <div class="timer-circle" id="timer">7</div>
+            <div class="score-board">
+                <span id="p-score">0</span> : <span id="b-score">0</span>
+            </div>
+            <div style="color: #e1b12c; font-weight: bold; letter-spacing: 2px;">РАУНД <span id="round-num">1</span>/5</div>
+        </div>
+        
+        <div id="battle-area">
+            <div id="player-card-display" class="card-slot">
+                </div>
+            <div id="bot-card-display" class="card-slot card-back">
+                </div>
+        </div>
+
+        <div id="squad-hand">
+            </div>
+    </div>
+
     <div id="online-modal">
         <div class="modal-content">
-            <button class="close-btn" onclick="closeOnlineMenu()">×</button>
-            <iframe src="1v1.html" style="width: 100%; height: 550px; border: none;"></iframe>
+            <button class="close-btn" onclick="closeOnlineModal()">ЗАКРЫТЬ</button>
+            <iframe src="1v1.html" width="550" height="600"></iframe>
         </div>
     </div>
 
-    <div id="setup-screen" class="screen">
-        <h1 class="logo-text" style="font-size: 40px; margin-bottom: 40px;">READY FOR BATTLE?</h1>
-        
-        <div class="difficulty-box">
-            <button class="battle-btn bot-btn" onclick="runBotGame()">
-                В БОЙ (3000 CY)
-            </button>
-            
-            <button class="battle-btn online-btn" onclick="startOnlineSearch()">
-                ОНЛАЙН БИТВА
-            </button>
-        </div>
-
-        <a href="index.html" style="color: #555; text-decoration: none; margin-top: 30px; font-size: 14px;">НАЗАД В ХАБ</a>
-    </div>
-
-    <div id="game-screen" class="screen hidden" style="justify-content: flex-start; padding-top: 20px;">
-        <header style="width: 90%; display: flex; justify-content: space-between; margin-bottom: 30px; font-weight: bold;">
-            <div class="score">
-                <span id="p-name">ИГРОК</span> <span id="p-score" style="color:#00ff88;">0</span> 
-                : 
-                <span id="b-score" style="color:#ff4d4d;">0</span> <span id="opp-name">ВРАГ</span>
-            </div>
-            <div id="timer-box">⏱ <span id="timer">7</span></div>
-        </header>
-
-        <div class="battle-arena" style="display: flex; align-items: center; gap: 30px; margin-bottom: 40px; justify-content: center;">
-            <div id="player-card-display" class="card-placeholder"></div>
-            <div class="vs-text">VS</div>
-            <div id="bot-card-display" class="card-placeholder card-back"></div>
-        </div>
-
-        <div class="squad-selection">
-            <h3 style="margin-bottom: 15px;">РАУНД <span id="round-num" style="color:#e1b12c;">1</span> / 5</h3>
-            <div id="squad-hand" class="hand-grid" style="display: flex; flex-wrap: wrap; justify-content: center; max-width: 500px;"></div>
-        </div>
-    </div>
+    <script type="module" src="online_draft.js"></script>
 
     <script>
-        // Открытие меню
-        window.startOnlineSearch = function() {
-            const modal = document.getElementById('online-modal');
-            if (modal) modal.style.display = 'flex';
-        };
+        /**
+         * АВТО-ПРОВЕРКА СОСТОЯНИЯ (КРИТИЧНО)
+         * Срабатывает мгновенно при загрузке страницы.
+         */
+        (function initEngine() {
+            const matchId = localStorage.getItem('currentMatchId');
+            const myRole = localStorage.getItem('myRole');
 
-        // Закрытие меню
-        window.closeOnlineMenu = function() {
-            const modal = document.getElementById('online-modal');
-            if (modal) modal.style.display = 'none';
-        };
-
-        // Игра с ботом
-        function runBotGame() {
-            if (window.startGameBot) {
-                window.startGameBot();
-            } else {
-                alert("Ошибка: draft.js не загружен.");
+            // Если данные о матче есть в памяти — сразу включаем поле боя
+            if (matchId && myRole) {
+                console.log("ВНИМАНИЕ: Обнаружена активная сессия 1v1. Запуск арены...");
+                
+                // Используем window.onload или проверку элементов, чтобы убедиться что HTML готов
+                window.addEventListener('DOMContentLoaded', () => {
+                    const setup = document.getElementById('setup-screen');
+                    const game = document.getElementById('game-screen');
+                    
+                    if (setup && game) {
+                        setup.classList.add('hidden');
+                        game.classList.remove('hidden');
+                    }
+                });
             }
+        })();
+
+        // Функции кнопок
+        function openOnlineModal() {
+            document.getElementById('online-modal').style.display = 'flex';
+        }
+
+        function closeOnlineModal() {
+            document.getElementById('online-modal').style.display = 'none';
         }
     </script>
-
-    <script src="audio.js"></script>
-    <script src="draft.js"></script> 
 </body>
 </html>
