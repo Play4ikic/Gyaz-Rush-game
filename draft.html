@@ -4,41 +4,157 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FixOne - Draft Battle</title>
-    <link rel="stylesheet" href="draft.css">
     <style>
-        body { background: #000; margin: 0; font-family: sans-serif; overflow: hidden; color: white; }
-        .screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: 0.3s; }
+        :root {
+            --gold: #e1b12c;
+            --blue: #0097e6;
+            --purple: #8c7ae6;
+            --red: #ff4d4d;
+            --green: #00ff88;
+        }
+
+        body { 
+            background: #050505; 
+            margin: 0; 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            overflow: hidden; 
+            color: white; 
+            /* Анимированный фон сетки */
+            background-image: 
+                linear-gradient(rgba(225, 177, 44, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(225, 177, 44, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .screen { 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            text-align: center; 
+            transition: opacity 0.5s ease; 
+        }
+
         .hidden { display: none !important; }
         
-        .difficulty-box { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 350px; }
+        /* ЛОГОТИП */
+        .logo-text { 
+            font-size: 50px; 
+            font-weight: 900;
+            letter-spacing: 4px;
+            margin-bottom: 40px; 
+            background: linear-gradient(to bottom, #fff, var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px rgba(225, 177, 44, 0.3));
+        }
+
+        /* КНОПКИ */
+        .difficulty-box { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 380px; }
 
         .battle-btn {
-            width: 100%; padding: 18px; font-size: 18px; font-weight: bold;
-            border-radius: 50px; border: none; cursor: pointer;
-            text-transform: uppercase; transition: 0.3s;
+            width: 100%; padding: 20px; font-size: 18px; font-weight: 900;
+            border-radius: 12px; border: none; cursor: pointer;
+            text-transform: uppercase; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative; overflow: hidden;
         }
 
-        .bot-btn { background: #e1b12c; color: #000; box-shadow: 0 0 15px rgba(225, 177, 44, 0.4); }
-        .bot-btn:hover { transform: scale(1.05); }
+        .bot-btn { 
+            background: var(--gold); 
+            color: #000; 
+            box-shadow: 0 10px 20px rgba(225, 177, 44, 0.2); 
+        }
 
         .online-btn { 
-            background: linear-gradient(45deg, #0097e6, #8c7ae6); 
-            color: white; border: 2px solid white;
-            box-shadow: 0 0 20px rgba(0, 151, 230, 0.6);
+            background: linear-gradient(45deg, var(--blue), var(--purple)); 
+            color: white; 
+            border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 10px 20px rgba(0, 151, 230, 0.2);
         }
 
-        .card-placeholder { width: 120px; height: 170px; border: 2px dashed #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-        .card-back { background: #111; border: 2px solid #444; }
-        .vs-text { font-size: 30px; font-weight: bold; color: white; }
+        .battle-btn:hover { transform: scale(1.03) translateY(-3px); }
+        .battle-btn:active { transform: scale(0.98); }
 
-        .hand-grid img { width: 70px; margin: 5px; border-radius: 5px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
-        .used-card { filter: grayscale(1) opacity(0.3) !important; pointer-events: none; }
+        /* ИГРОВАЯ АРЕНА */
+        header { 
+            width: 90%; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            margin-bottom: 30px; 
+            padding: 15px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .score { font-size: 24px; letter-spacing: 1px; }
+        #timer-box { 
+            background: rgba(0,0,0,0.5); 
+            padding: 8px 20px; 
+            border-radius: 30px; 
+            border: 2px solid var(--gold);
+            font-size: 20px;
+        }
+
+        .card-placeholder { 
+            width: 160px; height: 230px; 
+            border: 3px dashed rgba(255,255,255,0.1); 
+            border-radius: 15px; 
+            display: flex; align-items: center; justify-content: center; 
+            transition: 0.4s;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .card-back { 
+            
+            border: 2px solid var(--gold); 
+            box-shadow: 0 0 20px rgba(225,177,44,0.2);
+        }
+
+        .vs-text { 
+            font-size: 40px; 
+            font-weight: 900; 
+            font-style: italic;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+
+        /* РУКА ИГРОКА */
+        .hand-grid img { 
+            width: 90px; 
+            margin: 8px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
+        }
+
+        .hand-grid img:hover { 
+            transform: translateY(-15px) scale(1.1); 
+            filter: drop-shadow(0 15px 25px rgba(225, 177, 44, 0.4));
+        }
+
+        .used-card { filter: grayscale(1) opacity(0.2) blur(2px) !important; pointer-events: none; }
+
+        /* КНОПКА СБРОСА (ДЛЯ ТЕБЯ) */
+        .exit-btn {
+            position: fixed; bottom: 20px; left: 20px;
+            background: rgba(255,0,0,0.2); border: 1px solid var(--red);
+            color: var(--red); padding: 8px 15px; border-radius: 5px;
+            font-size: 12px; cursor: pointer; text-transform: uppercase;
+        }
+        .exit-btn:hover { background: var(--red); color: white; }
     </style>
 </head>
 <body>
 
+    <button class="exit-btn" onclick="forceExit()">Сброс (если застрял)</button>
+
     <div id="setup-screen" class="screen">
-        <h1 class="logo-text" style="font-size: 40px; margin-bottom: 40px;">READY FOR BATTLE?</h1>
+        <h1 class="logo-text">GYAZ RUSH</h1>
         
         <div class="difficulty-box">
             <button class="battle-btn bot-btn" onclick="runBotGame()">
@@ -50,39 +166,58 @@
             </button>
         </div>
 
-        <a href="index.html" style="color: #555; text-decoration: none; margin-top: 30px; font-size: 14px;">НАЗАД В ХАБ</a>
+        <a href="index.html" style="color: rgba(255,255,255,0.3); text-decoration: none; margin-top: 40px; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">← Вернуться в хаб</a>
     </div>
 
     <div id="game-screen" class="screen hidden" style="justify-content: flex-start; padding-top: 20px;">
-        <header style="width: 90%; display: flex; justify-content: space-between; margin-bottom: 30px; font-weight: bold;">
+        <header>
             <div class="score">
-                <span id="p-name">ИГРОК</span> <span id="p-score" style="color:#00ff88;">0</span> 
-                : 
-                <span id="b-score" style="color:#ff4d4d;">0</span> <span id="opp-name">ВРАГ</span>
+                <span id="p-name" style="color: #fff;">ВЫ</span> 
+                <span id="p-score" style="color: var(--green); font-weight: 900; margin: 0 10px;">0</span> 
+                <span style="opacity: 0.5;">:</span> 
+                <span id="b-score" style="color: var(--red); font-weight: 900; margin: 0 10px;">0</span> 
+                <span id="opp-name" style="color: #fff;">ВРАГ</span>
             </div>
             <div id="timer-box">⏱ <span id="timer">7</span></div>
-           
         </header>
 
-        <div class="battle-arena" style="display: flex; align-items: center; gap: 30px; margin-bottom: 40px; justify-content: center;">
+        <div class="battle-arena" style="display: flex; align-items: center; gap: 40px; margin: 40px 0; justify-content: center;">
             <div id="player-card-display" class="card-placeholder"></div>
             <div class="vs-text">VS</div>
             <div id="bot-card-display" class="card-placeholder card-back"></div>
         </div>
 
         <div class="squad-selection">
-            <h3 style="margin-bottom: 15px;">РАУНД <span id="round-num" style="color:#e1b12c;">1</span> / 5</h3>
-            <div id="squad-hand" class="hand-grid" style="display: flex; flex-wrap: wrap; justify-content: center; max-width: 500px;"></div>
+            <h3 style="margin-bottom: 20px; letter-spacing: 3px; opacity: 0.8;">РАУНД <span id="round-num" style="color:var(--gold);">1</span> / 5</h3>
+            <div id="squad-hand" class="hand-grid" style="display: flex; flex-wrap: wrap; justify-content: center; max-width: 600px;">
+                </div>
         </div>
     </div>
 
     <script>
+        // Функция принудительного выхода (очистка памяти)
+        function forceExit() {
+            if(confirm("Очистить данные матча и вернуться в меню?")) {
+                localStorage.removeItem('currentMatchId');
+                localStorage.removeItem('myRole');
+                location.reload();
+            }
+        }
+
+        // Проверка при загрузке: если в памяти есть матч — сразу в бой
+        (function() {
+            const matchId = localStorage.getItem('currentMatchId');
+            if (matchId) {
+                document.getElementById('setup-screen').classList.add('hidden');
+                document.getElementById('game-screen').classList.remove('hidden');
+            }
+        })();
+
         function runBotGame() {
             if (window.startGameBot) {
                 window.startGameBot();
             } else {
-                console.error("Ошибка: draft.js не загружен.");
-                alert("Ошибка: Скрипт не готов. Попробуй обновить страницу (Ctrl+F5).");
+                alert("Ошибка: Скрипт draft.js не загружен.");
             }
         }
 
@@ -90,14 +225,13 @@
             if (window.startOnlineSearch) {
                 window.startOnlineSearch();
             } else {
-                alert("Онлайн режим загружается...");
+                alert("Онлайн режим еще инициализируется...");
             }
         }
     </script>
 
-<script src="audio.js"></script>
-<script src="draft.js"></script> 
-
-<script type="module" src="online_draft.js"></script>
+    <script src="audio.js"></script>
+    <script src="draft.js"></script> 
+    <script type="module" src="online_draft.js"></script>
 </body>
 </html>
