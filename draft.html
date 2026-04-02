@@ -26,6 +26,7 @@
             color: white; border: 2px solid white;
             box-shadow: 0 0 20px rgba(0, 151, 230, 0.6);
         }
+        .online-btn:hover { transform: scale(1.05); }
 
         .card-placeholder { width: 120px; height: 170px; border: 2px dashed #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
         .card-back { background: #111; border: 2px solid #444; }
@@ -33,9 +34,53 @@
 
         .hand-grid img { width: 70px; margin: 5px; border-radius: 5px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
         .used-card { filter: grayscale(1) opacity(0.3) !important; pointer-events: none; }
+
+        /* --- СТИЛИ ДЛЯ МОДАЛЬНОГО ОКНА 1v1 --- */
+        #online-modal {
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.85); 
+            z-index: 9999; 
+            justify-content: center; 
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            position: relative;
+            width: 90%;
+            max-width: 500px;
+            background: #0b0b0b;
+            border: 2px solid #e1b12c;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(225, 177, 44, 0.2);
+        }
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #e1b12c;
+            color: black;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
+
+    <div id="online-modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeOnlineMenu()">×</button>
+            <iframe src="1v1.html" style="width: 100%; height: 550px; border: none;"></iframe>
+        </div>
+    </div>
 
     <div id="setup-screen" class="screen">
         <h1 class="logo-text" style="font-size: 40px; margin-bottom: 40px;">READY FOR BATTLE?</h1>
@@ -45,7 +90,7 @@
                 В БОЙ (3000 CY)
             </button>
             
-            <button class="battle-btn online-btn" onclick="runOnlineGame()">
+            <button class="battle-btn online-btn" onclick="startOnlineSearch()">
                 ОНЛАЙН БИТВА
             </button>
         </div>
@@ -61,7 +106,6 @@
                 <span id="b-score" style="color:#ff4d4d;">0</span> <span id="opp-name">ВРАГ</span>
             </div>
             <div id="timer-box">⏱ <span id="timer">7</span></div>
-           
         </header>
 
         <div class="battle-arena" style="display: flex; align-items: center; gap: 30px; margin-bottom: 40px; justify-content: center;">
@@ -77,27 +121,29 @@
     </div>
 
     <script>
+        // Открытие меню
+        window.startOnlineSearch = function() {
+            const modal = document.getElementById('online-modal');
+            if (modal) modal.style.display = 'flex';
+        };
+
+        // Закрытие меню
+        window.closeOnlineMenu = function() {
+            const modal = document.getElementById('online-modal');
+            if (modal) modal.style.display = 'none';
+        };
+
+        // Игра с ботом
         function runBotGame() {
             if (window.startGameBot) {
                 window.startGameBot();
             } else {
-                console.error("Ошибка: draft.js не загружен.");
-                alert("Ошибка: Скрипт не готов. Попробуй обновить страницу (Ctrl+F5).");
-            }
-        }
-
-        function runOnlineGame() {
-            if (window.startOnlineSearch) {
-                window.startOnlineSearch();
-            } else {
-                alert("Онлайн режим загружается...");
+                alert("Ошибка: draft.js не загружен.");
             }
         }
     </script>
 
-<script src="audio.js"></script>
-<script src="draft.js"></script> 
-
-<script type="module" src="online_draft.js"></script>
+    <script src="audio.js"></script>
+    <script src="draft.js"></script> 
 </body>
 </html>
