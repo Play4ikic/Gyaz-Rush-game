@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, update, push, get, remove, off } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, update, remove, off } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDq3-wPkua6nMUt3cetwwC_-4iVtx-7PiQ",
@@ -29,10 +29,16 @@ let usedIndexes = [];
 // СТАРТ ПРИ ЗАГРУЗКЕ
 window.onload = async function() {
     if (matchId && myRole) {
+        // Сразу скрываем меню и показываем арену
+        const setup = document.getElementById('setup-screen');
+        if(setup) setup.classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+
         const statusText = document.querySelector('.logo-text');
         if (statusText) statusText.innerText = "ПОДКЛЮЧЕНИЕ К БОЮ...";
 
         if (myRole === "guest") {
+            // Гость обновляет матч, чтобы Хост увидел его вход
             await update(ref(db, `matches/${matchId}`), {
                 guestId: userData.uid,
                 guestName: userData.nickname,
@@ -40,10 +46,9 @@ window.onload = async function() {
             });
             initGameUI();
         } else {
+            // Хост ждет, пока Гость зайдет (статус станет playing)
             listenForOpponent();
         }
-    } else {
-        console.log("Ждем вызова через 1v1.html...");
     }
 };
 
@@ -58,9 +63,6 @@ function listenForOpponent() {
 }
 
 function initGameUI() {
-    const setup = document.getElementById('setup-screen');
-    if(setup) setup.classList.add('hidden');
-    document.getElementById('game-screen').classList.remove('hidden');
     startRound();
 }
 
@@ -121,7 +123,9 @@ function processBattle() {
 
     const pRating = myCard ? Number(myCard.rating) : 0;
     const oRating = oppCard ? Number(oppCard.rating) : 0;
-    if (pRating > oRating) playerScore++; else if (oRating > pRating) oppScore++;
+    
+    if (pRating > oRating) playerScore++; 
+    else if (oRating > pRating) oppScore++;
 
     document.getElementById('p-score').innerText = playerScore;
     document.getElementById('b-score').innerText = oppScore;
@@ -142,8 +146,11 @@ async function endGame() {
         localStorage.setItem('gyaz_user', JSON.stringify(userData));
     }
 
+    // ОЧИСТКА ДАННЫХ
     localStorage.removeItem('currentMatchId');
     localStorage.removeItem('myRole');
+    remove(ref(db, `challenges/${userData.uid}`));
+
     if (myRole === "host" && matchId) {
         setTimeout(() => { remove(ref(db, `matches/${matchId}`)); }, 3000);
     }

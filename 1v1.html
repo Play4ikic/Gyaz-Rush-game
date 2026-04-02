@@ -40,16 +40,14 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        let userData = JSON.parse(localStorage.getItem('gyaz_user')) || { uid: "guest", nickname: "Player" };
+        let userData = JSON.parse(localStorage.getItem('gyaz_user')) || { uid: "guest_" + Math.floor(Math.random()*1000), nickname: "Player" };
 
-        // Обновляем статус
-        if (userData.uid !== "guest") {
-            const myStatusRef = ref(db, `all_players/${userData.uid}`);
-            update(myStatusRef, { nickname: userData.nickname, online: true });
-            onDisconnect(myStatusRef).update({ online: false });
-        }
+        // 1. Статус Онлайн
+        const myStatusRef = ref(db, `all_players/${userData.uid}`);
+        update(myStatusRef, { nickname: userData.nickname, online: true });
+        onDisconnect(myStatusRef).update({ online: false });
 
-        // Функция отправки вызова
+        // 2. Функция отправки вызова (Хост)
         window.sendChallenge = function(targetId) {
             const matchId = "match_" + Date.now();
             const challengeRef = ref(db, `challenges/${targetId}`);
@@ -61,18 +59,19 @@
                 status: "pending"
             });
 
-            alert("Вызов отправлен! Ждем, пока соперник примет...");
+            alert("Вызов отправлен! Ждем ответа...");
 
             onValue(challengeRef, (snap) => {
                 if (snap.exists() && snap.val().status === "accepted") {
                     localStorage.setItem('currentMatchId', matchId);
                     localStorage.setItem('myRole', 'host');
-                    window.parent.location.href = "draft.html"; // Выход из iframe в основное окно
+                    // Перезагружаем ГЛАВНОЕ окно (draft.html)
+                    window.parent.location.reload(); 
                 }
             });
         };
 
-        // Слушаем вызовы для меня
+        // 3. Слушаем вызовы для меня (Гость)
         const myChallengeRef = ref(db, `challenges/${userData.uid}`);
         onValue(myChallengeRef, (snapshot) => {
             if (snapshot.exists()) {
@@ -82,7 +81,8 @@
                         update(myChallengeRef, { status: "accepted" });
                         localStorage.setItem('currentMatchId', data.matchId);
                         localStorage.setItem('myRole', 'guest');
-                        window.parent.location.href = "draft.html";
+                        // Перезагружаем ГЛАВНОЕ окно (draft.html)
+                        window.parent.location.reload(); 
                     } else {
                         remove(myChallengeRef);
                     }
@@ -90,7 +90,7 @@
             }
         });
 
-        // Список игроков
+        // 4. Список игроков
         onValue(ref(db, 'all_players'), (snapshot) => {
             const container = document.getElementById('players-container');
             container.innerHTML = "";
