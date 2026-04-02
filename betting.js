@@ -88,7 +88,7 @@ function startSimulation() {
     }, TICK_RATE); 
 }
 
-// 4. Проверка результатов (ОБНОВЛЕННАЯ ЛОГИКА ТОТАЛА)
+// 4. Проверка результатов (ЛОГИКА ЭКСПРЕССА)
 async function checkResults(betAmount) {
     const { scoreToxic, scoreCheer } = gameState;
     const totalGoals = scoreToxic + scoreCheer;
@@ -97,7 +97,6 @@ async function checkResults(betAmount) {
     let finalMultiplier = 1; 
     let betCount = 0;
 
-    // ПРОВЕРКА ПОБЕДИТЕЛЯ
     if (currentBets.winner) {
         betCount++;
         let wonWinner = false;
@@ -109,20 +108,16 @@ async function checkResults(betAmount) {
         else isWin = false;
     }
 
-    // ПРОВЕРКА ТОТАЛА (ОБНОВЛЕНО: 0-4 и 5+)
     if (isWin && currentBets.total) {
         betCount++;
         let wonTotal = false;
-        
-        // Логика под новые значения
-        if (currentBets.total === 'under4' && totalGoals <= 4) wonTotal = true;
-        if (currentBets.total === 'over5' && totalGoals >= 5) wonTotal = true;
+        if (currentBets.total === 'under2' && totalGoals <= 2) wonTotal = true;
+        if (currentBets.total === 'over3' && totalGoals >= 3) wonTotal = true;
 
         if (wonTotal) finalMultiplier *= 2; 
         else isWin = false;
     }
 
-    // ПРОВЕРКА ТОЧНОГО СЧЕТА
     if (isWin && currentBets.exact) {
         betCount++;
         const inputToxic = parseInt(document.getElementById('score-toxic').value) || 0;
@@ -137,6 +132,7 @@ async function checkResults(betAmount) {
 
     if (isWin && betCount > 0) {
         const winAmount = Math.floor(betAmount * finalMultiplier);
+        // Зачисляем выигрыш в банк
         await updateBalance(winAmount); 
         alert(`🔥 ПОБЕДА! Коэффициент: x${finalMultiplier}. Выигрыш: ${winAmount} CY`);
     } else if (betCount === 0) {
@@ -175,6 +171,7 @@ window.confirmAndStart = async function() {
         return;
     }
 
+    // Списываем ставку из банка
     const success = await updateBalance(-betAmount);
 
     if (success) {
@@ -187,7 +184,7 @@ window.confirmAndStart = async function() {
         startSimulation();
     } else {
         amountInput.style.borderColor = "red";
-        alert("Недостаточно CY!");
+        alert("Эльджан, недостаточно CY!");
     }
 };
 
