@@ -123,14 +123,23 @@ function endGame() {
     if (win) {
         reward = 3000;
         alert(`ПОБЕДА! Вы выиграли ${reward} CY!`);
+
+        // --- ЛОГИКА КВЕСТА ---
+        // Получаем текущее количество побед для квеста (если нет, то 0)
+        let draftWins = parseInt(localStorage.getItem('quest_draft_wins')) || 0;
+        // Прибавляем 1 победу
+        draftWins++;
+        // Сохраняем обратно
+        localStorage.setItem('quest_draft_wins', draftWins.toString());
+        // ---------------------
+
     } else if (playerScore === botScore) {
-        reward = 500; // Бонус за ничью
+        reward = 500; 
         alert(`НИЧЬЯ! Утешительный приз: ${reward} CY`);
     } else {
         alert("КОНЕЦ МАТЧА. Попробуйте еще раз!");
     }
 
-    // Если есть награда, обновляем баланс в localStorage
     if (reward > 0) {
         let currentBalance = parseInt(localStorage.getItem('fixone_balance')) || 0;
         localStorage.setItem('fixone_balance', (currentBalance + reward).toString());

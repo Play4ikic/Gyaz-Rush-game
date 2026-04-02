@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GY Pass: Задания</title>
+    <style>
+        :root {
+            --dark-bg: #0a0a0a;
+            --fixone-yellow: #ffcc00; 
+            --task-bg: #1a1a1a;
+            --gray-text: #888;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--dark-bg);
+            font-family: 'Arial Black', sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            border-bottom: 3px solid #222;
+        }
+
+        .back-btn {
+            font-size: 30px;
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+
+        .title { font-size: 22px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .quests-container {
+            flex-grow: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        .quest-card {
+            background: var(--task-bg);
+            border: 2px solid #333;
+            border-radius: 15px;
+            padding: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .quest-info { width: 65%; }
+        .quest-info h3 { margin: 0; font-size: 16px; text-transform: uppercase; color: #fff; }
+        .quest-info p { margin: 4px 0; color: var(--fixone-yellow); font-size: 14px; }
+
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            margin: 10px 0 5px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--fixone-yellow);
+            width: 0%;
+            transition: width 0.5s ease-out;
+        }
+
+        .progress-text { font-size: 11px; color: var(--gray-text); font-family: sans-serif; }
+
+        .complete-btn {
+            background: var(--fixone-yellow);
+            color: black;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 12px;
+            cursor: pointer;
+            min-width: 110px;
+            text-transform: uppercase;
+        }
+
+        .complete-btn:disabled {
+            background: #333 !important;
+            color: #666 !important;
+            cursor: not-allowed;
+        }
+
+        .footer {
+            height: 90px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            align-items: center;
+            background: #000;
+            border-top: 3px solid #222;
+        }
+
+        .menu-btn {
+            padding: 15px 40px;
+            border-radius: 35px;
+            border: 2px solid #444;
+            background: none;
+            color: #fff;
+            font-weight: 900;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .menu-btn.active {
+            background: var(--fixone-yellow);
+            color: black;
+            border-color: var(--fixone-yellow);
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="back-btn" onclick="window.location.href='index.html'">←</div>
+    <div class="title">ЗАДАНИЯ СЕЗОНА</div>
+</div>
+
+<div class="quests-container" id="quests-list"></div>
+
+<footer class="footer">
+    <button class="menu-btn" onclick="window.location.href='index.html'">НАГРАДЫ</button>
+    <button class="menu-btn active">ЗАДАНИЯ</button>
+</footer>
+
+<script>
+    const QUEST_CONFIG = {
+        draft: { target: 5, reward: 500, storageKey: 'quest_draft_wins', title: 'Выиграть в драфте' },
+        streak: { target: 5, reward: 2000, storageKey: 'quest_bet_streak', title: 'Серия побед в ставках' }
+    };
+
+    function renderQuests() {
+        const list = document.getElementById('quests-list');
+        list.innerHTML = "";
+
+        // 1. Динамические квесты (Драфт и Ставки)
+        Object.keys(QUEST_CONFIG).forEach(type => {
+            const config = QUEST_CONFIG[type];
+            const currentProgress = parseInt(localStorage.getItem(config.storageKey)) || 0;
+            const isDone = currentProgress >= config.target;
+            const percent = Math.min((currentProgress / config.target) * 100, 100);
+
+            const card = document.createElement('div');
+            card.className = 'quest-card';
+            card.innerHTML = `
+                <div class="quest-info">
+                    <h3>${config.title}</h3>
+                    <p>+${config.reward} XP</p>
+                    <div class="progress-container">
+                        <div class="progress-fill" style="width: ${percent}%"></div>
+                    </div>
+                    <div class="progress-text">Прогресс: ${currentProgress} / ${config.target}</div>
+                </div>
+                <button class="complete-btn" ${!isDone ? 'disabled' : ''} onclick="claimReward('${type}')">
+                    ${isDone ? 'ЗАБРАТЬ' : 'В ПРОЦЕССЕ'}
+                </button>
+            `;
+            list.appendChild(card);
+        });
+
+        // 2. Ежедневный квест (Зайти в игру)
+        const lastClaim = localStorage.getItem('last_daily_claim');
+        const now = Date.now();
+        const oneDay = 24 * 60 * 60 * 1000;
+        const isLocked = lastClaim && (now - lastClaim) < oneDay;
+
+        const dailyCard = document.createElement('div');
+        dailyCard.className = 'quest-card';
+        
+        let buttonText = 'ВЫПОЛНИТЬ';
+        if (isLocked) {
+            const hoursLeft = Math.ceil((oneDay - (now - lastClaim)) / (1000 * 60 * 60));
+            buttonText = `${hoursLeft} Ч.`;
+        }
+
+        dailyCard.innerHTML = `
+            <div class="quest-info">
+                <h3>Зайти в игру</h3>
+                <p>+200 XP</p>
+                <div class="progress-text" style="margin-top: 10px;">Доступно раз в 24 часа</div>
+            </div>
+            <button class="complete-btn" ${isLocked ? 'disabled' : ''} onclick="claimDaily()">
+                ${buttonText}
+            </button>
+        `;
+        list.appendChild(dailyCard);
+    }
+
+    function claimReward(type) {
+        const config = QUEST_CONFIG[type];
+        addXP(config.reward);
+        localStorage.setItem(config.storageKey, '0');
+        alert(`Награда получена! +${config.reward} XP`);
+        renderQuests();
+    }
+
+    function claimDaily() {
+        const lastClaim = localStorage.getItem('last_daily_claim');
+        const now = Date.now();
+        const oneDay = 24 * 60 * 60 * 1000;
+
+        if (lastClaim && (now - lastClaim) < oneDay) return;
+
+        addXP(200);
+        localStorage.setItem('last_daily_claim', now);
+        alert("Награда за вход получена! +200 XP");
+        renderQuests();
+    }
+
+    function addXP(amount) {
+        let currentXP = parseInt(localStorage.getItem('playerXP')) || 0;
+        localStorage.setItem('playerXP', currentXP + amount);
+    }
+
+    window.onload = renderQuests;
+</script>
+
+</body>
+</html>

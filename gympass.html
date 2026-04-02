@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GY Pass: Spring Season</title>
+    <style>
+        :root {
+            --dark-bg: #0a0a0a;
+            --fixone-yellow: #ffcc00; 
+            --claimed-green: #00ff88;
+        }
+
+        html, body {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background-color: var(--dark-bg);
+            font-family: 'Arial Black', sans-serif;
+            color: white;
+        }
+
+        .pass-container {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+        }
+
+        /* ШАПКА */
+        .pass-header {
+            height: 100px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            background: rgba(0,0,0,0.9);
+            border-bottom: 3px solid #222;
+            z-index: 100;
+        }
+
+        .balance-display {
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border: 2px solid var(--fixone-yellow);
+            border-radius: 12px;
+            font-size: 18px;
+        }
+
+        .xp-bar-container { width: 300px; text-align: center; }
+        .xp-bg { height: 14px; background: #333; border-radius: 7px; overflow: hidden; border: 1px solid #000; }
+        .xp-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #ffcc00, #ffa500); transition: 1s; }
+
+        /* ЗОНА ПРОКРУТКИ */
+        .scroll-area { 
+            flex-grow: 1; 
+            overflow-x: auto; 
+            display: flex;
+            align-items: center;
+        }
+
+        .track-wrapper {
+            display: flex;
+            min-width: max-content;
+            padding-right: 100px;
+            height: 100%;
+            align-items: center;
+        }
+
+        .logos-column {
+            position: sticky;
+            left: 0;
+            z-index: 90;
+            background: rgba(10, 10, 10, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 130px;
+            padding: 20px;
+            border-right: 3px solid #333;
+            box-shadow: 15px 0 30px rgba(0,0,0,0.8);
+        }
+        .logos-column img { width: 120px; height: 120px; object-fit: contain; cursor: pointer; transition: 0.3s; }
+
+        .levels-grid {
+            display: flex;
+            gap: 0;
+            padding-left: 40px;
+        }
+
+        .level-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 180px;
+            position: relative;
+        }
+
+        .tile {
+            width: 130px;
+            height: 130px;
+            border: 5px solid #000;
+            border-radius: 20px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            transition: 0.2s;
+            z-index: 5;
+            background-size: 70% !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+        }
+
+        .premium-tile { background: linear-gradient(135deg, #a55eea, #8e44ad); margin-bottom: 30px; }
+        .free-tile { background: linear-gradient(135deg, #fed330, #f1c40f); margin-top: 30px; }
+
+        .tile.locked { filter: grayscale(1) brightness(0.3); }
+        .tile.locked::after { content: "🔒"; position: absolute; top: 30%; left: 35%; font-size: 40px; }
+
+        .tile.claimed::before {
+            content: "✔"; position: absolute; top: -15px; left: -15px;
+            width: 45px; height: 45px; background: var(--claimed-green);
+            border: 4px solid #000; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-size: 26px; 
+            color: #000; z-index: 20;
+        }
+
+        /* ЦЕНТРАЛЬНАЯ ЛИНИЯ */
+        .node-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 60px;
+            position: relative;
+        }
+
+        .connector {
+            position: absolute;
+            left: 50%;
+            width: 180px;
+            height: 8px;
+            background: #333;
+            z-index: 1;
+        }
+
+        .connector.active {
+            background: var(--fixone-yellow);
+            box-shadow: 0 0 10px var(--fixone-yellow);
+        }
+
+        .node {
+            width: 50px; height: 50px; background: #222; border: 4px solid #444;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: 900; z-index: 10; position: relative;
+        }
+
+        .node.active { 
+            background: var(--fixone-yellow); 
+            color: #000; 
+            border-color: #fff; 
+            box-shadow: 0 0 20px var(--fixone-yellow); 
+        }
+
+        /* МОДАЛКИ */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); display: none; justify-content: center; 
+            align-items: center; z-index: 1000; backdrop-filter: blur(8px);
+        }
+        
+        .buy-menu { 
+            background: #111; border: 4px solid var(--fixone-yellow); 
+            padding: 40px; border-radius: 30px; text-align: center; width: 350px;
+        }
+
+        .buy-btn {
+            width: 100%; padding: 15px; background: #00ff88; border: none; 
+            border-radius: 12px; font-weight: 900; cursor: pointer; font-size: 18px;
+            margin-top: 20px; transition: 0.3s;
+        }
+
+        @keyframes cardPop {
+            0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
+        .reveal-card { animation: cardPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        .pass-footer { height: 90px; display: flex; justify-content: center; gap: 40px; align-items: center; background: #000; border-top: 3px solid #222; }
+        .menu-btn { padding: 15px 70px; border-radius: 35px; border: 2px solid #444; background: none; color: #fff; font-weight: 900; cursor: pointer; text-decoration: none; }
+        .menu-btn.active { background: var(--fixone-yellow); color: #000; }
+        .exit-btn { position: absolute; top: 25px; left: 25px; font-size: 35px; color: #fff; text-decoration: none; z-index: 200; }
+    </style>
+</head>
+<body>
+
+<div class="modal-overlay" id="reveal-screen">
+    <div style="text-align: center;">
+        <h1 style="color: var(--fixone-yellow); margin-bottom: 20px;">НОВАЯ НАГРАДА!</h1>
+        <img id="reveal-img" class="reveal-card" src="" style="width: 280px; filter: drop-shadow(0 0 20px gold);">
+        <button class="buy-btn" onclick="closeReveal()" style="width: 220px; background: white; color: black; margin-top: 30px;">ЗАКРЫТЬ</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="buy-modal">
+    <div class="buy-menu">
+        <h2 style="color: var(--fixone-yellow); margin-top: 0;">АКТИВАЦИЯ PASS+</h2>
+        <img src="images/pass+.png" style="width: 120px; margin: 10px 0;">
+        <p style="color: #bbb;">Разблокируйте эксклюзивные награды!</p>
+        <p style="font-size: 28px; color: #00ff88; margin: 15px 0; font-weight: 900;">5 000 000 CY</p>
+        <button class="buy-btn" onclick="confirmPurchase()">КУПИТЬ</button>
+        <p onclick="closeBuyMenu()" style="margin-top:20px; cursor:pointer; color:#666;">ПОЗЖЕ</p>
+    </div>
+</div>
+
+<div class="pass-container">
+    <a href="index.html" class="exit-btn">←</a>
+
+    <header class="pass-header">
+        <div class="balance-display" id="user-money-display">0 CY</div>
+        <div class="xp-bar-container">
+            <div class="xp-bg"><div class="xp-fill" id="xp-fill"></div></div>
+            <div id="xp-text" style="font-size: 14px; margin-top: 4px;">LVL 1 | 0 / 1000 XP</div>
+        </div>
+        <div style="width: 120px;"></div>
+    </header>
+
+    <main class="scroll-area">
+        <div class="track-wrapper">
+            <div class="logos-column">
+                <img src="images/pass+.png" id="pass-plus-logo" onclick="openBuyMenu()">
+                <img src="images/pass.png">
+            </div>
+            <div class="levels-grid" id="pass-grid"></div>
+        </div>
+    </main>
+
+    <footer class="pass-footer">
+        <button class="menu-btn active">НАГРАДЫ</button>
+        <button class="menu-btn" onclick="window.location.href='quests.html'">ЗАДАНИЯ</button>
+    </footer>
+</div>
+
+<script>
+    // --- ДАННЫЕ ИГРОКОВ ---
+    const goldPlayers = [
+        { name: 'Bayturan', folder: 'Gold', file: 'Bayturan-85.png' },
+        { name: 'Nazrin', folder: 'Gold', file: 'Nazrin-82.png' }
+    ];
+    const championsPlayers = [
+        { name: 'Eldjan', folder: 'Champions', file: 'Elcan-96.png' },
+        { name: 'Tuncay', folder: 'Champions', file: 'Tuncay-91.png' }
+    ];
+
+    const PASS_DATA = {
+        1: { free: { type: 'pack', id: 'gold', img: 'images/gold_pack.png' }, premium: { type: 'pack', id: 'champions', img: 'images/champions_pack.png' } },
+        2: { free: { type: 'money', amount: 50000, img: 'images/coin.png' }, premium: { type: 'money', amount: 150000, img: 'images/coin_stack.png' } },
+        10: { 
+            free: { type: 'player', name: 'Tuncay', folder: 'Champions', file: 'Tuncay-91.png', img: 'Champions/Tuncay-91.png' }, 
+            premium: { type: 'player', name: 'Turqay', folder: 'Toty', file: 'Turqay-97.png', img: 'Toty/Turqay-97.png' } 
+        }
+    };
+
+    // --- СОСТОЯНИЕ (СИНХРОНИЗИРОВАНО С ЭКОНОМИКОЙ) ---
+    const player = {
+        money: parseInt(localStorage.getItem('fixone_balance')) || 0,
+        xp: parseInt(localStorage.getItem('playerXP')) || 0,
+        xpPerLevel: 1000,
+        hasPremium: localStorage.getItem('hasPassPlus') === 'true',
+        claimed: JSON.parse(localStorage.getItem('claimedRewards')) || []
+    };
+
+    function init() {
+        renderLevels();
+        updateUI();
+    }
+
+    function renderLevels() {
+        const grid = document.getElementById('pass-grid');
+        grid.innerHTML = "";
+        const currentLvl = Math.floor(player.xp / player.xpPerLevel) + 1;
+
+        for (let i = 1; i <= 10; i++) {
+            const lvlData = PASS_DATA[i] || PASS_DATA[1]; 
+            const col = document.createElement('div');
+            col.className = 'level-column';
+
+            col.appendChild(createTile(i, 'premium', currentLvl, lvlData.premium));
+            
+            const nodeRow = document.createElement('div');
+            nodeRow.className = 'node-row';
+            
+            if (i < 10) {
+                const conn = document.createElement('div');
+                conn.className = `connector ${i < currentLvl ? 'active' : ''}`;
+                nodeRow.appendChild(conn);
+            }
+
+            const node = document.createElement('div');
+            node.className = `node ${i <= currentLvl ? 'active' : ''}`;
+            node.innerText = i;
+            nodeRow.appendChild(node);
+            col.appendChild(nodeRow);
+
+            col.appendChild(createTile(i, 'free', currentLvl, lvlData.free));
+            grid.appendChild(col);
+        }
+    }
+
+    function createTile(lvl, type, currentLvl, config) {
+        const tile = document.createElement('div');
+        const id = `${type}-${lvl}`;
+        tile.className = `tile ${type}-tile`;
+        tile.style.background = `url('${config.img}')`;
+
+        if (type === 'premium' && !player.hasPremium) tile.classList.add('locked');
+        if (player.claimed.includes(id)) tile.classList.add('claimed');
+
+        tile.onclick = () => {
+            if (type === 'premium' && !player.hasPremium) { openBuyMenu(); return; }
+            if (lvl > currentLvl) { alert("Недостаточно XP!"); return; }
+            if (player.claimed.includes(id)) return;
+            handleReward(config, id, tile);
+        };
+        return tile;
+    }
+
+    function handleReward(config, id, tile) {
+        player.claimed.push(id);
+        localStorage.setItem('claimedRewards', JSON.stringify(player.claimed));
+        tile.classList.add('claimed');
+
+        if (config.type === 'money') {
+            player.money += config.amount;
+            saveMoney();
+            alert(`+${config.amount} CY!`);
+        } else if (config.type === 'pack') {
+            let pool = config.id === 'champions' ? championsPlayers : goldPlayers;
+            let drop = pool[Math.floor(Math.random() * pool.length)];
+            showReveal(drop);
+            addToInv(drop);
+        } else if (config.type === 'player') {
+            showReveal(config);
+            addToInv(config);
+        }
+        updateUI();
+    }
+
+    function showReveal(p) {
+        document.getElementById('reveal-img').src = `${p.folder}/${p.file}`;
+        document.getElementById('reveal-screen').style.display = 'flex';
+    }
+
+    window.closeReveal = () => document.getElementById('reveal-screen').style.display = 'none';
+
+    function addToInv(p) {
+        let inv = JSON.parse(localStorage.getItem('myPlayers')) || [];
+        inv.push(p);
+        localStorage.setItem('myPlayers', JSON.stringify(inv));
+    }
+
+    function saveMoney() {
+        localStorage.setItem('fixone_balance', player.money.toString());
+    }
+
+    function updateUI() {
+        document.getElementById('user-money-display').innerText = player.money.toLocaleString() + " CY";
+        const lvl = Math.floor(player.xp / player.xpPerLevel) + 1;
+        const prog = (player.xp % player.xpPerLevel) / player.xpPerLevel * 100;
+        document.getElementById('xp-fill').style.width = prog + "%";
+        document.getElementById('xp-text').innerText = `LVL ${lvl} | ${player.xp % player.xpPerLevel} / ${player.xpPerLevel} XP`;
+        
+        if (player.hasPremium) {
+            document.getElementById('pass-plus-logo').style.filter = "drop-shadow(0 0 15px gold) brightness(1.2)";
+        }
+    }
+
+    function openBuyMenu() { 
+        if (player.hasPremium) {
+            alert("Pass+ уже активирован!");
+            return;
+        }
+        document.getElementById('buy-modal').style.display = 'flex'; 
+    }
+
+    function closeBuyMenu() { document.getElementById('buy-modal').style.display = 'none'; }
+
+    function confirmPurchase() {
+        if (player.hasPremium) return;
+        if (player.money >= 5000000) {
+            player.money -= 5000000;
+            player.hasPremium = true;
+            saveMoney();
+            localStorage.setItem('hasPassPlus', 'true');
+            renderLevels();
+            updateUI();
+            closeBuyMenu();
+            alert("Pass+ Активирован!");
+        } else {
+            alert("Недостаточно CY!");
+        }
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>

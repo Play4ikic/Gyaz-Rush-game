@@ -1,5 +1,13 @@
 import { updateBalance, refreshBalanceDisplay } from './economy.js';
 
+// --- ЛОГИКА КВЕСТОВ ---
+let currentBetStreak = parseInt(localStorage.getItem('quest_bet_streak')) || 0;
+
+function addXP(amount) {
+    let currentXP = parseInt(localStorage.getItem('playerXP')) || 0;
+    localStorage.setItem('playerXP', currentXP + amount);
+}
+
 // 1. Состояние игры
 let currentBets = { winner: null, total: null, exact: false };
 let gameState = {
@@ -13,7 +21,7 @@ let gameState = {
 // Константы реализма
 const CHANCE_OF_ATTACK = 0.18; 
 const GOAL_PROBABILITY = 0.25; 
-const MATCH_DURATION_MS = 20000; // 20 секунд на матч
+const MATCH_DURATION_MS = 20000; 
 const TICK_RATE = MATCH_DURATION_MS / 90; 
 
 // БЛОКИРОВКА НАВИГАЦИИ
@@ -35,7 +43,7 @@ function toggleNavigation(isLocked) {
 }
 
 // 2. Выбор ставки (интерфейс)
-window.selectBet = function(type, value, element) {
+function selectBet(type, value, element) {
     if (gameState.isMatchRunning) return; 
 
     const parent = element.parentElement;
@@ -48,13 +56,13 @@ window.selectBet = function(type, value, element) {
         element.classList.add('selected');
         currentBets[type] = value;
     }
-};
+}
 
-window.toggleExact = function() {
+function toggleExact() {
     if (gameState.isMatchRunning) return;
     currentBets.exact = !currentBets.exact;
     document.getElementById('exact-btn').classList.toggle('selected');
-};
+}
 
 // 3. Симуляция матча
 function startSimulation() {
@@ -88,7 +96,7 @@ function startSimulation() {
     }, TICK_RATE); 
 }
 
-// 4. Проверка результатов (ЛОГИКА ЭКСПРЕССА)
+// 4. Проверка результатов (ЛОГИКА ЭКСПРЕССА + КВЕСТ)
 async function checkResults(betAmount) {
     const { scoreToxic, scoreCheer } = gameState;
     const totalGoals = scoreToxic + scoreCheer;
@@ -130,15 +138,32 @@ async function checkResults(betAmount) {
         }
     }
 
-    if (isWin && betCount > 0) {
-        const winAmount = Math.floor(betAmount * finalMultiplier);
-        // Зачисляем выигрыш в банк
-        await updateBalance(winAmount); 
-        alert(`🔥 ПОБЕДА! Коэффициент: x${finalMultiplier}. Выигрыш: ${winAmount} CY`);
-    } else if (betCount === 0) {
+    if (betCount === 0) {
         alert("Ты не выбрал ни одного исхода!");
+        return;
+    }
+
+    if (isWin) {
+        const winAmount = Math.floor(betAmount * finalMultiplier);
+        await updateBalance(winAmount); 
+        
+        // Логика квеста: победа
+        currentBetStreak++;
+        localStorage.setItem('quest_bet_streak', currentBetStreak);
+        
+        alert(`🔥 ПОБЕДА! Коэффициент: x${finalMultiplier}. Выигрыш: ${winAmount} CY\nСерия побед: ${currentBetStreak}/5`);
+
+        if (currentBetStreak >= 5) {
+            addXP(2000);
+            alert("🏆 ЗАДАНИЕ ВЫПОЛНЕНО: 5 побед подряд! +2000 XP");
+            currentBetStreak = 0; 
+            localStorage.setItem('quest_bet_streak', 0);
+        }
     } else {
-        alert(`❌ ПРОИГРЫШ. Итог матча: ${scoreToxic}:${scoreCheer}`);
+        // Логика квеста: проигрыш (сброс серии)
+        currentBetStreak = 0;
+        localStorage.setItem('quest_bet_streak', 0);
+        alert(`❌ ПРОИГРЫШ. Серия прервана. Итог матча: ${scoreToxic}:${scoreCheer}`);
     }
 }
 
@@ -160,7 +185,7 @@ function finishMatch() {
 }
 
 // 6. Главная кнопка Старта
-window.confirmAndStart = async function() {
+async function confirmAndStart() {
     const amountInput = document.getElementById('bet-amount');
     const betAmount = parseInt(amountInput.value) || 0;
 
@@ -171,7 +196,6 @@ window.confirmAndStart = async function() {
         return;
     }
 
-    // Списываем ставку из банка
     const success = await updateBalance(-betAmount);
 
     if (success) {
@@ -186,7 +210,12 @@ window.confirmAndStart = async function() {
         amountInput.style.borderColor = "red";
         alert("Эльджан, недостаточно CY!");
     }
-};
+}
+
+// --- ЭКСПОРТ ДЛЯ HTML ---
+window.selectBet = selectBet;
+window.toggleExact = toggleExact;
+window.confirmAndStart = confirmAndStart;
 
 document.addEventListener('DOMContentLoaded', () => {
     refreshBalanceDisplay();

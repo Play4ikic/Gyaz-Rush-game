@@ -146,6 +146,22 @@
     <script src="script.js"></script>
 
     <script>
+        function checkDailyLogin() {
+    const lastLogin = localStorage.getItem('lastLoginDate');
+    const today = new Date().toDateString();
+
+    if (lastLogin !== today) {
+        let streak = parseInt(localStorage.getItem('loginStreak') || 0);
+        streak++;
+        localStorage.setItem('loginStreak', streak);
+        localStorage.setItem('lastLoginDate', today);
+
+        if (streak >= 7) {
+            addXP(1000);
+            alert("📅 7 дней в игре! Опыт начислен.");
+        }
+    }
+}
         // Функции для управления окном "ЛЮДИ"
         function openOnline() {
             document.getElementById('online-modal').style.display = 'flex';
