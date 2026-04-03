@@ -362,12 +362,8 @@
     window.closeReveal = () => document.getElementById('reveal-screen').style.display = 'none';
 
     function saveMoney() {
-    // Обновляем через общую систему, чтобы везде цифры прыгнули сразу
-    localStorage.setItem('fixone_balance', player.money.toString());
-    if (typeof refreshBalanceDisplay === 'function') {
-        refreshBalanceDisplay();
+        localStorage.setItem('fixone_balance', player.money.toString());
     }
-}
 
     function updateUI() {
         document.getElementById('user-money-display').innerText = player.money.toLocaleString() + " CY";
