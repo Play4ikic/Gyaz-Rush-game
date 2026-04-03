@@ -2,85 +2,82 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FixOne FC - Hub</title>
+    <link rel="icon" href="favicon.png" type="image/png">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ВЕРХНЯЯ ПАНЕЛЬ НАВИГАЦИИ */
+        /* ВОЗВРАТ ПРЕЖНЕГО СТИЛЯ */
         .top-nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 10px 20px;
-            background: rgba(0,0,0,0.85);
+            background: rgba(0,0,0,0.8);
             backdrop-filter: blur(10px);
-            border-bottom: 2px solid #222;
             position: relative;
             z-index: 100;
         }
 
-        .menu-tabs { display: flex; gap: 15px; }
-        
-        .tab-item {
-            color: #888;
-            font-weight: 900;
+        .business-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            padding: 5px 15px;
+            border-radius: 12px;
             cursor: pointer;
-            padding: 10px 15px;
-            transition: 0.3s;
-            text-transform: uppercase;
-            font-size: 14px;
+            min-width: 120px;
+            margin-right: 15px;
         }
 
-        .tab-item.active { color: #fff; border-bottom: 3px solid #00ff88; }
-        .tab-item:hover { color: #fff; }
+        .business-label { font-size: 10px; color: #aaa; text-transform: uppercase; }
+        .business-money { color: #00ff88; font-weight: bold; font-family: monospace; }
 
-        /* ВИДЖЕТ PASS (Левый нижний угол) */
+        /* УВЕЛИЧЕННЫЙ ВИДЖЕТ PASS (Левый нижний угол) */
         .pass-widget {
             position: fixed;
-            bottom: 25px;
-            left: 25px;
-            width: 210px;
+            bottom: 30px;
+            left: 30px;
+            width: 280px; /* Увеличено с 200px */
             z-index: 1000;
             cursor: pointer;
             transition: transform 0.1s;
         }
-
         .pass-widget:hover { transform: scale(1.05); }
         .pass-widget:active { transform: scale(0.95); }
 
         .pass-card {
             background: linear-gradient(180deg, #f1c40f 0%, #d4ac0d 100%);
-            border: 4px solid #000;
-            border-radius: 14px;
-            padding: 8px 12px;
+            border: 5px solid #000; /* Утолщенная рамка */
+            border-radius: 18px;
+            padding: 15px; /* Увеличенные отступы */
             display: flex;
             align-items: center;
-            gap: 12px;
-            box-shadow: 0 6px 0 #856404;
+            gap: 15px;
+            box-shadow: 0 8px 0 #856404;
         }
 
         .pass-ticket-icon { 
-            width: 42px; 
-            filter: drop-shadow(2px 2px 0 #000); 
+            width: 60px; /* Увеличено с 40px */
+            filter: drop-shadow(3px 3px 0 #000); 
         }
 
         .pass-xp-container {
             flex-grow: 1;
             background: rgba(0,0,0,0.4);
             border-radius: 10px;
-            height: 22px;
+            height: 30px; /* Увеличено с 20px */
             position: relative;
-            border: 2px solid #000;
+            border: 3px solid #000;
             overflow: hidden;
-            display: flex;
-            align-items: center;
         }
 
         .pass-xp-fill {
             height: 100%;
             width: 0%;
             background: linear-gradient(90deg, #3498db, #2980b9);
-            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: width 0.5s;
         }
 
         .pass-xp-text {
@@ -88,52 +85,28 @@
             width: 100%;
             text-align: center;
             color: white;
-            font-size: 11px;
+            font-size: 14px; /* Крупнее текст */
             font-weight: 900;
-            text-shadow: 1px 1px 0 #000;
+            text-shadow: 2px 2px 0 #000;
+            line-height: 24px;
             z-index: 2;
-            pointer-events: none;
         }
 
-        /* ПАНЕЛЬ ПРЕВЬЮ */
-        .content-preview {
-            display: flex;
+        /* МОДАЛКА ЛЮДИ */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
             justify-content: center;
             align-items: center;
-            height: calc(100vh - 80px);
-        }
-
-        .preview-container {
-            display: flex;
-            width: 80%;
-            max-width: 1000px;
-            background: rgba(20,20,20,0.8);
-            border-radius: 20px;
-            overflow: hidden;
-            border: 1px solid #333;
-            transition: 0.3s;
-        }
-
-        .info-side { padding: 40px; flex: 1; }
-        .image-side { flex: 1; background: #000; display: flex; align-items: center; justify-content: center; }
-        .image-side img { width: 100%; height: 100%; object-fit: cover; }
-
-        .go-btn {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 15px 30px;
-            background: #00ff88;
-            color: #000;
-            text-decoration: none;
-            font-weight: 900;
-            border-radius: 10px;
+            z-index: 10000;
         }
     </style>
 </head>
 <body>
-
     <header class="top-nav">
-        <div class="logo" style="font-weight: 900; color: #fff; font-size: 20px;">GYAZ RUSH</div>
+        <div class="logo" style="font-weight: 900; color: #fff; letter-spacing: 2px;">GYAZ RUSH</div>
         
         <nav class="menu-tabs">
             <div class="tab-item active" onclick="selectTab('news')">НОВОСТИ</div>
@@ -141,17 +114,24 @@
             <div class="tab-item" onclick="selectTab('club')">КЛУБ</div>
             <div class="tab-item" onclick="selectTab('draft')">DRAFT</div>
             <div class="tab-item" onclick="selectTab('market')">РЫНОК</div>
-            <div class="tab-item" onclick="selectTab('pass')" style="color: #ffcc00;">PASS</div>
+            <div class="tab-item" onclick="selectTab('betting')">СТАВКИ</div>
+            <div class="tab-item" onclick="openOnline()" style="color: #e1b12c; font-weight: bold;">ЛЮДИ</div>
         </nav>
 
-        <div id="shop-balance" style="background: #222; padding: 10px 20px; border-radius: 10px; font-weight: 900; color: #00ff88;">
-            0 CY
+        <div class="right-side" style="display: flex; align-items: center;">
+            <div class="business-container" onclick="collectBusinessMoney()">
+                <span class="business-label">Загрузка...</span>
+                <span id="business-display" class="business-money">0 / 6000 CY</span>
+            </div>
+            <div id="shop-balance" style="background: #00ff88; color: #000; padding: 8px 15px; border-radius: 8px; font-weight: bold;">
+                0 CY
+            </div>
         </div>
     </header>
 
     <div class="pass-widget" onclick="window.location.href='gympass.html'">
         <div class="pass-card">
-            <img src="images/pass_ticket.png" class="pass-ticket-icon" alt="Ticket">
+            <img src="images/pass_ticket.png" class="pass-ticket-icon" alt="Pass">
             <div class="pass-xp-container">
                 <div class="pass-xp-text" id="widget-xp-text">0 / 1000</div>
                 <div class="pass-xp-fill" id="widget-xp-fill"></div>
@@ -162,33 +142,35 @@
     <main class="content-preview">
         <div id="preview-box" class="preview-container">
             <div class="info-side">
-                <h2 id="pre-title" style="font-size: 32px; margin-bottom: 10px;">НОВОСТИ</h2>
-                <p id="pre-desc" style="color: #aaa; line-height: 1.6;">Загрузка данных...</p>
-                <a href="#" id="pre-link" class="go-btn">ИГРАТЬ</a>
+                <h2 id="pre-title">НОВОСТИ</h2>
+                <p id="pre-desc">Загрузка последних событий...</p>
+                <a href="#" id="pre-link" class="go-btn">ПЕРЕЙТИ В РЕЖИМ →</a>
             </div>
             <div class="image-side">
-                <img src="Prewie/news.png" id="pre-img">
+                <img src="Prewie/news.png" id="pre-img" alt="Preview">
             </div>
         </div>
     </main>
 
+    <div id="online-modal" class="modal-overlay" onclick="closeOnline()">
+        <div class="modal-content" onclick="event.stopPropagation()" style="width: 90%; max-width: 500px; background: #111; border-radius: 20px;">
+            <iframe src="online.html" style="width: 100%; height: 500px; border: none;"></iframe>
+        </div>
+    </div>
+
     <script src="script.js"></script>
     <script>
-        // Функция обновления прогресса в виджете
         function updateWidgetXP() {
             const xp = parseInt(localStorage.getItem('playerXP')) || 0;
             const xpPerLevel = 1000;
             const currentXP = xp % xpPerLevel;
             const percent = (currentXP / xpPerLevel) * 100;
-
-            const fill = document.getElementById('widget-xp-fill');
-            const text = document.getElementById('widget-xp-text');
-            
-            if(fill) fill.style.width = percent + "%";
-            if(text) text.innerText = `${currentXP} / ${xpPerLevel}`;
+            document.getElementById('widget-xp-fill').style.width = percent + "%";
+            document.getElementById('widget-xp-text').innerText = `${currentXP} / ${xpPerLevel}`;
         }
-
         window.addEventListener('DOMContentLoaded', updateWidgetXP);
+        function openOnline() { document.getElementById('online-modal').style.display = 'flex'; }
+        function closeOnline() { document.getElementById('online-modal').style.display = 'none'; }
     </script>
 </body>
 </html>
