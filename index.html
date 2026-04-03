@@ -214,5 +214,64 @@
     </div>
 
     <script src="audio.js"></script>
+    <script type="module">
+    import { updateBalance } from './economy.js';
+
+    const BIZ_CONFIG = {
+        MAX: 6000,
+        PER_SECOND: 20,
+        VAL_KEY: 'gyaz_biz_val',
+        TIME_KEY: 'gyaz_biz_time'
+    };
+
+    let currentPool = parseFloat(localStorage.getItem(BIZ_CONFIG.VAL_KEY)) || 0;
+    let lastTick = parseInt(localStorage.getItem(BIZ_CONFIG.TIME_KEY)) || Date.now();
+
+    function tick() {
+        const now = Date.now();
+        const diffMs = now - lastTick;
+
+        if (diffMs >= 1000) {
+            const secondsPassed = Math.floor(diffMs / 1000);
+            
+            if (currentPool < BIZ_CONFIG.MAX) {
+                currentPool += secondsPassed * BIZ_CONFIG.PER_SECOND;
+                if (currentPool > BIZ_CONFIG.MAX) currentPool = BIZ_CONFIG.MAX;
+                
+                lastTick += secondsPassed * 1000;
+                localStorage.setItem(BIZ_CONFIG.VAL_KEY, currentPool);
+                localStorage.setItem(BIZ_CONFIG.TIME_KEY, lastTick);
+            }
+        }
+
+        // Обновляем текст в кнопке
+        const display = document.getElementById('business-display');
+        if (display) {
+            display.innerText = Math.floor(currentPool).toLocaleString() + " / " + BIZ_CONFIG.MAX + " CY";
+            // Подсветка красным, если банк полон
+            display.style.color = (currentPool >= BIZ_CONFIG.MAX) ? "#ff4444" : "#00ff88";
+        }
+    }
+
+    // Делаем функцию сбора доступной для HTML-атрибута onclick
+    window.collectBusinessMoney = async function() {
+        if (currentPool >= 1) {
+            const toAdd = Math.floor(currentPool);
+            const success = await updateBalance(toAdd); // Используем твою экономику
+
+            if (success) {
+                currentPool = 0;
+                lastTick = Date.now();
+                localStorage.setItem(BIZ_CONFIG.VAL_KEY, 0);
+                localStorage.setItem(BIZ_CONFIG.TIME_KEY, lastTick);
+                console.log(`Собрано прибыли: ${toAdd} CY`);
+            }
+        }
+    };
+
+    // Запускаем таймер
+    setInterval(tick, 1000);
+    tick();
+</script>
 </body>
 </html>
