@@ -259,8 +259,8 @@
 
     const player = {
         money: parseInt(localStorage.getItem('fixone_balance')) || 0,
-        xp:10000,
-        xpPerLevel: parseInt(localStorage.getItem('playerXP')) || 0,
+        xp:parseInt(localStorage.getItem('playerXP')) || 0,
+        xpPerLevel: 2000,
         hasPremium: localStorage.getItem('hasPassPlus') === 'true',
         claimed: JSON.parse(localStorage.getItem('claimedRewards')) || []
     };
