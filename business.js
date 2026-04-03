@@ -14,27 +14,34 @@ let lastTick = parseInt(localStorage.getItem(CONFIG.TIME_KEY)) || Date.now();
 
 function tick() {
     const now = Date.now();
-    const diffSeconds = Math.floor((now - lastTick) / 1000);
+    // Считаем разницу в миллисекундах
+    const diffMs = now - lastTick;
 
-    if (diffSeconds >= 1) {
-        // Если прошло время, начисляем
+    if (diffMs >= 1000) {
+        // Вычисляем, сколько целых секунд прошло
+        const secondsPassed = Math.floor(diffMs / 1000);
+
         if (currentPool < CONFIG.MAX) {
-            currentPool += diffSeconds * CONFIG.PER_SECOND;
+            // Начисляем за каждую прошедшую секунду
+            currentPool += secondsPassed * CONFIG.PER_SECOND;
+            
             if (currentPool > CONFIG.MAX) currentPool = CONFIG.MAX;
+
+            // ВАЖНО: обновляем время только на количество учтенных секунд
+            // Это исключает потерю миллисекунд
+            lastTick += secondsPassed * 1000;
+
+            // Сохраняем состояние
+            localStorage.setItem(CONFIG.VAL_KEY, Math.floor(currentPool));
+            localStorage.setItem(CONFIG.TIME_KEY, lastTick);
         }
-        
-        // Запоминаем время этого тика
-        lastTick = now;
-        
-        // Сохраняем состояние бизнеса
-        localStorage.setItem(CONFIG.VAL_KEY, currentPool);
-        localStorage.setItem(CONFIG.TIME_KEY, lastTick);
     }
 
-    // Рисуем в HTML
+    // Обновление UI
     const display = document.getElementById('business-display');
     if (display) {
-        display.innerText = Math.floor(currentPool).toLocaleString() + " / " + CONFIG.MAX + " CY";
+        const currentAmount = Math.floor(currentPool);
+        display.innerText = currentAmount.toLocaleString() + " / " + CONFIG.MAX + " CY";
         display.style.color = (currentPool >= CONFIG.MAX) ? "#ff4444" : "#00ff88";
     }
 }
