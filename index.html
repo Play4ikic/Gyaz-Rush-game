@@ -39,7 +39,7 @@
             position: fixed;
             bottom: 30px;
             left: 30px;
-            width: 280px; /* Увеличено с 200px */
+            width: 300px; /* Немного увеличил для надписи */
             z-index: 1000;
             cursor: pointer;
             transition: transform 0.1s;
@@ -49,25 +49,42 @@
 
         .pass-card {
             background: linear-gradient(180deg, #f1c40f 0%, #d4ac0d 100%);
-            border: 5px solid #000; /* Утолщенная рамка */
+            border: 5px solid #000;
             border-radius: 18px;
-            padding: 15px; /* Увеличенные отступы */
+            padding: 12px 15px;
             display: flex;
-            align-items: center;
-            gap: 15px;
+            flex-direction: column; /* Изменено для текста сверху */
+            gap: 5px;
             box-shadow: 0 8px 0 #856404;
         }
 
+        /* Надпись СЕЗОН */
+        .pass-season-label {
+            font-family: 'Arial Black', sans-serif;
+            color: #000;
+            font-size: 14px;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-left: 5px;
+        }
+
+        .pass-main-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+
         .pass-ticket-icon { 
-            width: 60px; /* Увеличено с 40px */
+            width: 55px; 
             filter: drop-shadow(3px 3px 0 #000); 
         }
 
         .pass-xp-container {
             flex-grow: 1;
-            background: rgba(0,0,0,0.4);
+            background: #664400; /* Темно-золотой фон как на скрине */
             border-radius: 10px;
-            height: 30px; /* Увеличено с 20px */
+            height: 28px;
             position: relative;
             border: 3px solid #000;
             overflow: hidden;
@@ -76,7 +93,7 @@
         .pass-xp-fill {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, #3498db, #2980b9);
+            background: #0099ff; /* Голубой цвет прогресса как на скрине */
             transition: width 0.5s;
         }
 
@@ -85,10 +102,10 @@
             width: 100%;
             text-align: center;
             color: white;
-            font-size: 14px; /* Крупнее текст */
+            font-size: 14px;
             font-weight: 900;
             text-shadow: 2px 2px 0 #000;
-            line-height: 24px;
+            line-height: 22px;
             z-index: 2;
         }
 
@@ -120,7 +137,7 @@
 
         <div class="right-side" style="display: flex; align-items: center;">
             <div class="business-container" onclick="collectBusinessMoney()">
-                <span class="business-label">Загрузка...</span>
+                <span class="business-label">Бизнес</span>
                 <span id="business-display" class="business-money">0 / 6000 CY</span>
             </div>
             <div id="shop-balance" style="background: #00ff88; color: #000; padding: 8px 15px; border-radius: 8px; font-weight: bold;">
@@ -131,10 +148,13 @@
 
     <div class="pass-widget" onclick="window.location.href='gympass.html'">
         <div class="pass-card">
-            <img src="images/pass_ticket.png" class="pass-ticket-icon" alt="Pass">
-            <div class="pass-xp-container">
-                <div class="pass-xp-text" id="widget-xp-text">0 / 1000</div>
-                <div class="pass-xp-fill" id="widget-xp-fill"></div>
+            <div class="pass-season-label">SPRING SEASON</div>
+            <div class="pass-main-row">
+                <img src="images/pass_ticket.png" class="pass-ticket-icon" alt="Pass">
+                <div class="pass-xp-container">
+                    <div class="pass-xp-text" id="widget-xp-text">0 / 1000</div>
+                    <div class="pass-xp-fill" id="widget-xp-fill"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -165,10 +185,26 @@
             const xpPerLevel = 1000;
             const currentXP = xp % xpPerLevel;
             const percent = (currentXP / xpPerLevel) * 100;
-            document.getElementById('widget-xp-fill').style.width = percent + "%";
-            document.getElementById('widget-xp-text').innerText = `${currentXP} / ${xpPerLevel}`;
+            
+            const fill = document.getElementById('widget-xp-fill');
+            const text = document.getElementById('widget-xp-text');
+            
+            if(fill) fill.style.width = percent + "%";
+            if(text) text.innerText = `${currentXP} / ${xpPerLevel}`;
         }
-        window.addEventListener('DOMContentLoaded', updateWidgetXP);
+
+        // Обновляем баланс из localStorage
+        function updateHubBalance() {
+            const balance = localStorage.getItem('fixone_balance') || "0";
+            const display = document.getElementById('shop-balance');
+            if(display) display.innerText = parseInt(balance).toLocaleString() + " CY";
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateWidgetXP();
+            updateHubBalance();
+        });
+
         function openOnline() { document.getElementById('online-modal').style.display = 'flex'; }
         function closeOnline() { document.getElementById('online-modal').style.display = 'none'; }
     </script>
