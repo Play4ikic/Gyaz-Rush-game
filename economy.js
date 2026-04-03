@@ -31,11 +31,11 @@ export async function updateBalance(amount) {
 export function refreshBalanceDisplay() {
     const balance = localStorage.getItem('fixone_balance') || "0";
     
-    // Ищем все возможные ID, которые мы использовали на разных страницах
     const displays = [
         document.getElementById('balance-display'),
         document.getElementById('shop-balance'),
-        document.getElementById('user-balance')
+        document.getElementById('user-balance'),
+        document.getElementById('user-money-display') // ДОБАВЬ ЭТОТ ID
     ];
 
     displays.forEach(el => {
