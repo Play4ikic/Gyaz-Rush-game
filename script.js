@@ -1,42 +1,45 @@
 const tabData = {
     news: { 
         title: "ПОСЛЕДНИЕ НОВОСТИ", 
-        desc: "Новый сезон уже стартует.Успей получить новые Карточки", 
+        desc: "Новый весенний сезон FixOne FC уже здесь! Успей забрать уникальные карточки Eldzhan и Tuncay.", 
         img: "Prewie/news.png", 
         link: "#" 
     },
     shop: { 
         title: "МАГАЗИН ПАКОВ", 
-        desc: "Открывай эксклюзивные паки Toty Pack. Попробуй выбить TOTY или Champions карты!", 
+        desc: "Трать свои CY на элитные наборы. Шанс выбить TOTY или Champions карты повышен!", 
         img: "Prewie/shop.jpg", 
         link: "shop.html" 
     },
     club: { 
-        title: "УПРАВЛЕНИЕ КЛУБОМ", 
-        desc: "Настрой свой состав, проверь средний рейтинг (AVG) и расставь игроков на поле.", 
+        title: "МОЙ КЛУБ", 
+        desc: "Настраивай тактику, меняй состав и следи за рейтингом (AVG) своей команды.", 
         img: "Prewie/club.png", 
         link: "club.html" 
     },
     draft: { 
         title: "DRAFT BATTLE", 
-        desc: "Выбери сложность и сразись в бою.Твой клуб твое решение!", 
+        desc: "Собери команду из случайных игроков и докажи, что ты лучший тренер в быстром турнире.", 
         img: "Prewie/draft.png", 
         link: "draft.html" 
     },
     market: { 
         title: "ТРАНСФЕРНЫЙ РЫНОК", 
-        desc: "Продавай своих игроков.Создай свой Бизнес", 
+        desc: "Торгуй игроками с умом. Покупай дешево, продавай дорого и строй свою империю.", 
         img: "Prewie/market.png", 
         link: "market.html" 
     },
-    betting: { 
-        title: "BETTING ARENA", 
-        desc: "Ставь на Toxic или Cheerleaders. Угадывай точный счет и умножай свои Деньги в 10 раз!", 
-        img: "Prewie/betting.png", 
-        link: "betting.html" 
+    pass: { 
+        title: "GY PASS: SPRING", 
+        desc: "Проходи уровни, зарабатывай опыт и открывай премиальные награды этого сезона.", 
+        img: "Prewie/pass.png", 
+        link: "gympass.html" 
     }
 };
 
+/**
+ * Функция переключения контента в центре экрана
+ */
 function selectTab(tabKey) {
     const data = tabData[tabKey];
     if (!data) return;
@@ -44,69 +47,53 @@ function selectTab(tabKey) {
     const container = document.getElementById('preview-box');
     const goBtn = document.getElementById('pre-link');
 
-    // Эффект переключения
+    // Анимация затухания
     container.style.opacity = "0";
-    container.style.transform = "scale(0.95)";
+    container.style.transform = "translateY(10px)";
 
     setTimeout(() => {
         document.getElementById('pre-title').innerText = data.title;
         document.getElementById('pre-desc').innerText = data.desc;
         document.getElementById('pre-img').src = data.img;
         
-        // Назначаем ссылку кнопке
         goBtn.href = data.link;
-
-        // Если это новости — кнопку входа прячем
+        // Скрываем кнопку, если это раздел новостей
         goBtn.style.display = (data.link === "#") ? "none" : "inline-block";
 
         container.style.opacity = "1";
-        container.style.transform = "scale(1)";
+        container.style.transform = "translateY(0)";
     }, 200);
 
-    // Активный класс для вкладок
+    // Обновление активного состояния в меню
     document.querySelectorAll('.tab-item').forEach(el => {
         el.classList.remove('active');
-        if (el.innerText.toLowerCase().includes(tabKey.replace('news', 'новости'))) {
+        if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(`'${tabKey}'`)) {
             el.classList.add('active');
         }
     });
 }
 
-window.onload = () => {
-    selectTab('news');
-    if (typeof refreshBalanceDisplay === "function") refreshBalanceDisplay();
-};
-// Проверка авторизации при входе в Хаб
+/**
+ * Загрузка данных пользователя при старте
+ */
 window.addEventListener('DOMContentLoaded', () => {
     const localData = localStorage.getItem('gyaz_user');
     
+    // Если игрок не авторизован — редирект
     if (!localData) {
-        // Если игрок не залогинен — отправляем на страницу входа
         window.location.href = "auth.html";
         return;
     }
 
     const userData = JSON.parse(localData);
     
-    // Выводим никнейм в консоль для теста
-    console.log("Авторизован как: " + userData.nickname);
+    // Обновляем баланс в шапке (приоритет данным из localStorage экономики)
+    const balanceEl = document.getElementById('shop-balance');
+    if (balanceEl) {
+        const currentBalance = localStorage.getItem('fixone_balance') || userData.balance;
+        balanceEl.innerText = Number(currentBalance).toLocaleString() + " CY";
+    }
 
-    // Обновляем интерфейс данными из профиля
-    updateUIFromProfile(userData);
+    // Стартовая вкладка
+    selectTab('news');
 });
-
-function updateUIFromProfile(data) {
-    // Давай заменим текст "Бизнес" на твой Никнейм
-    const businessLabel = document.querySelector('.business-label');
-    if (businessLabel) {
-        businessLabel.innerText = "ИГРОК: " + data.nickname.toUpperCase();
-    }
-
-    // Обновляем баланс из базы (если в базе 10,000, то и тут будет 10,000)
-    if (typeof updateBalanceDisplay === "function") {
-        // Если у тебя в economy.js есть функция обновления, вызываем её
-        // Либо просто напрямую:
-        const balanceEl = document.getElementById('shop-balance');
-        if (balanceEl) balanceEl.innerText = data.balance + " CY";
-    }
-}
