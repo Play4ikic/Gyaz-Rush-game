@@ -1,5 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+import { 
+    getAuth, 
+    signInWithPopup, 
+    GoogleAuthProvider, 
+    signInAnonymously // ПРОВЕРЬ ЭТОТ ИМПОРТ
+} from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -17,35 +22,51 @@ const auth = getAuth(app);
 const db = getDatabase(app);
 
 const loginBtn = document.getElementById('login-btn');
+const guestBtn = document.getElementById('guest-btn');
 const nickForm = document.getElementById('nick-form');
 const finishBtn = document.getElementById('finish-btn');
+const statusMsg = document.getElementById('status-msg');
 
-// 1. Клик по кнопке Google
+// ВХОД ЧЕРЕЗ GOOGLE
 loginBtn.addEventListener('click', () => {
     const provider = new GoogleAuthProvider();
     signInWithPopup(auth, provider)
         .then((result) => checkUser(result.user))
-        .catch((err) => alert("Ошибка: " + err.message));
+        .catch((err) => alert("Ошибка Google: " + err.message));
 });
 
-// 2. Проверка: новый игрок или старый?
+// ВХОД КАК ГОСТЬ
+guestBtn.addEventListener('click', () => {
+    signInAnonymously(auth)
+        .then((result) => {
+            // Скрываем выбор входа
+            loginBtn.style.display = 'none';
+            guestBtn.style.display = 'none';
+            // Показываем поле ника
+            statusMsg.innerText = "Вход выполнен (Гость). Как тебя звать?";
+            nickForm.style.display = 'flex';
+        })
+        .catch((err) => {
+            console.error("Ошибка анонимного входа:", err);
+            alert("Не удалось зайти гостем: " + err.message);
+        });
+});
+
 async function checkUser(user) {
     const userRef = ref(db, 'users/' + user.uid);
     const snapshot = await get(userRef);
 
     if (snapshot.exists()) {
-        // Игрок уже есть в базе — сохраняем в браузер и заходим
         localStorage.setItem('gyaz_user', JSON.stringify(snapshot.val()));
         window.location.href = "index.html";
     } else {
-        // Новый игрок — показываем поле для ника
         loginBtn.style.display = 'none';
-        document.getElementById('status-msg').innerText = "Как тебя звать?";
+        guestBtn.style.display = 'none';
+        statusMsg.innerText = "Регистрация нового игрока:";
         nickForm.style.display = 'flex';
     }
 }
 
-// 3. Завершение регистрации
 finishBtn.addEventListener('click', async () => {
     const nick = document.getElementById('nickname-input').value.trim();
     if (nick.length < 3) return alert("Ник слишком короткий!");
@@ -54,14 +75,14 @@ finishBtn.addEventListener('click', async () => {
     const userData = {
         uid: user.uid,
         nickname: nick,
-        balance: 10000, // Начальный подарок
-        level: 1
+        balance: 10000,
+        level: 1,
+        isGuest: user.isAnonymous
     };
 
-    // Сохраняем в облако Firebase
     await set(ref(db, 'users/' + user.uid), userData);
-    
-    // Сохраняем локально и входим
     localStorage.setItem('gyaz_user', JSON.stringify(userData));
+    localStorage.setItem('fixone_balance', '10000'); // Синхронизация с экономикой
+    
     window.location.href = "index.html";
 });

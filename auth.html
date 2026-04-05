@@ -2,41 +2,167 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Gyaz Rush - Вход</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FixOne - Вход в GYAZ RUSH</title>
     <style>
-        .auth-wrapper { height: 100vh; display: flex; justify-content: center; align-items: center; background: #0a0a0a; font-family: sans-serif; }
-        .auth-card { background: #1a1a1a; padding: 40px; border-radius: 20px; text-align: center; border: 1px solid #333; width: 350px; }
-        .google-btn { 
-            background: #fff; color: #000; border: none; padding: 15px; width: 100%;
-            font-weight: bold; border-radius: 10px; cursor: pointer; display: flex; 
-            align-items: center; justify-content: center; gap: 10px; margin-top: 20px;
-            transition: 0.3s;
+        :root {
+            --gold: #e1b12c;
+            --blue: #0097e6;
+            --purple: #8c7ae6;
+            --red: #ff4d4d;
+            --green: #00ff88;
         }
-        .google-btn:hover { background: #eee; transform: scale(1.02); }
-        #nick-form { display: none; flex-direction: column; gap: 15px; margin-top: 20px; }
-        input { background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 8px; text-align: center; font-size: 16px; }
-        .save-btn { background: #00ff88; color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        body { 
+            background: #050505; 
+            margin: 0; 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            overflow: hidden; 
+            color: white; 
+            /* Сетка на фоне */
+            background-image: 
+                linear-gradient(rgba(225, 177, 44, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(225, 177, 44, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .screen { 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            text-align: center; 
+        }
+
+        /* ЛОГОТИП */
+        .logo-text { 
+            font-size: 60px; 
+            font-weight: 900;
+            letter-spacing: 6px;
+            margin-bottom: 10px; 
+            background: linear-gradient(to bottom, #fff, var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 20px rgba(225, 177, 44, 0.4));
+        }
+
+        #status-msg {
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* КОНТЕЙНЕР КНОПОК */
+        .login-box { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            width: 100%; 
+            max-width: 350px; 
+        }
+
+        .battle-btn {
+            width: 100%; 
+            padding: 20px; 
+            font-size: 16px; 
+            font-weight: 900;
+            border-radius: 12px; 
+            border: none; 
+            cursor: pointer;
+            text-transform: uppercase; 
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        /* Кнопка Google */
+        .online-btn { 
+            background: linear-gradient(45deg, var(--blue), var(--purple)); 
+            color: white; 
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 10px 20px rgba(0, 151, 230, 0.3);
+        }
+
+        /* Кнопка Гость */
+        .guest-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #ccc;
+        }
+
+        .battle-btn:hover { 
+            transform: scale(1.03) translateY(-3px); 
+            filter: brightness(1.2);
+        }
+
+        .battle-btn:active { transform: scale(0.98); }
+
+        /* ФОРМА НИКА */
+        #nick-form {
+            display: none; /* Скрыта изначально */
+            flex-direction: column;
+            gap: 15px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #nickname-input {
+            width: 100%;
+            padding: 18px;
+            background: #111;
+            border: 2px solid var(--gold);
+            border-radius: 12px;
+            color: white;
+            font-size: 20px;
+            text-align: center;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .finish-btn {
+            background: var(--gold);
+            color: black;
+            box-shadow: 0 10px 20px rgba(225, 177, 44, 0.3);
+        }
+
+        .footer-note {
+            margin-top: 40px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.2);
+            max-width: 280px;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
-    <div class="auth-wrapper">
-        <div class="auth-card">
-            <h1 style="color: white; margin-bottom: 10px;">GYAZ RUSH</h1>
-            <p id="status-msg" style="color: #888;">Войди, чтобы играть онлайн</p>
-            
-            <button id="login-btn" class="google-btn">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
-                ВОЙТИ ЧЕРЕЗ GOOGLE
-            </button>
+
+    <div id="setup-screen" class="screen">
+        <h1 class="logo-text">GYAZ RUSH</h1>
+        <div id="status-msg">Авторизация игрока</div>
+
+        <div class="login-box">
+            <button id="login-btn" class="battle-btn online-btn">Войти через Google</button>
+            <button id="guest-btn" class="battle-btn guest-btn">Играть как гость</button>
 
             <div id="nick-form">
-                <input type="text" id="nickname-input" placeholder="ПРИДУМАЙ НИКНЕЙМ" maxlength="12">
-                <button class="save-btn" id="finish-btn">НАЧАТЬ ИГРУ</button>
+                <input type="text" id="nickname-input" placeholder="ПРИДУМАЙ НИК..." maxlength="15">
+                <button id="finish-btn" class="battle-btn finish-btn">СОЗДАТЬ АККАУНТ</button>
             </div>
+        </div>
+
+        <div class="footer-note">
+            Нажимая кнопку входа, вы соглашаетесь с правилами FixOne FC. <br>
+            Данные гостевого входа хранятся только в этом браузере.
         </div>
     </div>
 
     <script type="module" src="auth.js"></script>
+
 </body>
 </html>
