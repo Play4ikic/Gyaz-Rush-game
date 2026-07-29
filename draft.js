@@ -12,6 +12,15 @@ const goldPlayers = [
     { name: 'Bugday', rating: 87, file: 'Bugday-87.png', folder: 'Gold' }
 ];
 
+// НОВЫЕ КАРТОЧКИ TOTT
+const tottPlayers = [
+    { name: 'Bugday', rating: 82, file: 'Bugday-82.png', folder: 'Tott' },
+    { name: 'Elcan', rating: 89, file: 'Elcan-89.png', folder: 'Tott' },
+    { name: 'Nazrin', rating: 85, file: 'Nazrin-85.png', folder: 'Tott' },
+    { name: 'Tuncay', rating: 92, file: 'Tuncay-92.png', folder: 'Tott' },
+    { name: 'Turqay', rating: 89, file: 'Turqay-89.png', folder: 'Tott' }
+];
+
 const totyPlayers = [
     { name: 'Eldjan', rating: 97, file: 'Elcan-97.png', folder: 'Toty' },
     { name: 'Turqay', rating: 97, file: 'Turqay-97.png', folder: 'Toty' },
@@ -28,7 +37,8 @@ const championsPlayers = [
     { name: 'Nazrin', rating: 88, file: 'Nazrin-88.png', folder: 'Champions' }
 ];
 
-const ALL_GAME_CARDS = [...goldPlayers, ...totyPlayers, ...championsPlayers];
+// Объединяем все коллекции, включая TOTT
+const ALL_GAME_CARDS = [...goldPlayers, ...tottPlayers, ...totyPlayers, ...championsPlayers];
 
 let activeSquad = [], round = 1, playerScore = 0, botScore = 0, selectedPlayerCard = null, timerInterval, usedPlayerIndexes = [], botHand = [];
 
@@ -125,11 +135,8 @@ function endGame() {
         alert(`ПОБЕДА! Вы выиграли ${reward} CY!`);
 
         // --- ЛОГИКА КВЕСТА ---
-        // Получаем текущее количество побед для квеста (если нет, то 0)
         let draftWins = parseInt(localStorage.getItem('quest_draft_wins')) || 0;
-        // Прибавляем 1 победу
         draftWins++;
-        // Сохраняем обратно
         localStorage.setItem('quest_draft_wins', draftWins.toString());
         // ---------------------
 
