@@ -3,6 +3,7 @@ import { updateBalance, refreshBalanceDisplay } from './economy.js';
 const PRICES = { 
     gold: 5000, 
     champions: 50000, 
+    tott: 70000,
     toty: 100000 
 };
 
@@ -19,12 +20,12 @@ const goldPlayers = [
     { name: 'Bugday', rating: 87, pos: 'GK', club: 'cheer', file: 'Bugday-87.png', folder: 'Gold' }
 ];
 
-const totyPlayers = [
-    { name: 'Eldjan', rating: 97, pos: 'RW', club: 'toxic', file: 'Elcan-97.png', folder: 'Toty' },
-    { name: 'Turqay', rating: 97, pos: 'ST', club: 'cheer', file: 'Turqay-97.png', folder: 'Toty' },
-    { name: 'Tuncay', rating: 97, pos: 'DF', club: 'icon', file: 'Tuncay-97.png', folder: 'Toty' },
-    { name: 'Bugday', rating: 95, pos: 'GK', club: 'cheer', file: 'Bugday-95.png', folder: 'Toty' },
-    { name: 'Nazrin', rating: 91, pos: 'DF', club: 'toxic', file: 'Nazrin-91.png', folder: 'Toty' }
+const tottPlayers = [
+    { name: 'Bugday', rating: 82, pos: 'GK', club: 'cheer', file: 'Bugday-82.png', folder: 'Tott' },
+    { name: 'Elcan', rating: 89, pos: 'CAM', club: 'toxic', file: 'Elcan-89.png', folder: 'Tott' },
+    { name: 'Nazrin', rating: 85, pos: 'CB', club: 'toxic', file: 'Nazrin-85.png', folder: 'Tott' },
+    { name: 'Tuncay', rating: 92, pos: 'CB', club: 'icon', file: 'Tuncay-92.png', folder: 'Tott' },
+    { name: 'Turqay', rating: 89, pos: 'ST', club: 'cheer', file: 'Turqay-89.png', folder: 'Tott' }
 ];
 
 const championsPlayers = [
@@ -35,12 +36,30 @@ const championsPlayers = [
     { name: 'Nazrin', rating: 88, pos: 'DF', club: 'toxic', file: 'Nazrin-88.png', folder: 'Champions' }
 ];
 
+const totyPlayers = [
+    { name: 'Eldjan', rating: 97, pos: 'RW', club: 'toxic', file: 'Elcan-97.png', folder: 'Toty' },
+    { name: 'Turqay', rating: 97, pos: 'ST', club: 'cheer', file: 'Turqay-97.png', folder: 'Toty' },
+    { name: 'Tuncay', rating: 97, pos: 'DF', club: 'icon', file: 'Tuncay-97.png', folder: 'Toty' },
+    { name: 'Bugday', rating: 95, pos: 'GK', club: 'cheer', file: 'Bugday-95.png', folder: 'Toty' },
+    { name: 'Nazrin', rating: 91, pos: 'DF', club: 'toxic', file: 'Nazrin-91.png', folder: 'Toty' }
+];
+
 let currentDroppedPlayer = null;
 
 // ОСНОВНАЯ ФУНКЦИЯ ОТКРЫТИЯ
 window.openPack = async function(type, videoFile) {
     const price = PRICES[type];
-    let pool = (type === 'gold') ? goldPlayers : (type === 'champions' ? championsPlayers : totyPlayers);
+    
+    let pool;
+    if (type === 'gold') {
+        pool = goldPlayers;
+    } else if (type === 'tott') {
+        pool = tottPlayers;
+    } else if (type === 'champions') {
+        pool = championsPlayers;
+    } else {
+        pool = totyPlayers;
+    }
 
     // Списываем деньги через Firebase (ждем результат)
     const success = await updateBalance(-price);
@@ -54,7 +73,7 @@ window.openPack = async function(type, videoFile) {
             startVideoReveal(videoFile);
         }
     } else {
-        alert("Эльджан, не хватает CY!");
+        alert("Не хватает CY для открытия пака!");
     }
 };
 

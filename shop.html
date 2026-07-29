@@ -18,6 +18,8 @@
 
         <main class="shop-content">
             <div class="pack-container">
+                
+                <!-- GOLD PACK -->
                 <div class="pack-card gold-card">
                     <div class="pack-visual">
                         <img src="images/gold.png" alt="Gold" class="pack-img">
@@ -29,6 +31,19 @@
                     </div>
                 </div>
 
+                <!-- TOTT PACK -->
+                <div class="pack-card tott-card">
+                    <div class="pack-visual">
+                        <img src="images/TOTT.png" alt="TOTT PACK" class="pack-img">
+                    </div>
+                    <div class="pack-info">
+                        <h2>TOTT PACK</h2>
+                        <div class="pack-price">70,000 CY</div>
+                        <button class="buy-button" onclick="openPack('tott', 'анимация.mp4')">ОТКРЫТЬ</button>
+                    </div>
+                </div>
+
+                <!-- CHAMPIONS PACK (ИСПРАВЛЕН) -->
                 <div class="pack-card champions-card">
                     <div class="pack-visual">
                         <img src="images/champions league.jpg" alt="UCL" class="pack-img">
@@ -40,6 +55,7 @@
                     </div>
                 </div>
 
+                <!-- TOTY PACK -->
                 <div class="pack-card toty-card">
                     <div class="pack-visual">
                         <img src="images/toty.jpg" alt="TOTY" class="pack-img">
@@ -50,10 +66,12 @@
                         <button class="buy-button" onclick="openPack('toty', 'анимация.mp4')">ОТКРЫТЬ</button>
                     </div>
                 </div>
+
             </div>
         </main>
     </div>
 
+    <!-- ОКНО АНИМАЦИИ ОТКРЫТИЯ -->
     <div id="video-reveal-container" class="hidden">
         <video id="pack-video" playsinline preload="auto">
             <source src="" type="video/mp4">
@@ -69,6 +87,7 @@
         </div>
     </div>
 
+    <!-- ОКНО ВЫПАВШЕЙ КАРТОЧКИ -->
     <div id="reveal-screen" class="hidden">
         <div class="overlay"></div>
         <div class="reveal-container">
