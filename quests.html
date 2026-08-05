@@ -10,6 +10,7 @@
             --fixone-yellow: #ffcc00; 
             --task-bg: #1a1a1a;
             --gray-text: #888;
+            --claimed-green: #00ff88;
         }
 
         body {
@@ -29,6 +30,7 @@
             align-items: center;
             padding: 0 30px;
             border-bottom: 3px solid #222;
+            box-sizing: border-box;
         }
 
         .back-btn {
@@ -37,6 +39,11 @@
             text-decoration: none;
             margin-right: 20px;
             cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .back-btn:hover {
+            color: var(--fixone-yellow);
         }
 
         .title { font-size: 22px; text-transform: uppercase; letter-spacing: 1px; }
@@ -48,6 +55,7 @@
             flex-direction: column;
             gap: 15px;
             overflow-y: auto;
+            box-sizing: border-box;
         }
 
         .quest-card {
@@ -91,8 +99,9 @@
             font-weight: 900;
             font-size: 12px;
             cursor: pointer;
-            min-width: 110px;
+            min-width: 120px;
             text-transform: uppercase;
+            transition: 0.2s;
         }
 
         .complete-btn:disabled {
@@ -101,45 +110,61 @@
             cursor: not-allowed;
         }
 
+        .complete-btn.claimed {
+            background: var(--claimed-green) !important;
+            color: black !important;
+        }
+
         .footer {
-            height: 90px;
+            height: 80px;
             display: flex;
             justify-content: center;
             gap: 20px;
             align-items: center;
             background: #000;
             border-top: 3px solid #222;
+            box-sizing: border-box;
+            z-index: 100;
         }
 
         .menu-btn {
-            padding: 15px 40px;
-            border-radius: 35px;
-            border: 2px solid #444;
-            background: none;
-            color: #fff;
+            padding: 12px 35px;
+            border-radius: 12px;
+            border: 2px solid #333;
+            background: #1a1a1a;
+            color: #888;
             font-weight: 900;
             cursor: pointer;
             font-size: 14px;
+            font-family: 'Arial Black', sans-serif;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .menu-btn:hover {
+            border-color: var(--fixone-yellow);
+            color: white;
         }
 
         .menu-btn.active {
             background: var(--fixone-yellow);
             color: black;
             border-color: var(--fixone-yellow);
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
         }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="back-btn" onclick="window.location.href='index.html'">←</div>
+    <div class="back-btn" onclick="window.location.href='gympass.html'">←</div>
     <div class="title">ЗАДАНИЯ СЕЗОНА</div>
 </div>
 
 <div class="quests-container" id="quests-list"></div>
 
 <footer class="footer">
-    <button class="menu-btn" onclick="window.location.href='index.html'">НАГРАДЫ</button>
+    <button class="menu-btn" onclick="window.location.href='gympass.html'">НАГРАДЫ</button>
     <button class="menu-btn active">ЗАДАНИЯ</button>
 </footer>
 
@@ -152,16 +177,33 @@
     function renderQuests() {
         const list = document.getElementById('quests-list');
         list.innerHTML = "";
+        
+        const claimedQuests = JSON.parse(localStorage.getItem('claimed_season_quests')) || {};
 
         // 1. Динамические квесты (Драфт и Ставки)
         Object.keys(QUEST_CONFIG).forEach(type => {
             const config = QUEST_CONFIG[type];
             const currentProgress = parseInt(localStorage.getItem(config.storageKey)) || 0;
+            const isClaimed = claimedQuests[type] === true;
             const isDone = currentProgress >= config.target;
-            const percent = Math.min((currentProgress / config.target) * 100, 100);
+            const percent = isClaimed ? 100 : Math.min((currentProgress / config.target) * 100, 100);
 
             const card = document.createElement('div');
             card.className = 'quest-card';
+            
+            let buttonText = 'В ПРОЦЕССЕ';
+            let isDisabled = true;
+            let buttonClass = 'complete-btn';
+
+            if (isClaimed) {
+                buttonText = 'ВЫПОЛНЕНО';
+                isDisabled = true;
+                buttonClass += ' claimed';
+            } else if (isDone) {
+                buttonText = 'ЗАБРАТЬ';
+                isDisabled = false;
+            }
+
             card.innerHTML = `
                 <div class="quest-info">
                     <h3>${config.title}</h3>
@@ -169,10 +211,10 @@
                     <div class="progress-container">
                         <div class="progress-fill" style="width: ${percent}%"></div>
                     </div>
-                    <div class="progress-text">Прогресс: ${currentProgress} / ${config.target}</div>
+                    <div class="progress-text">${isClaimed ? 'Задание завершено' : `Прогресс: ${currentProgress} / ${config.target}`}</div>
                 </div>
-                <button class="complete-btn" ${!isDone ? 'disabled' : ''} onclick="claimReward('${type}')">
-                    ${isDone ? 'ЗАБРАТЬ' : 'В ПРОЦЕССЕ'}
+                <button class="${buttonClass}" ${isDisabled ? 'disabled' : ''} onclick="claimReward('${type}')">
+                    ${buttonText}
                 </button>
             `;
             list.appendChild(card);
@@ -188,9 +230,12 @@
         dailyCard.className = 'quest-card';
         
         let buttonText = 'ВЫПОЛНИТЬ';
+        let isDailyDisabled = false;
+
         if (isLocked) {
             const hoursLeft = Math.ceil((oneDay - (now - lastClaim)) / (1000 * 60 * 60));
             buttonText = `${hoursLeft} Ч.`;
+            isDailyDisabled = true;
         }
 
         dailyCard.innerHTML = `
@@ -199,7 +244,7 @@
                 <p>+200 XP</p>
                 <div class="progress-text" style="margin-top: 10px;">Доступно раз в 24 часа</div>
             </div>
-            <button class="complete-btn" ${isLocked ? 'disabled' : ''} onclick="claimDaily()">
+            <button class="complete-btn ${isLocked ? 'claimed' : ''}" ${isDailyDisabled ? 'disabled' : ''} onclick="claimDaily()">
                 ${buttonText}
             </button>
         `;
@@ -208,10 +253,16 @@
 
     function claimReward(type) {
         const config = QUEST_CONFIG[type];
-        addXP(config.reward);
-        localStorage.setItem(config.storageKey, '0');
-        alert(`Награда получена! +${config.reward} XP`);
-        renderQuests();
+        const currentProgress = parseInt(localStorage.getItem(config.storageKey)) || 0;
+        let claimedQuests = JSON.parse(localStorage.getItem('claimed_season_quests')) || {};
+
+        if (currentProgress >= config.target && !claimedQuests[type]) {
+            addXP(config.reward);
+            claimedQuests[type] = true;
+            localStorage.setItem('claimed_season_quests', JSON.stringify(claimedQuests));
+            alert(`Награда получена! +${config.reward} XP`);
+            renderQuests();
+        }
     }
 
     function claimDaily() {
@@ -234,12 +285,12 @@
 
     window.onload = renderQuests;
 </script>
-  <div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
-        <button onclick="this.innerText = (typeof toggleMute === 'function' && toggleMute()) ? '🔇' : '🎵'" style="background: none; border: none; font-size: 20px; cursor: pointer;">🎵</button>
-        <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="if(typeof setVolume === 'function') setVolume(this.value)" style="width: 60px; cursor: pointer;">
-    </div>
 
-    <script src="audio.js"></script>
+<div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
+    <button onclick="this.innerText = (typeof toggleMute === 'function' && toggleMute()) ? '🔇' : '🎵'" style="background: none; border: none; font-size: 20px; cursor: pointer;">🎵</button>
+    <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="if(typeof setVolume === 'function') setVolume(this.value)" style="width: 60px; cursor: pointer;">
+</div>
 
+<script src="audio.js"></script>
 </body>
 </html>
