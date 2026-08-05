@@ -32,7 +32,7 @@
 
         /* ШАПКА */
         .pass-header {
-            height: 100px;
+            height: 90px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -40,6 +40,7 @@
             background: rgba(0,0,0,0.9);
             border-bottom: 2px solid #222;
             z-index: 100;
+            box-sizing: border-box;
         }
 
         .balance-display {
@@ -119,6 +120,44 @@
             font-weight: 900; z-index: 10;
         }
         .node.active { background: var(--fixone-yellow); color: #000; border-color: #fff; }
+
+        /* ИСПРАВЛЕНИЕ И СТИЛИЗАЦИЯ ФУТЕРА И КНОПОК */
+        .pass-footer {
+            height: 70px;
+            background: rgba(0, 0, 0, 0.95);
+            border-top: 2px solid #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            z-index: 100;
+            box-sizing: border-box;
+        }
+
+        .menu-btn {
+            padding: 12px 35px;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            color: #888;
+            font-family: 'Arial Black', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .menu-btn:hover {
+            border-color: var(--fixone-yellow);
+            color: white;
+        }
+
+        .menu-btn.active {
+            background: var(--fixone-yellow);
+            color: black;
+            border-color: var(--fixone-yellow);
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
+        }
 
         /* МОДАЛКИ */
         .modal-overlay {
@@ -259,7 +298,7 @@
 
     const player = {
         money: parseInt(localStorage.getItem('fixone_balance')) || 0,
-        xp:parseInt(localStorage.getItem('playerXP')) || 0,
+        xp: parseInt(localStorage.getItem('playerXP')) || 0,
         xpPerLevel: 2000,
         hasPremium: localStorage.getItem('hasPassPlus') === 'true',
         claimed: JSON.parse(localStorage.getItem('claimedRewards')) || []
