@@ -24,17 +24,27 @@
             overflow: hidden;
         }
 
+        /* ШАПКА */
         .header {
             height: 80px;
+            flex-shrink: 0;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             padding: 0 30px;
-            border-bottom: 3px solid #222;
+            border-bottom: 2px solid #222;
+            background: rgba(0,0,0,0.9);
             box-sizing: border-box;
+            z-index: 100;
+        }
+
+        .left-group {
+            display: flex;
+            align-items: center;
         }
 
         .back-btn {
-            font-size: 30px;
+            font-size: 28px;
             color: white;
             text-decoration: none;
             margin-right: 20px;
@@ -46,10 +56,16 @@
             color: var(--fixone-yellow);
         }
 
-        .title { font-size: 22px; text-transform: uppercase; letter-spacing: 1px; }
+        .title { 
+            font-size: 20px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+        }
 
+        /* СПИСОК ЗАДАНИЙ */
         .quests-container {
-            flex-grow: 1;
+            flex: 1;
+            min-height: 0;
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -114,59 +130,18 @@
             background: var(--claimed-green) !important;
             color: black !important;
         }
-
-        .footer {
-            height: 80px;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            align-items: center;
-            background: #000;
-            border-top: 3px solid #222;
-            box-sizing: border-box;
-            z-index: 100;
-        }
-
-        .menu-btn {
-            padding: 12px 35px;
-            border-radius: 12px;
-            border: 2px solid #333;
-            background: #1a1a1a;
-            color: #888;
-            font-weight: 900;
-            cursor: pointer;
-            font-size: 14px;
-            font-family: 'Arial Black', sans-serif;
-            text-transform: uppercase;
-            transition: all 0.3s ease;
-        }
-
-        .menu-btn:hover {
-            border-color: var(--fixone-yellow);
-            color: white;
-        }
-
-        .menu-btn.active {
-            background: var(--fixone-yellow);
-            color: black;
-            border-color: var(--fixone-yellow);
-            box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
-        }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="back-btn" onclick="window.location.href='gympass.html'">←</div>
-    <div class="title">ЗАДАНИЯ СЕЗОНА</div>
+    <div class="left-group">
+        <div class="back-btn" onclick="window.location.href='gympass.html'">←</div>
+        <div class="title">ЗАДАНИЯ СЕЗОНА</div>
+    </div>
 </div>
 
 <div class="quests-container" id="quests-list"></div>
-
-<footer class="footer">
-    <button class="menu-btn" onclick="window.location.href='gympass.html'">НАГРАДЫ</button>
-    <button class="menu-btn active">ЗАДАНИЯ</button>
-</footer>
 
 <script>
     const QUEST_CONFIG = {
