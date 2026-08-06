@@ -12,7 +12,6 @@ const goldPlayers = [
     { name: 'Bugday', rating: 87, file: 'Bugday-87.png', folder: 'Gold' }
 ];
 
-// НОВЫЕ КАРТОЧКИ TOTT
 const tottPlayers = [
     { name: 'Bugday', rating: 82, file: 'Bugday-82.png', folder: 'Tott' },
     { name: 'Elcan', rating: 89, file: 'Elcan-89.png', folder: 'Tott' },
@@ -37,12 +36,34 @@ const championsPlayers = [
     { name: 'Nazrin', rating: 88, file: 'Nazrin-88.png', folder: 'Champions' }
 ];
 
-// Объединяем все коллекции, включая TOTT
-const ALL_GAME_CARDS = [...goldPlayers, ...tottPlayers, ...totyPlayers, ...championsPlayers];
+// НОВАЯ КОЛЛЕКЦИЯ NATIONAL STARS
+const nationalStarsPlayers = [
+    { name: 'Bugday', rating: 89, file: 'Bugday-89.png', folder: 'NationalStars' },
+    { name: 'Elcan', rating: 90, file: 'Elcan-90.png', folder: 'NationalStars' },
+    { name: 'Nazrin', rating: 89, file: 'Nazrin-89.png', folder: 'NationalStars' },
+    { name: 'Tuncay', rating: 95, file: 'Tuncay-95.png', folder: 'NationalStars' },
+    { name: 'Turqay', rating: 92, file: 'Turgay-92.png', folder: 'NationalStars' }
+];
 
-let activeSquad = [], round = 1, playerScore = 0, botScore = 0, selectedPlayerCard = null, timerInterval, usedPlayerIndexes = [], botHand = [];
+// Объединяем абсолютно все коллекции карт для генерации руки бота
+const ALL_GAME_CARDS = [
+    ...goldPlayers, 
+    ...tottPlayers, 
+    ...totyPlayers, 
+    ...championsPlayers, 
+    ...nationalStarsPlayers
+];
 
-// ГЛАВНАЯ ФУНКЦИЯ
+let activeSquad = [];
+let round = 1;
+let playerScore = 0;
+let botScore = 0;
+let selectedPlayerCard = null;
+let timerInterval;
+let usedPlayerIndexes = [];
+let botHand = [];
+
+// ГЛАВНАЯ ФУНКЦИЯ СТАРТА ИГРЫ
 window.startGameBot = function() {
     console.log("Лог: Запуск игры...");
     const saved = localStorage.getItem('activeSquad');
@@ -54,7 +75,13 @@ window.startGameBot = function() {
         return;
     }
 
-    round = 1; playerScore = 0; botScore = 0; usedPlayerIndexes = []; botHand = [];
+    round = 1;
+    playerScore = 0;
+    botScore = 0;
+    usedPlayerIndexes = [];
+    botHand = [];
+
+    // Случайный набор карт для бота из всей коллекции
     for (let i = 0; i < 5; i++) {
         botHand.push(ALL_GAME_CARDS[Math.floor(Math.random() * ALL_GAME_CARDS.length)]);
     }
@@ -73,8 +100,10 @@ function renderHand() {
         if (!player) return;
         const img = document.createElement('img');
         img.src = `${player.folder}/${player.file}`;
-        if (usedPlayerIndexes.includes(index)) img.classList.add('used-card');
-        else {
+        
+        if (usedPlayerIndexes.includes(index)) {
+            img.classList.add('used-card');
+        } else {
             img.onclick = () => {
                 if (selectedPlayerCard) return;
                 selectedPlayerCard = { ...player, sIndex: index };
@@ -88,19 +117,24 @@ function renderHand() {
 
 function startRound() {
     if (round > 5) return endGame();
+    
     document.getElementById('round-num').innerText = round;
     document.getElementById('player-card-display').innerHTML = "";
     document.getElementById('bot-card-display').innerHTML = "";
     document.getElementById('bot-card-display').classList.add('card-back');
+    
     selectedPlayerCard = null;
     renderHand();
     
     let timeLeft = 7;
     document.getElementById('timer').innerText = timeLeft;
+    
     clearInterval(timerInterval);
     timerInterval = setInterval(() => {
         timeLeft--;
-        if(document.getElementById('timer')) document.getElementById('timer').innerText = timeLeft;
+        if (document.getElementById('timer')) {
+            document.getElementById('timer').innerText = timeLeft;
+        }
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             processBattle();
@@ -111,19 +145,30 @@ function startRound() {
 function processBattle() {
     const botDisplay = document.getElementById('bot-card-display');
     botDisplay.classList.remove('card-back');
+    
     const botCard = botHand[round - 1]; 
     botDisplay.innerHTML = `<img src="${botCard.folder}/${botCard.file}" style="width:100%">`;
 
     const pRating = selectedPlayerCard ? Number(selectedPlayerCard.rating) : 0;
     const bRating = Number(botCard.rating);
 
-    if (selectedPlayerCard) usedPlayerIndexes.push(selectedPlayerCard.sIndex);
-    if (pRating > bRating) playerScore++;
-    else if (bRating > pRating) botScore++;
+    if (selectedPlayerCard) {
+        usedPlayerIndexes.push(selectedPlayerCard.sIndex);
+    }
+    
+    if (pRating > bRating) {
+        playerScore++;
+    } else if (bRating > pRating) {
+        botScore++;
+    }
 
     document.getElementById('p-score').innerText = playerScore;
     document.getElementById('b-score').innerText = botScore;
-    setTimeout(() => { round++; startRound(); }, 2500);
+    
+    setTimeout(() => { 
+        round++; 
+        startRound(); 
+    }, 2500);
 }
 
 function endGame() {
@@ -134,11 +179,10 @@ function endGame() {
         reward = 3000;
         alert(`ПОБЕДА! Вы выиграли ${reward} CY!`);
 
-        // --- ЛОГИКА КВЕСТА ---
+        // Засчитываем прогресс квеста драфта
         let draftWins = parseInt(localStorage.getItem('quest_draft_wins')) || 0;
         draftWins++;
         localStorage.setItem('quest_draft_wins', draftWins.toString());
-        // ---------------------
 
     } else if (playerScore === botScore) {
         reward = 500; 

@@ -56,7 +56,7 @@ body {
 
 .pack-container { 
     display: flex; 
-    gap: 20px; 
+    gap: 15px; 
     justify-content: center;
     align-items: stretch;
 }
@@ -64,12 +64,12 @@ body {
 /* ЕДИНАЯ КАРТОЧКА ПАКА */
 .pack-card { 
     background: #161616; 
-    padding: 20px; 
+    padding: 15px; 
     border-radius: 20px; 
     text-align: center; 
     border: 2px solid #333; 
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
-    width: 210px; 
+    width: 190px; 
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -79,7 +79,7 @@ body {
 
 /* ФИКСИРОВАННЫЙ БЛОК ДЛЯ ИЗОБРАЖЕНИЯ */
 .pack-visual { 
-    height: 220px; 
+    height: 200px; 
     width: 100%;
     display: flex; 
     align-items: center; 
@@ -112,7 +112,7 @@ body {
 }
 
 .pack-info h2 {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 800;
     margin: 0;
     letter-spacing: 0.5px;
@@ -123,7 +123,7 @@ body {
 }
 
 .pack-price {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
     color: #aaaaaa;
 }
@@ -132,8 +132,8 @@ body {
 .buy-button { 
     background: #f1c40f; 
     border: none; 
-    padding: 12px 10px; 
-    font-size: 15px; 
+    padding: 10px 8px; 
+    font-size: 14px; 
     font-weight: 900; 
     border-radius: 8px; 
     color: black;
@@ -157,22 +157,7 @@ body {
     box-shadow: 0 0 25px rgba(255, 215, 0, 0.25); 
 }
 
-/* TOTT Pack */
-.tott-card {
-    border-color: #ffd700;
-    background: linear-gradient(180deg, #1b1b1b 0%, #0d0d0d 100%);
-}
-
-.tott-card h2 {
-    color: #ffd700;
-}
-
-.tott-card:hover {
-    border-color: #ffea00;
-    box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
-}
-
-/* Champions Pack (Исправленный сине-неоновый стиль) */
+/* Champions Pack */
 .champions-card { 
     border-color: #0055ff; 
     background: linear-gradient(180deg, #121926 0%, #0b0f17 100%);
@@ -195,6 +180,46 @@ body {
 .champions-card:hover .buy-button { 
     background: #ffffff; 
     color: #0055ff; 
+}
+
+/* TOTT Pack */
+.tott-card {
+    border-color: #ffd700;
+    background: linear-gradient(180deg, #1b1b1b 0%, #0d0d0d 100%);
+}
+
+.tott-card h2 {
+    color: #ffd700;
+}
+
+.tott-card:hover {
+    border-color: #ffea00;
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
+}
+
+/* National Stars Pack */
+.national-stars-card {
+    border-color: #00ff88;
+    background: linear-gradient(180deg, #0d261a 0%, #08140e 100%);
+}
+
+.national-stars-card h2 {
+    color: #00ff88;
+}
+
+.national-stars-card .buy-button {
+    background: #00ff88;
+    color: black;
+}
+
+.national-stars-card:hover {
+    border-color: #55ffaa;
+    box-shadow: 0 0 25px rgba(0, 255, 136, 0.4);
+}
+
+.national-stars-card:hover .buy-button {
+    background: #ffffff;
+    color: black;
 }
 
 /* TOTY Pack */

@@ -4,7 +4,8 @@ const PRICES = {
     gold: 5000, 
     champions: 50000, 
     tott: 70000,
-    toty: 100000 
+    national_stars: 80000,
+    toty: 200000 
 };
 
 const goldPlayers = [
@@ -36,6 +37,14 @@ const championsPlayers = [
     { name: 'Nazrin', rating: 88, pos: 'DF', club: 'toxic', file: 'Nazrin-88.png', folder: 'Champions' }
 ];
 
+const nationalStarsPlayers = [
+    { name: 'Bugday', rating: 89, pos: 'GK', club: 'cheer', file: 'Bugday-89.png', folder: 'NationalStars' },
+    { name: 'Elcan', rating: 90, pos: 'RW', club: 'toxic', file: 'Elcan-90.png', folder: 'NationalStars' },
+    { name: 'Nazrin', rating: 89, pos: 'CB', club: 'toxic', file: 'Nazrin-89.png', folder: 'NationalStars' },
+    { name: 'Tuncay', rating: 95, pos: 'CB', club: 'icon', file: 'Tuncay-95.png', folder: 'NationalStars' },
+    { name: 'Turqay', rating: 92, pos: 'ST', club: 'cheer', file: 'Turgay-92.png', folder: 'NationalStars' }
+];
+
 const totyPlayers = [
     { name: 'Eldjan', rating: 97, pos: 'RW', club: 'toxic', file: 'Elcan-97.png', folder: 'Toty' },
     { name: 'Turqay', rating: 97, pos: 'ST', club: 'cheer', file: 'Turqay-97.png', folder: 'Toty' },
@@ -57,11 +66,12 @@ window.openPack = async function(type, videoFile) {
         pool = tottPlayers;
     } else if (type === 'champions') {
         pool = championsPlayers;
+    } else if (type === 'national_stars') {
+        pool = nationalStarsPlayers;
     } else {
         pool = totyPlayers;
     }
 
-    // Списываем деньги через Firebase (ждем результат)
     const success = await updateBalance(-price);
 
     if (success) {
@@ -141,5 +151,4 @@ window.closeReveal = function() {
     currentDroppedPlayer = null;
 };
 
-// При загрузке обновляем баланс на экране
 document.addEventListener('DOMContentLoaded', refreshBalanceDisplay);
