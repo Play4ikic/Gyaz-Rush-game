@@ -7,7 +7,7 @@ function generateSignature(amount) {
     for (let i = 0; i < str.length; i++) {
         const char = str.charCodeAt(i);
         hash = ((hash << 5) - hash) + char;
-        hash |= 0; // Преобразование в 32-битное целое
+        hash |= 0;
     }
     return btoa(`sig_${hash}_${amount}`);
 }
@@ -24,20 +24,27 @@ function getValidBalance() {
     const rawBalance = localStorage.getItem('fixone_balance');
     const rawSig = localStorage.getItem('fixone_sig');
 
-    // Если игрок зашел первый раз
+    // 1. Если игрок зашел первый раз
     if (rawBalance === null) {
         setSecureBalance(10000); // 10k на старт
         return 10000;
     }
 
     const currentBalance = parseInt(rawBalance) || 0;
+
+    // 2. МИГРАЦИЯ: Если баланс есть, но подписи еще нет (первый запуск новой защиты)
+    if (rawSig === null) {
+        setSecureBalance(currentBalance); // Создаем подпись под текущие деньги
+        return currentBalance;
+    }
+
     const expectedSig = generateSignature(currentBalance);
 
-    // ПРОВЕРКА ВЗЛОМА: Если значения в localStorage были изменены вручную
+    // 3. ПРОВЕРКА ВЗЛОМА: Подпись была, но перестала совпадать
     if (rawSig !== expectedSig) {
-        console.warn("ВНИМАНИЕ: Обнаружена попытка изменить баланс через F12!");
-        alert("Обнаружено несанкционированное изменение баланса! Значение сброшено.");
-        setSecureBalance(0); // Сброс баланса при взломе
+        console.warn("ВНИМАНИЕ: Попытка изменения баланса!");
+        alert("Обнаружено изменение баланса через консоль! Значение сброшено.");
+        setSecureBalance(0);
         return 0;
     }
 
@@ -47,11 +54,10 @@ function getValidBalance() {
 // 1. Инициализация баланса при старте
 getValidBalance();
 
-// 2. ФУНКЦИЯ ОБНОВЛЕНИЯ БАЛАНСА (С ЗАЩИТОЙ)
+// 2. ФУНКЦИЯ ОБНОВЛЕНИЯ БАЛАНСА
 export async function updateBalance(amount) {
     let currentBalance = getValidBalance();
     
-    // ПРОВЕРКА: Если списываем средства (amount отрицательный)
     if (amount < 0) {
         if (currentBalance + amount < 0) {
             console.error("Недостаточно средств!");
@@ -59,14 +65,10 @@ export async function updateBalance(amount) {
         }
     }
 
-    // Записываем обновленный баланс с новой подписью
     const newBalance = currentBalance + amount;
     setSecureBalance(newBalance);
-    
-    // Обновляем отображение на экране
     refreshBalanceDisplay();
     
-    console.log(`Баланс обновлен: ${newBalance} CY`);
     return true;
 }
 
@@ -87,5 +89,5 @@ export function refreshBalanceDisplay() {
     });
 }
 
-// Авто-обновление при загрузке любого модуля
+// Авто-обновление при загрузке
 refreshBalanceDisplay();
