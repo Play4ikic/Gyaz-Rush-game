@@ -57,8 +57,12 @@ body {
 .pack-container { 
     display: flex; 
     gap: 15px; 
-    justify-content: center;
+    justify-content: flex-start; /* Изменено, чтобы прокрутка работала правильно */
     align-items: stretch;
+    overflow-x: auto; /* Включена горизонтальная прокрутка */
+    max-width: 100%; /* Занимает всю ширину */
+    padding: 20px; /* Добавлен отступ для эстетики */
+    box-sizing: border-box;
 }
 
 /* ЕДИНАЯ КАРТОЧКА ПАКА */
@@ -75,6 +79,7 @@ body {
     justify-content: space-between;
     box-sizing: border-box;
     cursor: pointer; 
+    flex-shrink: 0; /* Предотвращает сжатие карточек при прокрутке */
 }
 
 /* ФИКСИРОВАННЫЙ БЛОК ДЛЯ ИЗОБРАЖЕНИЯ */
@@ -220,6 +225,31 @@ body {
 .national-stars-card:hover .buy-button {
     background: #ffffff;
     color: black;
+}
+
+/* Time Travels Pack (НОВЫЙ - Фиолетовый неоновый стиль) */
+.time-travels-card { 
+    border-color: #8a2be2; 
+    background: linear-gradient(180deg, #261226 0%, #170b17 100%);
+}
+
+.time-travels-card h2 { 
+    color: #da70d6; 
+}
+
+.time-travels-card .buy-button { 
+    background: #8a2be2; 
+    color: white; 
+}
+
+.time-travels-card:hover { 
+    border-color: #da70d6; 
+    box-shadow: 0 0 25px rgba(218, 112, 214, 0.4); 
+}
+
+.time-travels-card:hover .buy-button { 
+    background: #ffffff; 
+    color: #8a2be2; 
 }
 
 /* TOTY Pack */

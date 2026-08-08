@@ -1,15 +1,16 @@
 const SECRET_KEY = "FixOne_Goalyaz_SecureKey_2026_#99!";
+const SIG_VERSION = "v2"; // Версия подписи для отслеживания изменений
 
 // 0. Генерация контрольной цифровой подписи (хеша)
 function generateSignature(amount) {
-    const str = `${amount}:${SECRET_KEY}`;
+    const str = `${amount}:${SECRET_KEY}:${SIG_VERSION}`;
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
         const char = str.charCodeAt(i);
         hash = ((hash << 5) - hash) + char;
         hash |= 0;
     }
-    return btoa(`sig_${hash}_${amount}`);
+    return btoa(`sig_${SIG_VERSION}_${hash}_${amount}`);
 }
 
 // Сохранение баланса вместе с защитной подписью
@@ -21,29 +22,43 @@ function setSecureBalance(amount) {
 
 // Безопасное чтение баланса с проверкой целостности
 function getValidBalance() {
-    const rawBalance = localStorage.getItem('fixone_balance');
-    const rawSig = localStorage.getItem('fixone_sig');
+    let rawBalance = localStorage.getItem('fixone_balance');
+    let rawSig = localStorage.getItem('fixone_sig');
 
-    // 1. Если игрок зашел первый раз
-    if (rawBalance === null) {
+    // ПРОВЕРКА НА ПЕРВЫЙ ВХОД (вообще нет данных)
+    if (rawBalance === null && rawSig === null) {
         setSecureBalance(10000); // 10k на старт
         return 10000;
     }
 
-    const currentBalance = parseInt(rawBalance) || 0;
+    // Обработка случая, когда баланс null, но подпись почему-то есть
+    if (rawBalance === null) {
+        rawBalance = '0';
+    }
 
-    // 2. МИГРАЦИЯ: Если баланс есть, но подписи еще нет (первый запуск новой защиты)
-    if (rawSig === null) {
-        setSecureBalance(currentBalance); // Создаем подпись под текущие деньги
+    const currentBalance = parseInt(rawBalance) || 0;
+    const expectedSig = generateSignature(currentBalance);
+
+    // ПРОВЕРКА НА МИГРАЦИЮ (баланс есть, подписи нет или она пустая)
+    if (!rawSig || rawSig.trim() === "") {
+        console.log("Включение защиты: создание начальной подписи.");
+        setSecureBalance(currentBalance); // Просто создаем подпись для текущих денег
         return currentBalance;
     }
 
-    const expectedSig = generateSignature(currentBalance);
+    // ПРОВЕРКА НА СТАРУЮ ВЕРСИЮ ПОДПИСИ
+    // Если подпись есть, но она не начинается с текущей версии,
+    // мы считаем её старой и обновляем под баланс (не сбрасываем!)
+    if (!rawSig.startsWith(`sig_${SIG_VERSION}_`)) {
+        console.log("Обновление версии защиты: пересоздание подписи.");
+        setSecureBalance(currentBalance);
+        return currentBalance;
+    }
 
-    // 3. ПРОВЕРКА ВЗЛОМА: Подпись была, но перестала совпадать
+    // ПРОВЕРКА ВЗЛОМА (защита активна, подписи не совпадают)
     if (rawSig !== expectedSig) {
-        console.warn("ВНИМАНИЕ: Попытка изменения баланса!");
-        alert("Обнаружено изменение баланса через консоль! Значение сброшено.");
+        console.warn("ВНИМАНИЕ: Обнаружена попытка изменения баланса!");
+        alert("Обнаружено несанкционированное изменение баланса через консоль! Значение сброшено.");
         setSecureBalance(0);
         return 0;
     }

@@ -45,13 +45,23 @@ const nationalStarsPlayers = [
     { name: 'Turqay', rating: 92, file: 'Turgay-92.png', folder: 'NationalStars' }
 ];
 
+// УПРОЩЕННЫЙ ПУЛ ИГРОКОВ TIME TRAVELS ( deducessed на основе имен файлов )
+const timeTravelsPlayers = [
+    { name: 'Bugday', rating: 95, file: 'Bugday-95.png', folder: 'Timetravlers' },
+    { name: 'Elcan', rating: 92, file: 'Elcan-92.png', folder: 'Timetravlers' },
+    { name: 'Nazrin', rating: 87, file: 'Nazrin-87.png', folder: 'Timetravlers' },
+    { name: 'Tuncay', rating: 92, file: 'Tuncay-92.png', folder: 'Timetravlers' },
+    { name: 'Turgay', rating: 92, file: 'Turgay-92.png', folder: 'Timetravlers' }
+];
+
 // Объединяем абсолютно все коллекции карт для генерации руки бота
 const ALL_GAME_CARDS = [
     ...goldPlayers, 
     ...tottPlayers, 
     ...totyPlayers, 
     ...championsPlayers, 
-    ...nationalStarsPlayers
+    ...nationalStarsPlayers,
+    ...timeTravelsPlayers // Подключен новый пул игроков
 ];
 
 let activeSquad = [];
@@ -168,7 +178,7 @@ function processBattle() {
     setTimeout(() => { 
         round++; 
         startRound(); 
-    }, 2500);
+    }, 5000);
 }
 
 function endGame() {

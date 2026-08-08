@@ -5,6 +5,7 @@ const PRICES = {
     champions: 50000, 
     tott: 70000,
     national_stars: 80000,
+    time_travels: 100000, // Установлена цена 100,000 CY
     toty: 200000 
 };
 
@@ -45,6 +46,15 @@ const nationalStarsPlayers = [
     { name: 'Turqay', rating: 92, pos: 'ST', club: 'cheer', file: 'Turgay-92.png', folder: 'NationalStars' }
 ];
 
+// НОВЫЙ ПУЛ ИГРОКОВ TIME TRAVELS ( deducced на основе скриншота папки )
+const timeTravelsPlayers = [
+    { name: 'Bugday', rating: 95, pos: 'GK', club: 'cheer', file: 'Bugday-95.png', folder: 'Timetravlers' },
+    { name: 'Elcan', rating: 92, pos: 'CAM', club: 'toxic', file: 'Elcan-92.png', folder: 'Timetravlers' },
+    { name: 'Nazrin', rating: 87, pos: 'CB', club: 'toxic', file: 'Nazrin-87.png', folder: 'Timetravlers' },
+    { name: 'Tuncay', rating: 92, pos: 'CB', club: 'icon', file: 'Tuncay-92.png', folder: 'Timetravlers' },
+    { name: 'Turgay', rating: 92, pos: 'ST', club: 'cheer', file: 'Turgay-92.png', folder: 'Timetravlers' }
+];
+
 const totyPlayers = [
     { name: 'Eldjan', rating: 97, pos: 'RW', club: 'toxic', file: 'Elcan-97.png', folder: 'Toty' },
     { name: 'Turqay', rating: 97, pos: 'ST', club: 'cheer', file: 'Turqay-97.png', folder: 'Toty' },
@@ -68,6 +78,8 @@ window.openPack = async function(type, videoFile) {
         pool = championsPlayers;
     } else if (type === 'national_stars') {
         pool = nationalStarsPlayers;
+    } else if (type === 'time_travels') {
+        pool = timeTravelsPlayers; // Подключен новый пул игроков
     } else {
         pool = totyPlayers;
     }
