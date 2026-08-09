@@ -1,8 +1,9 @@
 // --- ИНИЦИАЛИЗАЦИЯ ДАННЫХ ---
 let playerInventory = JSON.parse(localStorage.getItem('myPlayers')) || [];
+// Массив из 5 элементов (слоты 0-4), изначально пустые (null)
 let activeSquad = JSON.parse(localStorage.getItem('activeSquad')) || [null, null, null, null, null];
 
-// 1. СКРЫТИЕ ИНВЕНТАРЯ
+// 1. СКРЫТИЕ/ПОКАЗ ИНВЕНТАРЯ (КЛУБА)
 function toggleInventory() {
     const panel = document.getElementById('inventory-panel');
     const pitch = document.getElementById('pitch-area');
@@ -20,7 +21,7 @@ function toggleInventory() {
     }
 }
 
-// 2. СТРОГАЯ ПРОВЕРКА ПОЗИЦИЙ И ДУБЛИКАТОВ ИМЕН
+// 2. ДОБАВЛЕНИЕ ИГРОКА В СОСТАВ (БЕЗ УЧЕТА ПОЗИЦИЙ)
 window.addToSquad = function(inventoryIndex) {
     const player = playerInventory[inventoryIndex];
 
@@ -38,28 +39,20 @@ window.addToSquad = function(inventoryIndex) {
         return;
     }
 
-    let targetSlot = -1;
+    // ЛОГИКА ПОИСКА МЕСТА: Ищем первый попавшийся свободный слот (null)
+    const targetSlot = activeSquad.findIndex(slot => slot === null);
 
-    // ПРАВИЛО ПОЗИЦИЙ: GK только в слот 0, остальные в 1-4
-    if (player.pos === "GK") {
-        if (!activeSquad[0]) {
-            targetSlot = 0;
-        } else {
-            alert("Позиция вратаря уже занята!");
-            return;
-        }
-    } else {
-        // Ищем свободное место среди полевых (индексы 1, 2, 3, 4)
-        targetSlot = activeSquad.findIndex((p, idx) => idx > 0 && p === null);
-        if (targetSlot === -1) {
-            alert("Все места для полевых игроков заняты!");
-            return;
-        }
+    // Если свободных мест нет (findIndex вернул -1)
+    if (targetSlot === -1) {
+        alert("Состав заполнен! Удалите игрока с поля, чтобы освободить место.");
+        return;
     }
 
-    // Если все проверки пройдены
+    // Если место найдено, добавляем игрока
     activeSquad[targetSlot] = player;
+    // Сохраняем обновленный состав в память браузера
     localStorage.setItem('activeSquad', JSON.stringify(activeSquad));
+    // Перерисовываем поле
     renderSquad();
 };
 
@@ -73,14 +66,14 @@ function renderClub() {
         const card = document.createElement('div');
         card.className = 'inventory-card-mini';
         
-        // Определяем папку (если не указана, берем по рейтингу)
+        // Определяем папку (если не указана в данных, берем по рейтингу)
         const folder = player.folder || (player.rating >= 97 ? 'Toty' : 'Champions');
         
         card.innerHTML = `
             <img src="${folder}/${player.file}" 
                  class="mini-card-img" 
                  onclick="addToSquad(${index})"
-                 title="${player.name} (${player.pos})">
+                 title="${player.name} (${player.pos || '---'})">
         `;
         container.appendChild(card);
     });
@@ -93,30 +86,35 @@ function renderSquad() {
         if (!slot) return;
 
         if (player) {
+            // Если в слоте есть игрок, рисуем его карточку
             const folder = player.folder || (player.rating >= 97 ? 'Toty' : 'Champions');
             slot.innerHTML = `<img src="${folder}/${player.file}" class="field-card-img" onclick="handleSlotClick(${i})">`;
             slot.className = "player-slot has-player";
         } else {
-            const positions = ['GK', 'FLD', 'FLD', 'FLD', 'FLD'];
-            slot.innerHTML = `<div class="slot-label">${positions[i]}</div>`;
+            // Если слот пустой, рисуем заглушку с generic-названием
+            // i+1 чтобы было "ИГРОК 1", "ИГРОК 2" и т.д.
+            slot.innerHTML = `<div class="slot-label">ИГРОК ${i + 1}</div>`;
             slot.className = "player-slot";
         }
     });
-    updateAvg();
+    updateAvg(); // Обновляем средний рейтинг
 }
 
-// 5. УДАЛЕНИЕ ИГРОКА ПРИ КЛИКЕ НА СЛОТ
+// 5. УДАЛЕНИЕ ИГРОКА ПРИ КЛИКЕ НА СЛОТ НА ПОЛЕ
 window.handleSlotClick = function(index) {
     if (activeSquad[index]) {
+        // Освобождаем слот
         activeSquad[index] = null;
+        // Сохраняем в память
         localStorage.setItem('activeSquad', JSON.stringify(activeSquad));
+        // Перерисовываем
         renderSquad();
     }
 };
 
-// 6. СРЕДНИЙ РЕЙТИНГ
+// 6. РАСЧЕТ И ОТОБРАЖЕНИЕ СРЕДНЕГО РЕЙТИНГА
 function updateAvg() {
-    const onField = activeSquad.filter(p => p !== null);
+    const onField = activeSquad.filter(p => p !== null); // Берем только тех, кто на поле
     const badge = document.getElementById('avg-rating');
     if (!badge) return;
     
@@ -128,7 +126,7 @@ function updateAvg() {
     }
 }
 
-// 7. ОЧИСТКА СОСТАВА
+// 7. ОЧИСТКА ВСЕГО СОСТАВА
 window.clearSquad = function() {
     if (confirm("Очистить весь состав?")) {
         activeSquad = [null, null, null, null, null];
@@ -137,7 +135,7 @@ window.clearSquad = function() {
     }
 };
 
-// ЗАПУСК ПРИ ЗАГРУЗКЕ
+// ЗАПУСК ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
 window.onload = () => { 
     renderClub(); 
     renderSquad(); 
