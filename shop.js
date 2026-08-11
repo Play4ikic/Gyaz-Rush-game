@@ -46,7 +46,6 @@ const nationalStarsPlayers = [
     { name: 'Turqay', rating: 92, pos: 'ST', club: 'cheer', file: 'Turgay-92.png', folder: 'NationalStars' }
 ];
 
-// НОВЫЙ ПУЛ ИГРОКОВ TIME TRAVELS ( deducced на основе скриншота папки )
 const timeTravelsPlayers = [
     { name: 'Bugday', rating: 95, pos: 'GK', club: 'cheer', file: 'Bugday-95.png', folder: 'Timetravlers' },
     { name: 'Elcan', rating: 92, pos: 'CAM', club: 'toxic', file: 'Elcan-92.png', folder: 'Timetravlers' },
@@ -65,6 +64,58 @@ const totyPlayers = [
 
 let currentDroppedPlayer = null;
 
+// --- НОВАЯ ВСТАВКА: Логика шансов ---
+
+/**
+ * Определяет "вес" игрока на основе его рейтинга.
+ * Чем выше рейтинг, тем меньше вес (меньше шанс выпадения).
+ * Это абстрактные числа для расчета пропорций.
+ */
+function getPlayerWeight(rating) {
+    // Настраиваемый баланс:
+    if (rating >= 97) return 1;   // Ультра редкие (например, TOTY 97)
+    if (rating >= 95) return 3;   // Очень редкие
+    if (rating >= 90) return 10;  // Редкие
+    if (rating >= 85) return 40;  // Необычные
+    if (rating >= 80) return 100; // Частые
+    return 250;                   // Очень частые (рейтинг < 80)
+}
+
+/**
+ * Выбирает игрока из массива, используя веса на основе рейтинга.
+ */
+function pickPlayerByChance(pool) {
+    if (!pool || pool.length === 0) return null;
+
+    // 1. Рассчитываем веса для каждого игрока в текущем пуле
+    const weightedPool = pool.map(player => {
+        return {
+            player: player,
+            weight: getPlayerWeight(player.rating)
+        };
+    });
+
+    // 2. Считаем общий вес всего пула
+    const totalWeight = weightedPool.reduce((sum, item) => sum + item.weight, 0);
+
+    // 3. Выбираем случайное число от 0 до totalWeight
+    let randomNum = Math.random() * totalWeight;
+
+    // 4. Перебираем пул, вычитая веса, чтобы найти, куда попало число
+    for (let i = 0; i < weightedPool.length; i++) {
+        if (randomNum < weightedPool[i].weight) {
+            return weightedPool[i].player; // Нашли игрока
+        }
+        randomNum -= weightedPool[i].weight;
+    }
+
+    // Фаллбэк (на всякий случай, если Math.random выдаст ровно 1.0)
+    return pool[pool.length - 1];
+}
+
+// --- КОНЕЦ НОВОЙ ВСТАВКИ ---
+
+
 // ОСНОВНАЯ ФУНКЦИЯ ОТКРЫТИЯ
 window.openPack = async function(type, videoFile) {
     const price = PRICES[type];
@@ -79,7 +130,7 @@ window.openPack = async function(type, videoFile) {
     } else if (type === 'national_stars') {
         pool = nationalStarsPlayers;
     } else if (type === 'time_travels') {
-        pool = timeTravelsPlayers; // Подключен новый пул игроков
+        pool = timeTravelsPlayers;
     } else {
         pool = totyPlayers;
     }
@@ -87,7 +138,10 @@ window.openPack = async function(type, videoFile) {
     const success = await updateBalance(-price);
 
     if (success) {
-        currentDroppedPlayer = pool[Math.floor(Math.random() * pool.length)];
+        // --- ИЗМЕНЕНО: Теперь используем функцию с шансами ---
+        // Было: currentDroppedPlayer = pool[Math.floor(Math.random() * pool.length)];
+        currentDroppedPlayer = pickPlayerByChance(pool);
+        // ---------------------------------------------------
 
         if (type === 'gold') {
             showInstantReveal();
