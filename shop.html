@@ -24,59 +24,58 @@
                     <div class="pack-visual">
                         <img src="images/gold.png" alt="Gold" class="pack-img">
                     </div>
-                    <div class="pack-info">
+                    <div class="pack-details">
                         <h2>GOLD PACK</h2>
-                        <div class="pack-price">5,000 CY</div>
-                        <button class="buy-button" onclick="openPack('gold', '')">ОТКРЫТЬ</button>
+                        <div class="pack-price">1,000 CY</div>
                     </div>
+                    <button class="buy-button" onclick="openPack('gold', '')">ОТКРЫТЬ</button>
                 </div>
 
-                <!-- CHAMPIONS PACK -->
-                <div class="pack-card champions-card">
-                    <div class="pack-visual">
-                        <img src="images/champions league.jpg" alt="UCL" class="pack-img">
-                    </div>
-                    <div class="pack-info">
-                        <h2>CHAMPIONS PACK</h2>
-                        <div class="pack-price">50,000 CY</div>
-                        <button class="buy-button" onclick="openPack('champions', 'анимация 2.mp4')">ОТКРЫТЬ</button>
-                    </div>
-                </div>
 
                 <!-- TOTT PACK -->
                 <div class="pack-card tott-card">
                     <div class="pack-visual">
                         <img src="images/TOTT.png" alt="TOTT PACK" class="pack-img">
                     </div>
-                    <div class="pack-info">
+                    <div class="pack-details">
                         <h2>TOTT PACK</h2>
-                        <div class="pack-price">70,000 CY</div>
-                        <button class="buy-button" onclick="openPack('tott', 'анимация.mp4')">ОТКРЫТЬ</button>
+                        <div class="pack-price">50,000 CY</div>
                     </div>
+                    <button class="buy-button" onclick="openPack('tott', 'анимация.mp4')">ОТКРЫТЬ</button>
                 </div>
-
+    <!-- CHAMPIONS PACK -->
+                <div class="pack-card champions-card">
+                    <div class="pack-visual">
+                        <img src="images/champions league.jpg" alt="UCL" class="pack-img">
+                    </div>
+                    <div class="pack-details">
+                        <h2>CHAMPIONS PACK</h2>
+                        <div class="pack-price">70,000 CY</div>
+                    </div>
+                    <button class="buy-button" onclick="openPack('champions', 'анимация 2.mp4')">ОТКРЫТЬ</button>
+                </div>
                 <!-- NATIONAL STARS PACK -->
                 <div class="pack-card national-stars-card">
                     <div class="pack-visual">
                         <img src="images/NationalPack.png" alt="NATIONAL STARS" class="pack-img">
                     </div>
-                    <div class="pack-info">
+                    <div class="pack-details">
                         <h2>NATIONAL STARS</h2>
                         <div class="pack-price">80,000 CY</div>
-                        <button class="buy-button" onclick="openPack('national_stars', 'анимация 2.mp4')">ОТКРЫТЬ</button>
                     </div>
+                    <button class="buy-button" onclick="openPack('national_stars', 'анимация 2.mp4')">ОТКРЫТЬ</button>
                 </div>
 
-                <!-- TIME TRAVELS PACK (НОВЫЙ) -->
+                <!-- TIME TRAVELS PACK -->
                 <div class="pack-card time-travels-card">
                     <div class="pack-visual">
                         <img src="images/TimePack.png" alt="TIME TRAVELS" class="pack-img">
                     </div>
-                    <div class="pack-info">
+                    <div class="pack-details">
                         <h2>TIME TRAVELS</h2>
                         <div class="pack-price">100,000 CY</div>
-                        <button class="buy-button" onclick="openPack('time_travels', 'анимация 2.mp4')">ОТКРЫТЬ</button>
                     </div>
+                    <button class="buy-button" onclick="openPack('time_travels', 'анимация 2.mp4')">ОТКРЫТЬ</button>
                 </div>
 
                 <!-- TOTY PACK -->
@@ -84,11 +83,24 @@
                     <div class="pack-visual">
                         <img src="images/toty.jpg" alt="TOTY" class="pack-img">
                     </div>
-                    <div class="pack-info">
+                    <div class="pack-details">
                         <h2>TOTY PACK</h2>
                         <div class="pack-price">200,000 CY</div>
-                        <button class="buy-button" onclick="openPack('toty', 'анимация.mp4')">ОТКРЫТЬ</button>
                     </div>
+                    <button class="buy-button" onclick="openPack('toty', 'анимация.mp4')">ОТКРЫТЬ</button>
+                </div>
+
+                <!-- CHAOS PACK -->
+                <div class="pack-card chaos-card">
+                    <div class="pack-tag">ULTIMATE 99</div>
+                    <div class="pack-visual">
+                        <img src="images/CHAOSPACK.png" alt="CHAOS PACK" class="pack-img">
+                    </div>
+                    <div class="pack-details">
+                        <h2>CHAOS PACK</h2>
+                        <div class="pack-price">800,000 CY</div>
+                    </div>
+                    <button class="buy-button" onclick="openPack('chaos', 'анимация 2.mp4')">ОТКРЫТЬ</button>
                 </div>
 
             </div>
@@ -120,8 +132,8 @@
         </div>
     </div>
 
-    <div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
-        <button onclick="this.innerText = (typeof toggleMute === 'function' && toggleMute()) ? '🔇' : '🎵'" style="background: none; border: none; font-size: 20px; cursor: pointer;">🎵</button>
+    <div class="audio-controls" style="position: fixed; bottom: 15px; right: 15px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);">
+        <button onclick="this.innerText = (typeof toggleMute === 'function' && toggleMute()) ? '🔇' : '🎵'" style="background: none; border: none; font-size: 20px; cursor: pointer; color: white;">🎵</button>
         <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="if(typeof setVolume === 'function') setVolume(this.value)" style="width: 60px; cursor: pointer;">
     </div>
 

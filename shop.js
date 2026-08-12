@@ -1,11 +1,12 @@
 import { updateBalance, refreshBalanceDisplay } from './economy.js';
 
 const PRICES = { 
-    gold: 5000, 
-    champions: 50000, 
-    tott: 70000,
+    gold: 1000, 
+    champions: 70000, 
+    tott: 50000,
     national_stars: 80000,
-    time_travels: 100000, // Установлена цена 100,000 CY
+    time_travels: 100000, 
+    chaos: 800000, // Установлена цена 800,000 CY
     toty: 200000 
 };
 
@@ -47,11 +48,21 @@ const nationalStarsPlayers = [
 ];
 
 const timeTravelsPlayers = [
-    { name: 'Bugday', rating: 95, pos: 'GK', club: 'cheer', file: 'Bugday-95.png', folder: 'Timetravlers' },
+    { name: 'Bugday', rating: 96, pos: 'GK', club: 'cheer', file: 'Bugday-95.png', folder: 'Timetravlers' },
     { name: 'Elcan', rating: 92, pos: 'CAM', club: 'toxic', file: 'Elcan-92.png', folder: 'Timetravlers' },
     { name: 'Nazrin', rating: 87, pos: 'CB', club: 'toxic', file: 'Nazrin-87.png', folder: 'Timetravlers' },
     { name: 'Tuncay', rating: 92, pos: 'CB', club: 'icon', file: 'Tuncay-92.png', folder: 'Timetravlers' },
     { name: 'Turgay', rating: 92, pos: 'ST', club: 'cheer', file: 'Turgay-92.png', folder: 'Timetravlers' }
+];
+
+// НОВЫЙ ПУЛ ИГРОКОВ CHAOS (на основе скриншота image_4.png)
+// Я предполагаю pos и club на основе существующих игроков
+const chaosPlayers = [
+    { name: 'Bugday', rating: 99, pos: 'GK', club: 'cheer', file: 'Bugday-99.png', folder: 'CHAOS' },
+    { name: 'Elcan', rating: 99, pos: 'RW', club: 'toxic', file: 'Elcan-99.png', folder: 'CHAOS' },
+    { name: 'Nazrin', rating: 99, pos: 'DF', club: 'toxic', file: 'Nazrin-99.png', folder: 'CHAOS' },
+    { name: 'Tuncay', rating: 99, pos: 'DF', club: 'cheer', file: 'Tuncay-99.png', folder: 'CHAOS' },
+    { name: 'Turgay', rating: 99, pos: 'ST', club: 'cheer', file: 'Turgay-99.png', folder: 'CHAOS' }
 ];
 
 const totyPlayers = [
@@ -131,6 +142,8 @@ window.openPack = async function(type, videoFile) {
         pool = nationalStarsPlayers;
     } else if (type === 'time_travels') {
         pool = timeTravelsPlayers;
+    } else if (type === 'chaos') { // Обработка нового типа пака
+        pool = chaosPlayers;
     } else {
         pool = totyPlayers;
     }

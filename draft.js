@@ -15,7 +15,7 @@ const goldPlayers = [
 const tottPlayers = [
     { name: 'Bugday', rating: 82, file: 'Bugday-82.png', folder: 'Tott' },
     { name: 'Elcan', rating: 89, file: 'Elcan-89.png', folder: 'Tott' },
-    { name: 'Nazrin', rating: 85, file: 'Nazrin-85.png', folder: 'Tott' },
+    { name: 'Nazrin', rating: 85, pos: 'CB', club: 'toxic', file: 'Nazrin-85.png', folder: 'Tott' },
     { name: 'Tuncay', rating: 92, file: 'Tuncay-92.png', folder: 'Tott' },
     { name: 'Turqay', rating: 89, file: 'Turqay-89.png', folder: 'Tott' }
 ];
@@ -54,6 +54,16 @@ const timeTravelsPlayers = [
     { name: 'Turgay', rating: 92, file: 'Turgay-92.png', folder: 'Timetravlers' }
 ];
 
+// НОВЫЙ ПУЛ ИГРОКОВ CHAOS (на основе скриншота image_4.png)
+// В draft.js объекты проще
+const chaosPlayers = [
+    { name: 'Bugday', rating: 99, file: 'Bugday-99.png', folder: 'CHAOS' },
+    { name: 'Elcan', rating: 99, file: 'Elcan-99.png', folder: 'CHAOS' },
+    { name: 'Nazrin', rating: 99, file: 'Nazrin-99.png', folder: 'CHAOS' },
+    { name: 'Tuncay', rating: 99, file: 'Tuncay-99.png', folder: 'CHAOS' },
+    { name: 'Turgay', rating: 99, file: 'Turgay-99.png', folder: 'CHAOS' }
+];
+
 // Объединяем абсолютно все коллекции карт для генерации руки бота
 const ALL_GAME_CARDS = [
     ...goldPlayers, 
@@ -61,7 +71,8 @@ const ALL_GAME_CARDS = [
     ...totyPlayers, 
     ...championsPlayers, 
     ...nationalStarsPlayers,
-    ...timeTravelsPlayers // Подключен новый пул игроков
+    ...timeTravelsPlayers, 
+    ...chaosPlayers // Подключен новый пул игроков
 ];
 
 let activeSquad = [];
