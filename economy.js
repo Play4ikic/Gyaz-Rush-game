@@ -47,8 +47,6 @@ function getValidBalance() {
     }
 
     // ПРОВЕРКА НА СТАРУЮ ВЕРСИЮ ПОДПИСИ
-    // Если подпись есть, но она не начинается с текущей версии,
-    // мы считаем её старой и обновляем под баланс (не сбрасываем!)
     if (!rawSig.startsWith(`sig_${SIG_VERSION}_`)) {
         console.log("Обновление версии защиты: пересоздание подписи.");
         setSecureBalance(currentBalance);
@@ -104,5 +102,36 @@ export function refreshBalanceDisplay() {
     });
 }
 
-// Авто-обновление при загрузке
-refreshBalanceDisplay();
+// 4. ПРОВЕРКА ОДНОРАЗОВОЙ БОНУСНОЙ ССЫЛКИ (?promo=gift100k)
+document.addEventListener('DOMContentLoaded', () => {
+    refreshBalanceDisplay();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const promoCode = urlParams.get('promo');
+
+    const SECRET_CODE = "gift100k";
+    const CLAIM_KEY = "promo_claimed_" + SECRET_CODE;
+
+    if (promoCode === SECRET_CODE) {
+        const isClaimed = localStorage.getItem(CLAIM_KEY);
+
+        if (!isClaimed) {
+            // Начисляем 100 000 с генерацией валидной подписи
+            updateBalance(100000);
+            
+            // Фиксируем, что бонус был забран
+            localStorage.setItem(CLAIM_KEY, "true");
+
+            alert("🎉 Поздравляем! Вам начислено 100 000 CY!");
+
+            // Красиво очищаем URL без перезагрузки страницы
+            const cleanUrl = window.location.origin + window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+        } else {
+            alert("⚠️ Вы уже активировали этот подарок!");
+            
+            const cleanUrl = window.location.origin + window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+        }
+    }
+});
