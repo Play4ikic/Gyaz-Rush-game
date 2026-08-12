@@ -5,8 +5,6 @@
     <title>FixOne FC - Hub</title>
     <link rel="icon" href="favicon.png" type="image/png">
     <link rel="stylesheet" href="style.css">
-    <!-- Подключение экономики с версионированием для сброса кэша -->
-    <script type="module" src="economy.js?v=2"></script>
     <style>
         /* ВОЗВРАТ ПРЕЖНЕГО СТИЛЯ */
         .top-nav {
@@ -41,7 +39,7 @@
             position: fixed;
             bottom: 30px;
             left: 30px;
-            width: 300px;
+            width: 300px; /* Немного увеличил для надписи */
             z-index: 1000;
             cursor: pointer;
             transition: transform 0.1s;
@@ -55,7 +53,7 @@
             border-radius: 18px;
             padding: 12px 15px;
             display: flex;
-            flex-direction: column;
+            flex-direction: column; /* Изменено для текста сверху */
             gap: 5px;
             box-shadow: 0 8px 0 #856404;
         }
@@ -84,7 +82,7 @@
 
         .pass-xp-container {
             flex-grow: 1;
-            background: #664400;
+            background: #664400; /* Темно-золотой фон как на скрине */
             border-radius: 10px;
             height: 28px;
             position: relative;
@@ -95,7 +93,7 @@
         .pass-xp-fill {
             height: 100%;
             width: 0%;
-            background: #0099ff;
+            background: #0099ff; /* Голубой цвет прогресса как на скрине */
             transition: width 0.5s;
         }
 
@@ -210,16 +208,14 @@
         function openOnline() { document.getElementById('online-modal').style.display = 'flex'; }
         function closeOnline() { document.getElementById('online-modal').style.display = 'none'; }
     </script>
-
-    <div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
+      <div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
         <button onclick="this.innerText = (typeof toggleMute === 'function' && toggleMute()) ? '🔇' : '🎵'" style="background: none; border: none; font-size: 20px; cursor: pointer;">🎵</button>
         <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="if(typeof setVolume === 'function') setVolume(this.value)" style="width: 60px; cursor: pointer;">
     </div>
 
     <script src="audio.js"></script>
-
     <script type="module">
-    import { updateBalance } from './economy.js?v=2';
+    import { updateBalance } from './economy.js';
 
     const BIZ_CONFIG = {
         MAX: 6000,
