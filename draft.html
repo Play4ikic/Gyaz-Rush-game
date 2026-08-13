@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FixOne - Draft Battle</title>
+    <!-- ПОДКЛЮЧЕНИЕ СТИЛЕЙ ЧАТА -->
+    <link rel="stylesheet" href="chat.css">
     <style>
         :root {
             --gold: #e1b12c;
@@ -109,7 +111,6 @@
         }
 
         .card-back { 
-            
             border: 2px solid var(--gold); 
             box-shadow: 0 0 20px rgba(225,177,44,0.2);
         }
@@ -190,7 +191,7 @@
         <div class="squad-selection">
             <h3 style="margin-bottom: 20px; letter-spacing: 3px; opacity: 0.8;">РАУНД <span id="round-num" style="color:var(--gold);">1</span> / 5</h3>
             <div id="squad-hand" class="hand-grid" style="display: flex; flex-wrap: wrap; justify-content: center; max-width: 600px;">
-                </div>
+            </div>
         </div>
     </div>
 
@@ -233,5 +234,8 @@
     <script src="audio.js"></script>
     <script src="draft.js"></script> 
     <script type="module" src="online_draft.js"></script>
+    
+    <!-- ПОДКЛЮЧЕНИЕ МОДУЛЯ ЧАТА -->
+    <script type="module" src="online.js"></script>
 </body>
 </html>
