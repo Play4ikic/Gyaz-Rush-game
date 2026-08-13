@@ -73,14 +73,16 @@ const totyPlayers = [
 
 let currentDroppedPlayer = null;
 
-// Логика расчета шансов выпадения
+// Помощник паузы для таймингов анимации
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 function getPlayerWeight(rating) {
-    if (rating >= 97) return 1;   // Ультра редкие
-    if (rating >= 95) return 3;   // Очень редкие
-    if (rating >= 90) return 10;  // Редкие
-    if (rating >= 85) return 40;  // Необычные
-    if (rating >= 80) return 100; // Частые
-    return 250;                   // Очень частые (< 80)
+    if (rating >= 97) return 1;
+    if (rating >= 95) return 3;
+    if (rating >= 90) return 10;
+    if (rating >= 85) return 40;
+    if (rating >= 80) return 100;
+    return 250;
 }
 
 function pickPlayerByChance(pool) {
@@ -105,25 +107,17 @@ function pickPlayerByChance(pool) {
 }
 
 // ОСНОВНАЯ ФУНКЦИЯ ОТКРЫТИЯ
-window.openPack = async function(type, videoFile) {
+window.openPack = async function(type) {
     const price = PRICES[type];
     
     let pool;
-    if (type === 'gold') {
-        pool = goldPlayers;
-    } else if (type === 'tott') {
-        pool = tottPlayers;
-    } else if (type === 'champions') {
-        pool = championsPlayers;
-    } else if (type === 'national_stars') {
-        pool = nationalStarsPlayers;
-    } else if (type === 'time_travels') {
-        pool = timeTravelsPlayers;
-    } else if (type === 'chaos') {
-        pool = chaosPlayers;
-    } else {
-        pool = totyPlayers;
-    }
+    if (type === 'gold') pool = goldPlayers;
+    else if (type === 'tott') pool = tottPlayers;
+    else if (type === 'champions') pool = championsPlayers;
+    else if (type === 'national_stars') pool = nationalStarsPlayers;
+    else if (type === 'time_travels') pool = timeTravelsPlayers;
+    else if (type === 'chaos') pool = chaosPlayers;
+    else pool = totyPlayers;
 
     const success = await updateBalance(-price);
 
@@ -133,7 +127,7 @@ window.openPack = async function(type, videoFile) {
         if (type === 'gold') {
             showInstantReveal();
         } else {
-            startVideoReveal(videoFile);
+            startCinematicReveal(currentDroppedPlayer);
         }
     } else {
         alert("Не хватает CY для открытия пака!");
@@ -141,50 +135,104 @@ window.openPack = async function(type, videoFile) {
 };
 
 function showInstantReveal() {
-    const revealScreen = document.getElementById('reveal-screen');
-    const playerImg = document.getElementById('card-res-img');
+    const stage = document.getElementById('reveal-stage');
+    const cardDropStage = document.getElementById('card-drop-stage');
+    const playerImg = document.getElementById('final-card-img');
+    const claimBtn = document.getElementById('claim-btn');
 
+    // Скрываем тизеры
+    document.getElementById('teaser-container').classList.add('hidden');
+    
     playerImg.src = `${currentDroppedPlayer.folder}/${currentDroppedPlayer.file}`;
-    playerImg.classList.add('flash-effect');
-    revealScreen.classList.remove('hidden');
+    stage.classList.remove('hidden');
+    cardDropStage.classList.remove('hidden');
+    claimBtn.classList.remove('hidden');
 
+    playerImg.classList.add('flash-effect');
     setupClaimButton();
     setTimeout(() => playerImg.classList.remove('flash-effect'), 1000);
 }
 
-function startVideoReveal(videoFile) {
-    const videoContainer = document.getElementById('video-reveal-container');
-    const video = document.getElementById('pack-video');
-    const overlay = document.getElementById('video-overlay');
+// ЭПИЧНАЯ КИНЕМАТОГРАФИЧЕСКАЯ АНИМАЦИЯ
+async function startCinematicReveal(player) {
+    const stage = document.getElementById('reveal-stage');
+    const teaserContainer = document.getElementById('teaser-container');
+    const stepCountry = document.getElementById('step-country');
+    const stepPos = document.getElementById('step-pos');
+    const stepClub = document.getElementById('step-club');
     
-    video.querySelector('source').src = `images/${videoFile}`;
-    document.querySelectorAll('.reveal-text').forEach(el => el.classList.remove('show-text'));
-    overlay.classList.add('hidden');
+    const posBadge = document.getElementById('pos-badge');
+    const clubImg = document.getElementById('club-icon-img');
+    
+    const cardDropStage = document.getElementById('card-drop-stage');
+    const cardImg = document.getElementById('final-card-img');
+    const shockwave = document.getElementById('impact-shockwave');
+    const claimBtn = document.getElementById('claim-btn');
 
-    document.getElementById('reveal-pos').innerText = currentDroppedPlayer.pos;
-    document.getElementById('reveal-club-icon').src = `images/${currentDroppedPlayer.club}.png`; 
+    // Сброс всех прошлых состояний
+    teaserContainer.classList.remove('hidden');
+    stepCountry.className = 'teaser-step hidden';
+    stepPos.className = 'teaser-step hidden';
+    stepClub.className = 'teaser-step hidden';
+    cardDropStage.classList.add('hidden');
+    claimBtn.classList.add('hidden');
+    shockwave.classList.remove('active');
+    cardImg.className = 'slammed-card';
 
-    videoContainer.classList.remove('hidden');
-    video.load(); 
-    video.play();
+    // Заполнение данных
+    posBadge.innerText = player.pos;
+    clubImg.src = `images/${player.club}.png`;
+    cardImg.src = `${player.folder}/${player.file}`;
 
-    setTimeout(() => { 
-        overlay.classList.remove('hidden');
-        document.getElementById('reveal-country-cont').classList.add('show-text'); 
-    }, 3000); 
-    setTimeout(() => document.getElementById('reveal-pos').classList.add('show-text'), 5000); 
-    setTimeout(() => document.getElementById('reveal-club-img-cont').classList.add('show-text'), 6500); 
+    // Открываем сцену
+    stage.classList.remove('hidden');
 
+    // --- ШАГ 1: Показ Флага (Страна) ---
+    await sleep(300);
+    stepCountry.classList.remove('hidden');
+    stepCountry.classList.add('animate-in');
+    await sleep(1400);
+    stepCountry.classList.replace('animate-in', 'animate-out');
+    await sleep(300);
+    stepCountry.classList.add('hidden');
+
+    // --- ШАГ 2: Показ Позиции ---
+    stepPos.classList.remove('hidden');
+    stepPos.classList.add('animate-in');
+    await sleep(1400);
+    stepPos.classList.replace('animate-in', 'animate-out');
+    await sleep(300);
+    stepPos.classList.add('hidden');
+
+    // --- ШАГ 3: Показ Клуба ---
+    stepClub.classList.remove('hidden');
+    stepClub.classList.add('animate-in');
+    await sleep(1400);
+    stepClub.classList.replace('animate-in', 'animate-out');
+    await sleep(400);
+    stepClub.classList.add('hidden');
+    teaserContainer.classList.add('hidden');
+
+    // --- ШАГ 4: Эпичное падение карточки ---
+    cardDropStage.classList.remove('hidden');
+    cardImg.classList.add('drop-slam-anim');
+
+    // Эффект удара об землю (Shockwave & Screen Shake)
     setTimeout(() => {
-        overlay.classList.add('hidden'); 
-        document.getElementById('card-res-img').src = `${currentDroppedPlayer.folder}/${currentDroppedPlayer.file}`;
-        document.getElementById('reveal-screen').classList.remove('hidden');
-        setupClaimButton();
-    }, 8300); 
+        shockwave.classList.add('active');
+        stage.classList.add('screen-shake');
+        setTimeout(() => stage.classList.remove('screen-shake'), 400);
+    }, 500);
+
+    // Показываем кнопку "Забрать в состав"
+    await sleep(1000);
+    claimBtn.classList.remove('hidden');
+    claimBtn.classList.add('pop-in-btn');
+    setupClaimButton();
 }
 
 function setupClaimButton() {
-    const claimBtn = document.querySelector('.claim-button');
+    const claimBtn = document.getElementById('claim-btn');
     if (claimBtn) {
         claimBtn.onclick = () => saveToInventory(currentDroppedPlayer);
     }
@@ -199,8 +247,8 @@ function saveToInventory(player) {
 }
 
 window.closeReveal = function() {
-    document.getElementById('reveal-screen').classList.add('hidden');
-    document.getElementById('video-reveal-container').classList.add('hidden');
+    const stage = document.getElementById('reveal-stage');
+    stage.classList.add('hidden');
     currentDroppedPlayer = null;
 };
 

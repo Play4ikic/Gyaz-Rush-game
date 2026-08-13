@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FixOne Shop - Special Packs</title>
+    <title>Goalyaz Shop - Special Packs</title>
     <link rel="stylesheet" href="shop.css">
     <script type="module" src="economy.js"></script>
     <script type="module" src="shop.js"></script>
@@ -28,7 +28,7 @@
                         <h2>GOLD PACK</h2>
                         <div class="pack-price">1,000 CY</div>
                     </div>
-                    <button class="buy-button" onclick="openPack('gold', '')">ОТКРЫТЬ</button>
+                    <button class="buy-button" onclick="openPack('gold')">ОТКРЫТЬ</button>
                 </div>
 
                 <!-- TOTT PACK -->
@@ -40,7 +40,7 @@
                         <h2>TOTT PACK</h2>
                         <div class="pack-price">50,000 CY</div>
                     </div>
-                    <button class="buy-button" onclick="openPack('tott', 'анимация.mp4')">ОТКРЫТЬ</button>
+                    <button class="buy-button" onclick="openPack('tott')">ОТКРЫТЬ</button>
                 </div>
 
                 <!-- CHAMPIONS PACK -->
@@ -52,7 +52,7 @@
                         <h2>CHAMPIONS PACK</h2>
                         <div class="pack-price">70,000 CY</div>
                     </div>
-                    <button class="buy-button" onclick="openPack('champions', 'анимация 2.mp4')">ОТКРЫТЬ</button>
+                    <button class="buy-button" onclick="openPack('champions')">ОТКРЫТЬ</button>
                 </div>
 
                 <!-- NATIONAL STARS PACK -->
@@ -64,7 +64,7 @@
                         <h2>NATIONAL STARS</h2>
                         <div class="pack-price">80,000 CY</div>
                     </div>
-                    <button class="buy-button" onclick="openPack('national_stars', 'анимация 2.mp4')">ОТКРЫТЬ</button>
+                    <button class="buy-button" onclick="openPack('national_stars')">ОТКРЫТЬ</button>
                 </div>
 
                 <!-- TIME TRAVELS PACK -->
@@ -76,7 +76,7 @@
                         <h2>TIME TRAVELS</h2>
                         <div class="pack-price">100,000 CY</div>
                     </div>
-                    <button class="buy-button" onclick="openPack('time_travels', 'анимация 2.mp4')">ОТКРЫТЬ</button>
+                    <button class="buy-button" onclick="openPack('time_travels')">ОТКРЫТЬ</button>
                 </div>
 
                 <!-- TOTY PACK -->
@@ -88,7 +88,7 @@
                         <h2>TOTY PACK</h2>
                         <div class="pack-price">200,000 CY</div>
                     </div>
-                    <button class="buy-button" onclick="openPack('toty', 'анимация.mp4')">ОТКРЫТЬ</button>
+                    <button class="buy-button" onclick="openPack('toty')">ОТКРЫТЬ</button>
                 </div>
 
                 <!-- CHAOS PACK -->
@@ -101,35 +101,52 @@
                         <h2>CHAOS PACK</h2>
                         <div class="pack-price">800,000 CY</div>
                     </div>
-                    <button class="buy-button" onclick="openPack('chaos', 'анимация 2.mp4')">ОТКРЫТЬ</button>
+                    <button class="buy-button" onclick="openPack('chaos')">ОТКРЫТЬ</button>
                 </div>
 
             </div>
         </main>
     </div>
 
-    <!-- ОКНО АНИМАЦИИ ОТКРЫТИЯ -->
-    <div id="video-reveal-container" class="hidden">
-        <video id="pack-video" playsinline preload="auto">
-            <source src="" type="video/mp4">
-        </video>
-        <div id="video-overlay" class="hidden">
-            <div id="reveal-country-cont" class="reveal-text">
-                <img src="images/Flag.jpg" class="flag-reveal-icon">
-            </div> 
-            <div id="reveal-pos" class="reveal-text">ST</div>
-            <div id="reveal-club-img-cont" class="reveal-text">
-                <img src="" id="reveal-club-icon" class="club-reveal-icon">
+    <!-- ИНТЕРАКТИВНАЯ АНИМАЦИОННАЯ АРЕНА (БЕЗ ВИДЕО) -->
+    <div id="reveal-stage" class="hidden">
+        <div class="stage-overlay"></div>
+        <div class="stage-bg-beams"></div>
+        
+        <!-- ТИЗЕР-ЭТАПЫ (НАЦИЯ -> ПОЗИЦИЯ -> КЛУБ) -->
+        <div id="teaser-container" class="teaser-container">
+            <!-- 1. ФЛАГ -->
+            <div id="step-country" class="teaser-step hidden">
+                <div class="teaser-card">
+                    <img src="images/Flag.jpg" alt="Nation" class="flag-icon">
+                    <span class="teaser-label">НАЦИОНАЛЬНОСТЬ</span>
+                </div>
+            </div>
+
+            <!-- 2. ПОЗИЦИЯ -->
+            <div id="step-pos" class="teaser-step hidden">
+                <div class="teaser-card">
+                    <div id="pos-badge" class="pos-badge">ST</div>
+                    <span class="teaser-label">ПОЗИЦИЯ</span>
+                </div>
+            </div>
+
+            <!-- 3. КЛУБ -->
+            <div id="step-club" class="teaser-step hidden">
+                <div class="teaser-card">
+                    <img id="club-icon-img" src="" alt="Club" class="club-icon">
+                    <span class="teaser-label">КЛУБ</span>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- ОКНО ВЫПАВШЕЙ КАРТОЧКИ -->
-    <div id="reveal-screen" class="hidden">
-        <div class="overlay"></div>
-        <div class="reveal-container">
-            <img src="" id="card-res-img" class="final-player-image">
-            <button class="claim-button">ЗАБРАТЬ В СОСТАВ</button>
+        <!-- 4. ФИНАЛЬНОЕ ПАДЕНИЕ КАРТОЧКИ -->
+        <div id="card-drop-stage" class="card-drop-stage hidden">
+            <div id="impact-shockwave" class="shockwave"></div>
+            <div id="card-drop-wrapper" class="card-drop-wrapper">
+                <img id="final-card-img" src="" alt="Card" class="slammed-card">
+            </div>
+            <button id="claim-btn" class="claim-button hidden">ЗАБРАТЬ В СОСТАВ</button>
         </div>
     </div>
 

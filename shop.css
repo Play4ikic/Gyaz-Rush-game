@@ -118,7 +118,6 @@ body {
     z-index: 5;
 }
 
-/* ИЗОБРАЖЕНИЕ ПАКА */
 .pack-visual { 
     width: 110px; 
     height: 110px;
@@ -136,7 +135,6 @@ body {
     transition: transform 0.35s ease, filter 0.35s ease; 
 }
 
-/* ЭФФЕКТЫ НАВЕДЕНИЯ */
 .pack-card:hover { 
     transform: translateX(10px); 
     background: rgba(26, 31, 52, 0.85);
@@ -146,7 +144,6 @@ body {
     transform: scale(1.12) rotate(-2deg); 
 }
 
-/* ИНФОРМАЦИЯ И ЦЕНА */
 .pack-details {
     display: flex;
     flex-direction: column;
@@ -175,7 +172,6 @@ body {
     border: 1px solid rgba(241, 196, 15, 0.2);
 }
 
-/* КНОПКА ОТКРЫТИЯ */
 .buy-button { 
     width: 150px;
     padding: 12px 18px; 
@@ -199,100 +195,274 @@ body {
     transform: scale(1.04);
 }
 
-/* ТЕМАТИЧЕСКИЕ ЦВЕТА И СВЕЧЕНИЕ ДЛЯ КАЖДОГО ПАКА */
-
-/* Gold Pack */
+/* ЦВЕТА И СВЕЧЕНИЕ ПАКОВ */
 .gold-card { border-left: 4px solid #ffd700; }
-.gold-card:hover { 
-    border-color: #ffd700; 
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.25); 
-}
+.gold-card:hover { border-color: #ffd700; box-shadow: 0 0 30px rgba(255, 215, 0, 0.25); }
 
-/* Champions Pack */
 .champions-card { border-left: 4px solid #00bfff; }
 .champions-card h2 { color: #00bfff; }
 .champions-card .buy-button { background: linear-gradient(90deg, #0055ff, #00bfff); color: white; }
-.champions-card:hover { 
-    border-color: #00bfff; 
-    box-shadow: 0 0 30px rgba(0, 191, 255, 0.3); 
-}
+.champions-card:hover { border-color: #00bfff; box-shadow: 0 0 30px rgba(0, 191, 255, 0.3); }
 
-/* TOTT Pack */
 .tott-card { border-left: 4px solid #ffd700; }
 .tott-card h2 { color: #ffd700; }
-.tott-card:hover {
-    border-color: #ffea00;
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.25);
-}
+.tott-card:hover { border-color: #ffea00; box-shadow: 0 0 30px rgba(255, 215, 0, 0.25); }
 
-/* National Stars Pack */
 .national-stars-card { border-left: 4px solid #00ff88; }
 .national-stars-card h2 { color: #00ff88; }
 .national-stars-card .buy-button { background: linear-gradient(90deg, #00b359, #00ff88); color: black; }
-.national-stars-card:hover {
-    border-color: #00ff88;
-    box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
-}
+.national-stars-card:hover { border-color: #00ff88; box-shadow: 0 0 30px rgba(0, 255, 136, 0.3); }
 
-/* Time Travels Pack */
 .time-travels-card { border-left: 4px solid #da70d6; }
 .time-travels-card h2 { color: #da70d6; }
 .time-travels-card .buy-button { background: linear-gradient(90deg, #8a2be2, #da70d6); color: white; }
-.time-travels-card:hover { 
-    border-color: #da70d6; 
-    box-shadow: 0 0 30px rgba(218, 112, 214, 0.3); 
-}
+.time-travels-card:hover { border-color: #da70d6; box-shadow: 0 0 30px rgba(218, 112, 214, 0.3); }
 
-/* TOTY Pack */
 .toty-card { border-left: 4px solid #00d2ff; }
 .toty-card h2 { color: #e0e6ed; }
 .toty-card .buy-button { background: linear-gradient(90deg, #0088cc, #00d2ff); color: white; }
-.toty-card:hover { 
-    border-color: #00d2ff; 
-    box-shadow: 0 0 30px rgba(0, 210, 255, 0.35); 
-}
+.toty-card:hover { border-color: #00d2ff; box-shadow: 0 0 30px rgba(0, 210, 255, 0.35); }
 
-/* CHAOS PACK (ULTIMATE) */
 .chaos-card { 
     border-left: 4px solid #ff0055;
     background: linear-gradient(90deg, rgba(40, 10, 25, 0.8) 0%, rgba(18, 22, 36, 0.75) 100%);
     padding-top: 24px;
 }
-.chaos-card h2 { 
-    background: linear-gradient(90deg, #ff0055, #ffaa00);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-.chaos-card .pack-price { 
-    color: #ff0055; 
-    background: rgba(255, 0, 85, 0.1);
-    border-color: rgba(255, 0, 85, 0.3);
-}
-.chaos-card .buy-button { 
-    background: linear-gradient(90deg, #ff0055, #8a2be2); 
-    color: white; 
-}
-.chaos-card:hover {
-    border-color: #ff0055;
-    box-shadow: 0 0 40px rgba(255, 0, 85, 0.4);
+.chaos-card h2 { background: linear-gradient(90deg, #ff0055, #ffaa00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.chaos-card .pack-price { color: #ff0055; background: rgba(255, 0, 85, 0.1); border-color: rgba(255, 0, 85, 0.3); }
+.chaos-card .buy-button { background: linear-gradient(90deg, #ff0055, #8a2be2); color: white; }
+.chaos-card:hover { border-color: #ff0055; box-shadow: 0 0 40px rgba(255, 0, 85, 0.4); }
+
+/* ==========================================================================
+   НОВАЯ СЦЕНА АНИМАЦИИ ОТКРЫТИЯ (БЕЗ ВИДЕО)
+   ========================================================================== */
+
+#reveal-stage {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 5000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    perspective: 1200px;
 }
 
-/* АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ */
-@media (max-width: 600px) {
-    .shop-header { padding: 12px 20px; }
-    .shop-title { font-size: 20px; }
-    .pack-card { 
-        flex-direction: column; 
-        text-align: center;
-        padding: 20px;
+.stage-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(15, 20, 38, 0.95) 0%, rgba(5, 6, 12, 0.98) 100%);
+    backdrop-filter: blur(12px);
+    z-index: 1;
+}
+
+/* Динамические лучи света на фоне */
+.stage-bg-beams {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 50%, rgba(241, 196, 15, 0.15), transparent 70%);
+    animation: pulseGlow 3s infinite alternate ease-in-out;
+    z-index: 2;
+}
+
+@keyframes pulseGlow {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    100% { transform: scale(1.3); opacity: 0.9; }
+}
+
+/* Контейнер Тизеров (Флаг, Позиция, Клуб) */
+.teaser-container {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.teaser-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(241, 196, 15, 0.4);
+    box-shadow: 0 0 50px rgba(241, 196, 15, 0.25), inset 0 0 30px rgba(255, 255, 255, 0.1);
+    padding: 30px 50px;
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    backdrop-filter: blur(20px);
+}
+
+.teaser-label {
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: #f1c40f;
+    text-shadow: 0 0 10px rgba(241, 196, 15, 0.8);
+    margin-top: 10px;
+}
+
+/* Картинки и бейджи */
+.flag-icon {
+    width: 280px;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+}
+
+.pos-badge {
+    font-size: 110px;
+    font-weight: 900;
+    color: #ffffff;
+    text-shadow: 0 0 30px #f1c40f, 0 0 60px #e67e22;
+    line-height: 1;
+}
+
+.club-icon {
+    width: 160px;
+    height: 160px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 25px rgba(255, 255, 255, 0.6));
+}
+
+/* Анимации появление/исчезновение тизеров */
+.teaser-step.animate-in {
+    animation: teaserIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.teaser-step.animate-out {
+    animation: teaserOut 0.3s ease-in forwards;
+}
+
+@keyframes teaserIn {
+    0% { opacity: 0; transform: scale(0.3) rotateX(-30deg); }
+    100% { opacity: 1; transform: scale(1) rotateX(0deg); }
+}
+
+@keyframes teaserOut {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.4) filter(blur(10px)); }
+}
+
+/* ==========================================================================
+   4. ЭПИЧНОЕ ПАДЕНИЕ КАРТОЧКИ (CARD DROP SLAM)
+   ========================================================================== */
+
+.card-drop-stage {
+    position: relative;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-drop-wrapper {
+    perspective: 1000px;
+}
+
+.slammed-card {
+    height: 480px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9));
+}
+
+/* Анимация приземления с силой */
+.drop-slam-anim {
+    animation: cardSlam 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes cardSlam {
+    0% {
+        transform: translateY(-900px) scale(2.2) rotateX(50deg);
+        opacity: 0;
+        filter: brightness(4) blur(8px);
     }
-    .pack-details { align-items: center; }
-    .buy-button { width: 100%; }
-    .pack-tag { top: -10px; left: 50%; transform: translateX(-50%); }
-    .pack-card:hover { transform: translateY(-5px); }
+    65% {
+        transform: translateY(20px) scale(0.95) rotateX(-10deg);
+        opacity: 1;
+        filter: brightness(2);
+    }
+    80% {
+        transform: translateY(-10px) scale(1.03) rotateX(5deg);
+    }
+    100% {
+        transform: translateY(0) scale(1) rotateX(0deg);
+        filter: brightness(1) drop-shadow(0 0 35px rgba(241, 196, 15, 0.6));
+    }
 }
 
-/* ОВЕРЛЕЙ И ВЫПАДЕНИЕ КАРТОЧКИ */
+/* Ударная волна от падения */
+.shockwave {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 4px solid #f1c40f;
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.shockwave.active {
+    animation: shockwaveExpand 0.7s ease-out forwards;
+}
+
+@keyframes shockwaveExpand {
+    0% { transform: scale(0.2); opacity: 1; border-width: 10px; }
+    50% { border-color: #ffaa00; }
+    100% { transform: scale(4.5); opacity: 0; border-width: 1px; }
+}
+
+/* Тряска экрана при ударе */
+.screen-shake {
+    animation: shake 0.35s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translate(0, 0); }
+    20% { transform: translate(-8px, 6px); }
+    40% { transform: translate(8px, -6px); }
+    60% { transform: translate(-5px, -3px); }
+    80% { transform: translate(5px, 3px); }
+}
+
+/* Кнопка "Забрать в состав" */
+.claim-button { 
+    margin-top: 30px; 
+    padding: 16px 50px; 
+    background: linear-gradient(135deg, #f1c40f, #e67e22); 
+    color: black; 
+    border: none; 
+    border-radius: 14px; 
+    font-weight: 900; 
+    font-size: 20px; 
+    cursor: pointer; 
+    transition: all 0.3s ease; 
+    box-shadow: 0 0 30px rgba(241, 196, 15, 0.4);
+}
+
+.claim-button:hover { 
+    background: white; 
+    transform: scale(1.08); 
+    box-shadow: 0 0 45px rgba(255, 255, 255, 0.9);
+}
+
+.pop-in-btn {
+    animation: btnPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes btnPop {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Мгновенная вспышка (для Gold Pack) */
 .flash-effect {
     animation: goldFlash 0.8s ease-out forwards;
 }
@@ -302,109 +472,16 @@ body {
     100% { filter: brightness(1) blur(0px); opacity: 1; }
 }
 
-#video-reveal-container { 
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    width: 100vw; 
-    height: 100vh; 
-    background: black; 
-    z-index: 5000; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-}
-
-#pack-video { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; 
-}
-
-#video-overlay { 
-    position: absolute; 
-    top: 50%; 
-    left: 0; 
-    width: 100%; 
-    transform: translateY(-50%); 
-    display: flex; 
-    justify-content: space-around; 
-    align-items: center; 
-    z-index: 5500; 
-    padding: 0 60px; 
-    box-sizing: border-box; 
-}
-
-.reveal-text { 
-    opacity: 0; 
-    transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease-out; 
-    transform: scale(0.5); 
-}
-
-.show-text { 
-    opacity: 1 !important; 
-    transform: scale(1) !important; 
-}
-
-.flag-reveal-icon { width: 350px; height: auto; }
-#reveal-pos { font-size: 130px; font-weight: 900; color: #f1c40f; text-shadow: 0 0 50px black; }
-.club-reveal-icon { width: 200px; height: 200px; object-fit: contain; }
-
-#reveal-screen { 
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 100%; 
-    display: flex; 
-    flex-direction: column; 
-    justify-content: center; 
-    align-items: center; 
-    z-index: 6000; 
-}
-
-.overlay { 
-    position: absolute; 
-    width: 100%; 
-    height: 100%; 
-    background: rgba(0,0,0,0.88); 
-    backdrop-filter: blur(8px); 
-}
-
-.reveal-container { 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    position: relative; 
-    z-index: 10; 
-}
-
-.final-player-image { 
-    height: 480px; 
-    width: auto; 
-    object-fit: contain; 
-    animation: pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
-}
-
-.claim-button { 
-    margin-top: 25px; 
-    padding: 16px 50px; 
-    background: linear-gradient(135deg, #f1c40f, #e67e22); 
-    color: black; 
-    border: none; 
-    border-radius: 14px; 
-    font-weight: 900; 
-    font-size: 20px; 
-    cursor: pointer; 
-    transition: 0.3s ease; 
-}
-
-.claim-button:hover { 
-    background: white; 
-    transform: scale(1.05); 
-}
-
-@keyframes pop { 
-    from { transform: scale(0.5); opacity: 0; } 
-    to { transform: scale(1); opacity: 1; } 
+/* АДАПТИВНОСТЬ */
+@media (max-width: 600px) {
+    .shop-header { padding: 12px 20px; }
+    .shop-title { font-size: 20px; }
+    .pack-card { flex-direction: column; text-align: center; padding: 20px; }
+    .pack-details { align-items: center; }
+    .buy-button { width: 100%; }
+    .pack-tag { top: -10px; left: 50%; transform: translateX(-50%); }
+    .flag-icon { width: 200px; }
+    .pos-badge { font-size: 80px; }
+    .club-icon { width: 110px; height: 110px; }
+    .slammed-card { height: 360px; }
 }
