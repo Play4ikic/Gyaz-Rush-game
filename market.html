@@ -3,35 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FixOne - Рынок</title>
+    <title>Gyaz Rush - Трансферный Рынок</title>
+    <link rel="icon" href="favicon.png" type="image/png">
     <link rel="stylesheet" href="market.css">
-    <script type="module" src="economy.js"></script>
-    <script type="module" src="market.js"></script>
 </head>
 <body>
-    <div class="market-wrapper">
-        <header class="market-header">
+    <!-- ВЕРХНЯЯ НАВИГАЦИОННАЯ ПАНЕЛЬ -->
+    <header class="top-nav">
+        <div class="logo-title">GYAZ RUSH</div>
+        <div class="header-page-name">🛒 ТРАНСФЕРНЫЙ РЫНОК</div>
+        <div class="right-nav">
+            <div id="shop-balance" class="balance-badge">0 CY</div>
             <a href="index.html" class="back-btn">← В МЕНЮ</a>
-            <h1>ТРАНСФЕРНЫЙ РЫНОК</h1>
-            <div id="balance-display" class="balance-board">Загрузка...</div>
-        </header>
+        </div>
+    </header>
 
-        <div class="market-info">
-            <p>Здесь ты можешь продать своих игроков. <br> 
-            <span class="price-tag toty">TOTY: 10,000 CY</span> | <span class="price-tag champions">Champions: 5,000 CY</span></p>
+    <div class="market-wrapper">
+        <!-- ТАБЫ ПЕРЕКЛЮЧЕНИЯ -->
+        <div class="market-tabs">
+            <button class="tab-btn active" onclick="switchMarketTab('buy')">🛒 КУПИТЬ ИГРОКОВ</button>
+            <button class="tab-btn" onclick="switchMarketTab('sell')">📤 ВЫСТАВИТЬ НА ПРОДАЖУ</button>
+            <button class="tab-btn" onclick="switchMarketTab('my-listings')">📋 МОИ ЛОТЫ</button>
         </div>
 
-        <main class="market-content">
-            <div id="market-list" class="market-grid">
-                </div>
+        <!-- СЕКЦИЯ 1: ПОКУПКА (ОБЩИЙ РЫНОК) -->
+        <main id="tab-buy" class="market-tab-content active">
+            <div class="market-subhead">
+                <h2>Карточки на рынке</h2>
+                <p>Покупай футболистов у других игроков в реальном времени</p>
+            </div>
+            <div id="market-buy-list" class="market-grid">
+                <p class="empty-msg">Загрузка рынка...</p>
+            </div>
+        </main>
+
+        <!-- СЕКЦИЯ 2: ВЫБОР КАРТОЧКИ ДЛЯ ПРОДАЖИ (ИЗ КЛУБА) -->
+        <main id="tab-sell" class="market-tab-content">
+            <div class="market-subhead">
+                <h2>Ваш клуб</h2>
+                <p>Нажмите на карточку, чтобы установить свою цену и выставить её на рынок</p>
+            </div>
+            <div id="club-sell-list" class="market-grid">
+                <!-- Карточки клуба -->
+            </div>
+        </main>
+
+        <!-- СЕКЦИЯ 3: МОИ АКТИВНЫЕ ЛОТЫ (С ВОЗМОЖНОСТЬЮ ОТМЕНЫ) -->
+        <main id="tab-my-listings" class="market-tab-content">
+            <div class="market-subhead">
+                <h2>Ваши активные объявления</h2>
+                <p>Вы можете снять карточку с продажи в любой момент до её покупки</p>
+            </div>
+            <div id="my-listings-list" class="market-grid">
+                <!-- Лоты продавца -->
+            </div>
         </main>
     </div>
 
+    <!-- МОДАЛЬНОЕ ОКНО УСТАНОВКИ ЦЕНЫ -->
+    <div id="price-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="margin-top:0; color: #ffcc00; text-transform: uppercase;">ВЫСТАВИТЬ НА РЫНОК</h3>
+            <p id="modal-card-name" style="color: #aaa; font-weight: bold; margin-bottom: 15px;"></p>
+            
+            <label style="font-size: 12px; color: #888; display: block; text-align: left; margin-bottom: 5px;">Укажите цену продажи (CY):</label>
+            <input type="number" id="card-price-input" placeholder="Например: 15000" min="100" step="100">
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="modal-btn btn-confirm" id="confirm-list-btn">ВЫСТАВИТЬ</button>
+                <button class="modal-btn btn-cancel" onclick="closePriceModal()">ОТМЕНА</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Управление звуком -->
     <div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
         <button onclick="this.innerText = (typeof toggleMute === 'function' && toggleMute()) ? '🔇' : '🎵'" style="background: none; border: none; font-size: 20px; cursor: pointer;">🎵</button>
         <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="if(typeof setVolume === 'function') setVolume(this.value)" style="width: 60px; cursor: pointer;">
     </div>
 
     <script src="audio.js"></script>
+    <script type="module" src="market.js?v=2"></script>
 </body>
 </html>
