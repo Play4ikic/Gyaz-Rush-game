@@ -34,12 +34,101 @@
         .business-label { font-size: 10px; color: #aaa; text-transform: uppercase; }
         .business-money { color: #00ff88; font-weight: bold; font-family: monospace; }
 
+        /* ВИДЖЕТ ПРОМОКОДОВ (Левый угол над Пассом) */
+        .promo-widget {
+            position: fixed;
+            bottom: 165px;
+            left: 30px;
+            width: 300px;
+            z-index: 1000;
+        }
+
+        .promo-card {
+            background: rgba(18, 18, 22, 0.95);
+            border: 2px solid #ffcc00;
+            border-radius: 18px;
+            padding: 12px 15px;
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .promo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .promo-title {
+            font-family: 'Arial Black', sans-serif;
+            color: #ffcc00;
+            font-size: 13px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .promo-subtitle {
+            font-size: 10px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .promo-input-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .promo-input-group input {
+            flex-grow: 1;
+            background: #000;
+            border: 1px solid rgba(255, 204, 0, 0.4);
+            border-radius: 8px;
+            padding: 6px 10px;
+            color: #fff;
+            font-weight: bold;
+            font-size: 12px;
+            outline: none;
+            text-transform: uppercase;
+        }
+
+        .promo-input-group input:focus {
+            border-color: #ffcc00;
+        }
+
+        .promo-btn {
+            background: #ffcc00;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-weight: 900;
+            font-size: 11px;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+        }
+
+        .promo-btn:hover {
+            background: #e6b800;
+            transform: scale(1.03);
+        }
+
+        .promo-btn:active {
+            transform: scale(0.95);
+        }
+
+        .promo-message {
+            font-size: 11px;
+            margin-top: 6px;
+            font-weight: bold;
+            min-height: 14px;
+        }
+
         /* УВЕЛИЧЕННЫЙ ВИДЖЕТ PASS (Левый нижний угол) */
         .pass-widget {
             position: fixed;
             bottom: 30px;
             left: 30px;
-            width: 300px; /* Немного увеличил для надписи */
+            width: 300px;
             z-index: 1000;
             cursor: pointer;
             transition: transform 0.1s;
@@ -53,7 +142,7 @@
             border-radius: 18px;
             padding: 12px 15px;
             display: flex;
-            flex-direction: column; /* Изменено для текста сверху */
+            flex-direction: column;
             gap: 5px;
             box-shadow: 0 8px 0 #856404;
         }
@@ -82,7 +171,7 @@
 
         .pass-xp-container {
             flex-grow: 1;
-            background: #664400; /* Темно-золотой фон как на скрине */
+            background: #664400;
             border-radius: 10px;
             height: 28px;
             position: relative;
@@ -93,7 +182,7 @@
         .pass-xp-fill {
             height: 100%;
             width: 0%;
-            background: #0099ff; /* Голубой цвет прогресса как на скрине */
+            background: #0099ff;
             transition: width 0.5s;
         }
 
@@ -126,16 +215,16 @@
         <div class="logo" style="font-weight: 900; color: #fff; letter-spacing: 2px;">GYAZ RUSH</div>
         
         <nav class="menu-tabs">
-    <div class="tab-item active" onclick="selectTab('news')">НОВОСТИ</div>
-    <div class="tab-item" onclick="selectTab('shop')">МАГАЗИН</div>
-    <div class="tab-item" onclick="selectTab('club')">КЛУБ</div>
-    <div class="tab-item" onclick="selectTab('draft')">DRAFT</div>
-    <div class="tab-item" onclick="selectTab('market')">РЫНОК</div>
-    <div class="tab-item" onclick="selectTab('betting')">СТАВКИ</div>
-    <!-- НОВАЯ ВКЛАДКА ТРЕЙДЫ -->
-    <div class="tab-item" onclick="window.location.href='trade.html'" style="color: #00ff88; font-weight: bold;">ТРЕЙДЫ</div>
-    <div class="tab-item" onclick="openOnline()" style="color: #e1b12c; font-weight: bold;">ЛЮДИ</div>
-</nav>
+            <div class="tab-item active" onclick="selectTab('news')">НОВОСТИ</div>
+            <div class="tab-item" onclick="selectTab('shop')">МАГАЗИН</div>
+            <div class="tab-item" onclick="selectTab('club')">КЛУБ</div>
+            <div class="tab-item" onclick="selectTab('draft')">DRAFT</div>
+            <div class="tab-item" onclick="selectTab('market')">РЫНОК</div>
+            <div class="tab-item" onclick="selectTab('betting')">СТАВКИ</div>
+            <!-- НОВАЯ ВКЛАДКА ТРЕЙДЫ -->
+            <div class="tab-item" onclick="window.location.href='trade.html'" style="color: #00ff88; font-weight: bold;">ТРЕЙДЫ</div>
+            <div class="tab-item" onclick="openOnline()" style="color: #e1b12c; font-weight: bold;">ЛЮДИ</div>
+        </nav>
 
         <div class="right-side" style="display: flex; align-items: center;">
             <div class="business-container" onclick="collectBusinessMoney()">
@@ -148,6 +237,22 @@
         </div>
     </header>
 
+    <!-- ВИДЖЕТ ПРОМОКОДОВ -->
+    <div class="promo-widget">
+        <div class="promo-card">
+            <div class="promo-header">
+                <span class="promo-title">🎁 ПРОМОКОДЫ</span>
+            </div>
+            <div class="promo-subtitle">Введи секретный код и получи бонусные CY!</div>
+            <div class="promo-input-group">
+                <input type="text" id="promo-input" placeholder="КОД..." maxlength="20">
+                <button class="promo-btn" onclick="activatePromoCode()">ОК</button>
+            </div>
+            <div id="promo-msg" class="promo-message"></div>
+        </div>
+    </div>
+
+    <!-- ВИДЖЕТ PASS -->
     <div class="pass-widget" onclick="window.location.href='gympass.html'">
         <div class="pass-card">
             <div class="pass-season-label">SPRING SEASON</div>
@@ -210,70 +315,116 @@
         function openOnline() { document.getElementById('online-modal').style.display = 'flex'; }
         function closeOnline() { document.getElementById('online-modal').style.display = 'none'; }
     </script>
-      <div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
+
+    <div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
         <button onclick="this.innerText = (typeof toggleMute === 'function' && toggleMute()) ? '🔇' : '🎵'" style="background: none; border: none; font-size: 20px; cursor: pointer;">🎵</button>
         <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="if(typeof setVolume === 'function') setVolume(this.value)" style="width: 60px; cursor: pointer;">
     </div>
 
     <script src="audio.js"></script>
+    
     <script type="module">
-    import { updateBalance } from './economy.js';
+        import { updateBalance } from './economy.js';
 
-    const BIZ_CONFIG = {
-        MAX: 6000,
-        PER_SECOND: 20,
-        VAL_KEY: 'gyaz_biz_val',
-        TIME_KEY: 'gyaz_biz_time'
-    };
+        const BIZ_CONFIG = {
+            MAX: 6000,
+            PER_SECOND: 20,
+            VAL_KEY: 'gyaz_biz_val',
+            TIME_KEY: 'gyaz_biz_time'
+        };
 
-    let currentPool = parseFloat(localStorage.getItem(BIZ_CONFIG.VAL_KEY)) || 0;
-    let lastTick = parseInt(localStorage.getItem(BIZ_CONFIG.TIME_KEY)) || Date.now();
+        let currentPool = parseFloat(localStorage.getItem(BIZ_CONFIG.VAL_KEY)) || 0;
+        let lastTick = parseInt(localStorage.getItem(BIZ_CONFIG.TIME_KEY)) || Date.now();
 
-    function tick() {
-        const now = Date.now();
-        const diffMs = now - lastTick;
+        function tick() {
+            const now = Date.now();
+            const diffMs = now - lastTick;
 
-        if (diffMs >= 1000) {
-            const secondsPassed = Math.floor(diffMs / 1000);
-            
-            if (currentPool < BIZ_CONFIG.MAX) {
-                currentPool += secondsPassed * BIZ_CONFIG.PER_SECOND;
-                if (currentPool > BIZ_CONFIG.MAX) currentPool = BIZ_CONFIG.MAX;
+            if (diffMs >= 1000) {
+                const secondsPassed = Math.floor(diffMs / 1000);
                 
-                lastTick += secondsPassed * 1000;
-                localStorage.setItem(BIZ_CONFIG.VAL_KEY, currentPool);
-                localStorage.setItem(BIZ_CONFIG.TIME_KEY, lastTick);
+                if (currentPool < BIZ_CONFIG.MAX) {
+                    currentPool += secondsPassed * BIZ_CONFIG.PER_SECOND;
+                    if (currentPool > BIZ_CONFIG.MAX) currentPool = BIZ_CONFIG.MAX;
+                    
+                    lastTick += secondsPassed * 1000;
+                    localStorage.setItem(BIZ_CONFIG.VAL_KEY, currentPool);
+                    localStorage.setItem(BIZ_CONFIG.TIME_KEY, lastTick);
+                }
+            }
+
+            const display = document.getElementById('business-display');
+            if (display) {
+                display.innerText = Math.floor(currentPool).toLocaleString() + " / " + BIZ_CONFIG.MAX + " CY";
+                display.style.color = (currentPool >= BIZ_CONFIG.MAX) ? "#ff4444" : "#00ff88";
             }
         }
 
-        // Обновляем текст в кнопке
-        const display = document.getElementById('business-display');
-        if (display) {
-            display.innerText = Math.floor(currentPool).toLocaleString() + " / " + BIZ_CONFIG.MAX + " CY";
-            // Подсветка красным, если банк полон
-            display.style.color = (currentPool >= BIZ_CONFIG.MAX) ? "#ff4444" : "#00ff88";
-        }
-    }
+        window.collectBusinessMoney = async function() {
+            if (currentPool >= 1) {
+                const toAdd = Math.floor(currentPool);
+                const success = await updateBalance(toAdd);
 
-    // Делаем функцию сбора доступной для HTML-атрибута onclick
-    window.collectBusinessMoney = async function() {
-        if (currentPool >= 1) {
-            const toAdd = Math.floor(currentPool);
-            const success = await updateBalance(toAdd); // Используем твою экономику
-
-            if (success) {
-                currentPool = 0;
-                lastTick = Date.now();
-                localStorage.setItem(BIZ_CONFIG.VAL_KEY, 0);
-                localStorage.setItem(BIZ_CONFIG.TIME_KEY, lastTick);
-                console.log(`Собрано прибыли: ${toAdd} CY`);
+                if (success) {
+                    currentPool = 0;
+                    lastTick = Date.now();
+                    localStorage.setItem(BIZ_CONFIG.VAL_KEY, 0);
+                    localStorage.setItem(BIZ_CONFIG.TIME_KEY, lastTick);
+                    if (typeof updateHubBalance === 'function') updateHubBalance();
+                }
             }
-        }
-    };
+        };
 
-    // Запускаем таймер
-    setInterval(tick, 1000);
-    tick();
-</script>
+        // ЛОГИКА ПРОМОКОДОВ
+        const PROMO_CODES = {
+            'Pidoras': 100000
+        };
+
+        window.activatePromoCode = async function() {
+            const input = document.getElementById('promo-input');
+            const msg = document.getElementById('promo-msg');
+            if (!input || !msg) return;
+
+            const code = input.value.trim().toUpperCase();
+            if (!code) {
+                msg.style.color = '#ff4444';
+                msg.innerText = 'Введите код!';
+                return;
+            }
+
+            let usedPromos = JSON.parse(localStorage.getItem('gyaz_used_promos')) || [];
+
+            if (usedPromos.includes(code)) {
+                msg.style.color = '#ff4444';
+                msg.innerText = 'Код уже активирован!';
+                return;
+            }
+
+            if (PROMO_CODES[code]) {
+                const reward = PROMO_CODES[code];
+                let success = await updateBalance(reward);
+
+                if (success) {
+                    usedPromos.push(code);
+                    localStorage.setItem('gyaz_used_promos', JSON.stringify(usedPromos));
+                    
+                    msg.style.color = '#00ff88';
+                    msg.innerText = `+${reward.toLocaleString()} CY зачислено!`;
+                    input.value = '';
+                    
+                    if (typeof updateHubBalance === 'function') updateHubBalance();
+                } else {
+                    msg.style.color = '#ff4444';
+                    msg.innerText = 'Ошибка зачисления!';
+                }
+            } else {
+                msg.style.color = '#ff4444';
+                msg.innerText = 'Неверный промокод!';
+            }
+        };
+
+        setInterval(tick, 1000);
+        tick();
+    </script>
 </body>
 </html>
