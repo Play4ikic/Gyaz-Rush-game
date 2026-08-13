@@ -6,7 +6,6 @@
     <link rel="icon" href="favicon.png" type="image/png">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ВОЗВРАТ ПРЕЖНЕГО СТИЛЯ */
         .top-nav {
             display: flex;
             justify-content: space-between;
@@ -34,7 +33,7 @@
         .business-label { font-size: 10px; color: #aaa; text-transform: uppercase; }
         .business-money { color: #00ff88; font-weight: bold; font-family: monospace; }
 
-        /* УВЕЛИЧЕННЫЙ ВИДЖЕТ PASS (Левый нижний угол) */
+        /* УВЕЛИЧЕННЫЙ ВИДЖЕТ PASS */
         .pass-widget {
             position: fixed;
             bottom: 30px;
@@ -108,7 +107,7 @@
             z-index: 2;
         }
 
-        /* ВИДЖЕТ ПРОМОКОДОВ (Справа от Пасса) */
+        /* ВИДЖЕТ ПРОМОКОДОВ */
         .promo-widget {
             position: fixed;
             bottom: 30px;
@@ -208,9 +207,7 @@
             z-index: 100000;
         }
 
-        /* ==========================================
-           СТИЛИ ДЛЯ ПАНЕЛИ ЧАТА (TELEGRAM / WHATSAPP)
-           ========================================== */
+        /* ПАНЕЛЬ ЧАТА (TELEGRAM / WHATSAPP STYLE) */
         .chat-widget {
             position: fixed;
             bottom: 70px;
@@ -286,7 +283,6 @@
             background: rgba(5, 8, 15, 0.6);
         }
 
-        /* Кастомный скроллбар */
         .chat-messages::-webkit-scrollbar {
             width: 4px;
         }
@@ -411,7 +407,6 @@
             <div class="tab-item" onclick="selectTab('market')">РЫНОК</div>
             <div class="tab-item" onclick="selectTab('betting')">СТАВКИ</div>
             <div class="tab-item" onclick="window.location.href='trade.html'" style="color: #00ff88; font-weight: bold;">ТРЕЙДЫ</div>
-            <!-- ВКЛАДКА ЧАТ -->
             <div class="tab-item" onclick="toggleChat()" style="color: #00d2ff; font-weight: bold;">ЧАТ</div>
             <div class="tab-item" onclick="openOnline()" style="color: #e1b12c; font-weight: bold;">ЛЮДИ</div>
         </nav>
@@ -427,7 +422,7 @@
         </div>
     </header>
 
-    <!-- ВИДЖЕТ PASS (Слева) -->
+    <!-- ВИДЖЕТ PASS -->
     <div class="pass-widget" onclick="window.location.href='gympass.html'">
         <div class="pass-card">
             <div class="pass-season-label">SPRING SEASON</div>
@@ -441,7 +436,7 @@
         </div>
     </div>
 
-    <!-- ВИДЖЕТ ПРОМОКОДОВ (Справа от Пасса) -->
+    <!-- ВИДЖЕТ ПРОМОКОДОВ -->
     <div class="promo-widget">
         <div class="promo-card">
             <div class="promo-header">
@@ -456,7 +451,7 @@
         </div>
     </div>
 
-    <!-- ИНТЕРАКТИВНАЯ ПАНЕЛЬ ЧАТА (WHATSAPP / TELEGRAM STYLE) -->
+    <!-- ИНТЕРАКТИВНАЯ ПАНЕЛЬ ЧАТА -->
     <div id="chat-widget" class="chat-widget collapsed">
         <div class="chat-header" onclick="toggleChat()">
             <div class="chat-header-title">
@@ -467,7 +462,7 @@
         </div>
         <div class="chat-body">
             <div class="chat-messages" id="chat-messages-list">
-                <!-- Сообщения генерируются динамически -->
+                <!-- Динамические сообщения из Firebase -->
             </div>
             <div class="chat-input-area">
                 <input type="text" id="chat-input" placeholder="Напиши сообщение..." maxlength="120" onkeydown="if(event.key==='Enter') sendChatMessage()">
@@ -489,9 +484,11 @@
         </div>
     </main>
 
+    <!-- МОДАЛКА ЛЮДИ -->
     <div id="online-modal" class="modal-overlay" onclick="closeOnline()">
-        <div class="modal-content" onclick="event.stopPropagation()" style="width: 90%; max-width: 500px; background: #111; border-radius: 20px;">
-            <iframe src="online.html" style="width: 100%; height: 500px; border: none;"></iframe>
+        <div class="modal-content" onclick="event.stopPropagation()" style="width: 90%; max-width: 500px; background: #111; border-radius: 20px; padding: 20px;">
+            <h3 style="color: white; margin-top: 0;">Игроки на сервере</h3>
+            <div id="online-list"></div>
         </div>
     </div>
 
@@ -510,7 +507,6 @@
             if(text) text.innerText = `${currentXP} / ${xpPerLevel}`;
         }
 
-        // Обновляем баланс из localStorage
         function updateHubBalance() {
             const balance = localStorage.getItem('fixone_balance') || "0";
             const display = document.getElementById('shop-balance');
@@ -520,134 +516,10 @@
         window.addEventListener('DOMContentLoaded', () => {
             updateWidgetXP();
             updateHubBalance();
-            initChat();
         });
 
         function openOnline() { document.getElementById('online-modal').style.display = 'flex'; }
         function closeOnline() { document.getElementById('online-modal').style.display = 'none'; }
-
-        /* ==========================================
-           ЛОГИКА РАБОТЫ ЧАТА ИГРОКОВ
-           ========================================== */
-        const CHAT_STORAGE_KEY = 'gyaz_hub_chat_messages';
-        const USERNAME_KEY = 'gyaz_player_nickname';
-
-        // Стартовые приветственные сообщения
-        const defaultMessages = [
-            { id: 1, sender: 'Eldjan', text: 'Всем салам! Кто-то уже выбил TOTY 99?', time: '18:30', isMe: false },
-            { id: 2, sender: 'Turgay', text: 'Да, мне только что выпал карточка из Chaos пака! 🔥', time: '18:32', isMe: false }
-        ];
-
-        function getPlayerNickname() {
-            let name = localStorage.getItem(USERNAME_KEY);
-            if (!name) {
-                name = 'Игрок_' + Math.floor(1000 + Math.random() * 9000);
-                localStorage.setItem(USERNAME_KEY, name);
-            }
-            return name;
-        }
-
-        function toggleChat() {
-            const chat = document.getElementById('chat-widget');
-            const icon = document.getElementById('chat-toggle-icon');
-            chat.classList.toggle('collapsed');
-            
-            if (chat.classList.contains('collapsed')) {
-                icon.innerText = '▲';
-            } else {
-                icon.innerText = '▼';
-                scrollChatToBottom();
-            }
-        }
-
-        function initChat() {
-            let messages = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY));
-            if (!messages || messages.length === 0) {
-                messages = defaultMessages;
-                localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
-            }
-            renderChatMessages();
-        }
-
-        function renderChatMessages() {
-            const container = document.getElementById('chat-messages-list');
-            const messages = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY)) || [];
-            const myName = getPlayerNickname();
-
-            container.innerHTML = '';
-
-            messages.forEach(msg => {
-                const isMe = (msg.sender === myName);
-                const msgEl = document.createElement('div');
-                msgEl.className = `chat-msg ${isMe ? 'my-msg' : 'other-msg'}`;
-
-                msgEl.innerHTML = `
-                    <span class="msg-sender">${msg.sender}</span>
-                    <div class="msg-bubble">
-                        ${escapeHtml(msg.text)}
-                        <span class="msg-time">${msg.time}</span>
-                    </div>
-                `;
-                container.appendChild(msgEl);
-            });
-
-            scrollChatToBottom();
-        }
-
-        function sendChatMessage() {
-            const input = document.getElementById('chat-input');
-            const text = input.value.trim();
-            if (!text) return;
-
-            const myName = getPlayerNickname();
-            const now = new Date();
-            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-
-            const messages = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY)) || [];
-            
-            const newMsg = {
-                id: Date.now(),
-                sender: myName,
-                text: text,
-                time: timeStr
-            };
-
-            messages.push(newMsg);
-            
-            // Храним максимум 50 последних сообщений
-            if (messages.length > 50) messages.shift();
-
-            localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
-            input.value = '';
-
-            renderChatMessages();
-
-            // Автоматическое разворачивание при отправке
-            const chat = document.getElementById('chat-widget');
-            if (chat.classList.contains('collapsed')) {
-                toggleChat();
-            }
-        }
-
-        function scrollChatToBottom() {
-            const container = document.getElementById('chat-messages-list');
-            if (container) {
-                container.scrollTop = container.scrollHeight;
-            }
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.innerText = text;
-            return div.innerHTML;
-        }
-
-        // Реальное обновление между открытыми вкладками
-        window.addEventListener('storage', (e) => {
-            if (e.key === CHAT_STORAGE_KEY) {
-                renderChatMessages();
-            }
-        });
     </script>
 
     <div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
@@ -657,6 +529,9 @@
 
     <script src="audio.js"></script>
     
+    <!-- ПОДКЛЮЧЕНИЕ Firebase + Онлайн + Чат -->
+    <script type="module" src="online.js"></script>
+
     <script type="module">
         import { updateBalance } from './economy.js';
 
@@ -709,7 +584,6 @@
             }
         };
 
-        // ЛОГИКА ПРОМОКОДОВ
         const PROMO_CODES = {
             'PIDORAS': 100000
         };
