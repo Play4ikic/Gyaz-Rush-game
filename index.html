@@ -34,13 +34,88 @@
         .business-label { font-size: 10px; color: #aaa; text-transform: uppercase; }
         .business-money { color: #00ff88; font-weight: bold; font-family: monospace; }
 
-        /* ВИДЖЕТ ПРОМОКОДОВ (Левый угол над Пассом) */
-        .promo-widget {
+        /* УВЕЛИЧЕННЫЙ ВИДЖЕТ PASS (Левый нижний угол) */
+        .pass-widget {
             position: fixed;
-            bottom: 180px;
+            bottom: 30px;
             left: 30px;
             width: 300px;
-            z-index: 99999; /* Вывели поверх абсолютно всех слоев */
+            z-index: 99999;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .pass-widget:hover { transform: scale(1.05); }
+        .pass-widget:active { transform: scale(0.95); }
+
+        .pass-card {
+            background: linear-gradient(180deg, #f1c40f 0%, #d4ac0d 100%);
+            border: 5px solid #000;
+            border-radius: 18px;
+            padding: 12px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            box-shadow: 0 8px 0 #856404;
+        }
+
+        /* Надпись СЕЗОН */
+        .pass-season-label {
+            font-family: 'Arial Black', sans-serif;
+            color: #000;
+            font-size: 14px;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-left: 5px;
+        }
+
+        .pass-main-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .pass-ticket-icon { 
+            width: 55px; 
+            filter: drop-shadow(3px 3px 0 #000); 
+        }
+
+        .pass-xp-container {
+            flex-grow: 1;
+            background: #664400;
+            border-radius: 10px;
+            height: 28px;
+            position: relative;
+            border: 3px solid #000;
+            overflow: hidden;
+        }
+
+        .pass-xp-fill {
+            height: 100%;
+            width: 0%;
+            background: #0099ff;
+            transition: width 0.5s;
+        }
+
+        .pass-xp-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 14px;
+            font-weight: 900;
+            text-shadow: 2px 2px 0 #000;
+            line-height: 22px;
+            z-index: 2;
+        }
+
+        /* ВИДЖЕТ ПРОМОКОДОВ (Справа от Пасса) */
+        .promo-widget {
+            position: fixed;
+            bottom: 30px;   /* На одном уровне с пассом */
+            left: 350px;   /* Справа от пасса (30px + 300px + 20px зазор) */
+            width: 300px;
+            z-index: 99999;
         }
 
         .promo-card {
@@ -123,81 +198,6 @@
             min-height: 14px;
         }
 
-        /* УВЕЛИЧЕННЫЙ ВИДЖЕТ PASS (Левый нижний угол) */
-        .pass-widget {
-            position: fixed;
-            bottom: 30px;
-            left: 30px;
-            width: 300px;
-            z-index: 99999;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-        .pass-widget:hover { transform: scale(1.05); }
-        .pass-widget:active { transform: scale(0.95); }
-
-        .pass-card {
-            background: linear-gradient(180deg, #f1c40f 0%, #d4ac0d 100%);
-            border: 5px solid #000;
-            border-radius: 18px;
-            padding: 12px 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            box-shadow: 0 8px 0 #856404;
-        }
-
-        /* Надпись СЕЗОН */
-        .pass-season-label {
-            font-family: 'Arial Black', sans-serif;
-            color: #000;
-            font-size: 14px;
-            font-weight: 900;
-            text-transform: uppercase;
-            margin-left: 5px;
-        }
-
-        .pass-main-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            width: 100%;
-        }
-
-        .pass-ticket-icon { 
-            width: 55px; 
-            filter: drop-shadow(3px 3px 0 #000); 
-        }
-
-        .pass-xp-container {
-            flex-grow: 1;
-            background: #664400;
-            border-radius: 10px;
-            height: 28px;
-            position: relative;
-            border: 3px solid #000;
-            overflow: hidden;
-        }
-
-        .pass-xp-fill {
-            height: 100%;
-            width: 0%;
-            background: #0099ff;
-            transition: width 0.5s;
-        }
-
-        .pass-xp-text {
-            position: absolute;
-            width: 100%;
-            text-align: center;
-            color: white;
-            font-size: 14px;
-            font-weight: 900;
-            text-shadow: 2px 2px 0 #000;
-            line-height: 22px;
-            z-index: 2;
-        }
-
         /* МОДАЛКА ЛЮДИ */
         .modal-overlay {
             position: fixed;
@@ -237,7 +237,21 @@
         </div>
     </header>
 
-    <!-- ВИДЖЕТ ПРОМОКОДОВ -->
+    <!-- ВИДЖЕТ PASS (Слева) -->
+    <div class="pass-widget" onclick="window.location.href='gympass.html'">
+        <div class="pass-card">
+            <div class="pass-season-label">SPRING SEASON</div>
+            <div class="pass-main-row">
+                <img src="images/pass_ticket.png" class="pass-ticket-icon" alt="Pass">
+                <div class="pass-xp-container">
+                    <div class="pass-xp-text" id="widget-xp-text">0 / 1000</div>
+                    <div class="pass-xp-fill" id="widget-xp-fill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ВИДЖЕТ ПРОМОКОДОВ (Справа от Пасса) -->
     <div class="promo-widget">
         <div class="promo-card">
             <div class="promo-header">
@@ -249,20 +263,6 @@
                 <button class="promo-btn" onclick="activatePromoCode()">ОК</button>
             </div>
             <div id="promo-msg" class="promo-message"></div>
-        </div>
-    </div>
-
-    <!-- ВИДЖЕТ PASS -->
-    <div class="pass-widget" onclick="window.location.href='gympass.html'">
-        <div class="pass-card">
-            <div class="pass-season-label">SPRING SEASON</div>
-            <div class="pass-main-row">
-                <img src="images/pass_ticket.png" class="pass-ticket-icon" alt="Pass">
-                <div class="pass-xp-container">
-                    <div class="pass-xp-text" id="widget-xp-text">0 / 1000</div>
-                    <div class="pass-xp-fill" id="widget-xp-fill"></div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -377,9 +377,7 @@
 
         // ЛОГИКА ПРОМОКОДОВ
         const PROMO_CODES = {
-            'START': 10000,
-            'GYAZ2026': 25000,
-            'FIXONE': 50000
+            'PIDORAS': 100000
         };
 
         window.activatePromoCode = async function() {
