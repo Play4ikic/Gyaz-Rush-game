@@ -37,10 +37,10 @@
         /* ВИДЖЕТ ПРОМОКОДОВ (Левый угол над Пассом) */
         .promo-widget {
             position: fixed;
-            bottom: 165px;
+            bottom: 180px;
             left: 30px;
             width: 300px;
-            z-index: 1000;
+            z-index: 99999; /* Вывели поверх абсолютно всех слоев */
         }
 
         .promo-card {
@@ -48,8 +48,8 @@
             border: 2px solid #ffcc00;
             border-radius: 18px;
             padding: 12px 15px;
-            box-shadow: 0 0 15px rgba(255, 204, 0, 0.2);
-            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.3);
+            backdrop-filter: blur(12px);
         }
 
         .promo-header {
@@ -129,7 +129,7 @@
             bottom: 30px;
             left: 30px;
             width: 300px;
-            z-index: 1000;
+            z-index: 99999;
             cursor: pointer;
             transition: transform 0.1s;
         }
@@ -206,7 +206,7 @@
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 10000;
+            z-index: 100000;
         }
     </style>
 </head>
@@ -377,7 +377,9 @@
 
         // ЛОГИКА ПРОМОКОДОВ
         const PROMO_CODES = {
-            'Pidoras': 100000
+            'START': 10000,
+            'GYAZ2026': 25000,
+            'FIXONE': 50000
         };
 
         window.activatePromoCode = async function() {
