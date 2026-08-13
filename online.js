@@ -24,7 +24,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Получаем данные текущего игрока
+// Данные игрока
 let userData = JSON.parse(localStorage.getItem('gyaz_user')) || { 
     uid: "guest_" + Math.floor(Math.random() * 1000), 
     nickname: "Player" 
@@ -49,7 +49,7 @@ function manageStatus() {
 }
 
 /**
- * 2. ВЫВОД ТАБЛИЦЫ ВСЕХ ИГРОКОВ (в модальном окне/iframe)
+ * 2. ВЫВОД ТАБЛИЦЫ ИГРОКОВ В МОДАЛКЕ
  */
 function renderPlayersTable() {
     const listRef = ref(db, 'all_players');
@@ -105,11 +105,10 @@ function renderPlayersTable() {
 }
 
 /**
- * 3. РЕАЛЬНЫЙ ЧАТ МЕЖДУ ИГРОКАМИ (FIREBASE)
+ * 3. ОТПРАВКА И ЧТЕНИЕ СООБЩЕНИЙ ЧАТА (FIREBASE)
  */
 const chatRef = ref(db, 'global_chat');
 
-// Отправка сообщения в общую базу
 window.sendChatMessage = function() {
     const input = document.getElementById('chat-input');
     if (!input) return;
@@ -130,12 +129,11 @@ window.sendChatMessage = function() {
     input.value = '';
 
     const chat = document.getElementById('chat-widget');
-    if (chat && chat.classList.contains('collapsed')) {
-        toggleChat();
+    if (chat && chat.classList.contains('collapsed') && typeof window.toggleChat === 'function') {
+        window.toggleChat();
     }
 };
 
-// Слушатель сообщений от всех игроков в реальном времени
 function initGlobalChat() {
     const chatQuery = query(chatRef, limitToLast(50));
 
@@ -166,29 +164,11 @@ function initGlobalChat() {
                 container.appendChild(msgEl);
             });
         }
-        scrollChatToBottom();
+        
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
     });
-}
-
-// Открытие / Сворачивание виджета чата
-window.toggleChat = function() {
-    const chat = document.getElementById('chat-widget');
-    const icon = document.getElementById('chat-toggle-icon');
-    if (!chat) return;
-
-    chat.classList.toggle('collapsed');
-    
-    if (icon) {
-        icon.innerText = chat.classList.contains('collapsed') ? '▲' : '▼';
-    }
-    scrollChatToBottom();
-};
-
-function scrollChatToBottom() {
-    const container = document.getElementById('chat-messages-list');
-    if (container) {
-        container.scrollTop = container.scrollHeight;
-    }
 }
 
 function escapeHtml(text) {
@@ -198,7 +178,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Запуск функций
+// Старт систем
 manageStatus();
 renderPlayersTable();
 initGlobalChat();

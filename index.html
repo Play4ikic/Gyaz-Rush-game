@@ -222,12 +222,16 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.25s ease-in-out;
         }
 
         .chat-widget.collapsed {
-            height: 48px;
             width: 200px;
+        }
+
+        /* Гарантированное скрытие содержимого при сворачивании */
+        .chat-widget.collapsed .chat-body {
+            display: none !important;
         }
 
         .chat-header {
@@ -407,7 +411,7 @@
             <div class="tab-item" onclick="selectTab('market')">РЫНОК</div>
             <div class="tab-item" onclick="selectTab('betting')">СТАВКИ</div>
             <div class="tab-item" onclick="window.location.href='trade.html'" style="color: #00ff88; font-weight: bold;">ТРЕЙДЫ</div>
-            <div class="tab-item" onclick="toggleChat()" style="color: #00d2ff; font-weight: bold;">ЧАТ</div>
+            <div class="tab-item" onclick="toggleChat()" style="color: #00d2ff; font-weight: bold; cursor: pointer;">ЧАТ</div>
             <div class="tab-item" onclick="openOnline()" style="color: #e1b12c; font-weight: bold;">ЛЮДИ</div>
         </nav>
 
@@ -489,6 +493,27 @@
             <iframe src="online.html" style="width: 100%; height: 500px; border: none;"></iframe>
         </div>
     </div>
+
+    <!-- ГЛОБАЛЬНОЕ УПРАВЛЕНИЕ ОКНОМ ЧАТА (Открывается мгновенно) -->
+    <script>
+        function toggleChat() {
+            const chat = document.getElementById('chat-widget');
+            const icon = document.getElementById('chat-toggle-icon');
+            if (!chat) return;
+
+            chat.classList.toggle('collapsed');
+            
+            if (icon) {
+                icon.innerText = chat.classList.contains('collapsed') ? '▲' : '▼';
+            }
+            
+            const container = document.getElementById('chat-messages-list');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+        window.toggleChat = toggleChat;
+    </script>
 
     <script src="script.js"></script>
     <script>
