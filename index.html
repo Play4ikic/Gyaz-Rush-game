@@ -33,7 +33,7 @@
         .business-label { font-size: 10px; color: #aaa; text-transform: uppercase; }
         .business-money { color: #00ff88; font-weight: bold; font-family: monospace; }
 
-        /* УВЕЛИЧЕННЫЙ ВИДЖЕТ PASS */
+        /* УВЕЛИЧЕННЫЙ ВИДЖЕТ PASS (Левый нижний угол) */
         .pass-widget {
             position: fixed;
             bottom: 30px;
@@ -107,7 +107,7 @@
             z-index: 2;
         }
 
-        /* ВИДЖЕТ ПРОМОКОДОВ */
+        /* ВИДЖЕТ ПРОМОКОДОВ (Справа от Пасса) */
         .promo-widget {
             position: fixed;
             bottom: 30px;
@@ -207,7 +207,7 @@
             z-index: 100000;
         }
 
-        /* ПАНЕЛЬ ЧАТА (TELEGRAM / WHATSAPP STYLE) */
+        /* ПАНЕЛЬ ОНЛАЙН-ЧАТА (МЕССЕНДЖЕР) */
         .chat-widget {
             position: fixed;
             bottom: 70px;
@@ -422,7 +422,7 @@
         </div>
     </header>
 
-    <!-- ВИДЖЕТ PASS -->
+    <!-- ВИДЖЕТ PASS (Слева) -->
     <div class="pass-widget" onclick="window.location.href='gympass.html'">
         <div class="pass-card">
             <div class="pass-season-label">SPRING SEASON</div>
@@ -436,7 +436,7 @@
         </div>
     </div>
 
-    <!-- ВИДЖЕТ ПРОМОКОДОВ -->
+    <!-- ВИДЖЕТ ПРОМОКОДОВ (Справа от Пасса) -->
     <div class="promo-widget">
         <div class="promo-card">
             <div class="promo-header">
@@ -451,7 +451,7 @@
         </div>
     </div>
 
-    <!-- ИНТЕРАКТИВНАЯ ПАНЕЛЬ ЧАТА -->
+    <!-- ВИДЖЕТ ЧАТА МЕЖДУ ИГРОКАМИ -->
     <div id="chat-widget" class="chat-widget collapsed">
         <div class="chat-header" onclick="toggleChat()">
             <div class="chat-header-title">
@@ -462,7 +462,7 @@
         </div>
         <div class="chat-body">
             <div class="chat-messages" id="chat-messages-list">
-                <!-- Динамические сообщения из Firebase -->
+                <!-- Сообщения подгружаются в реальном времени из Firebase -->
             </div>
             <div class="chat-input-area">
                 <input type="text" id="chat-input" placeholder="Напиши сообщение..." maxlength="120" onkeydown="if(event.key==='Enter') sendChatMessage()">
@@ -484,11 +484,9 @@
         </div>
     </main>
 
-    <!-- МОДАЛКА ЛЮДИ -->
     <div id="online-modal" class="modal-overlay" onclick="closeOnline()">
-        <div class="modal-content" onclick="event.stopPropagation()" style="width: 90%; max-width: 500px; background: #111; border-radius: 20px; padding: 20px;">
-            <h3 style="color: white; margin-top: 0;">Игроки на сервере</h3>
-            <div id="online-list"></div>
+        <div class="modal-content" onclick="event.stopPropagation()" style="width: 90%; max-width: 500px; background: #111; border-radius: 20px;">
+            <iframe src="online.html" style="width: 100%; height: 500px; border: none;"></iframe>
         </div>
     </div>
 
@@ -529,7 +527,7 @@
 
     <script src="audio.js"></script>
     
-    <!-- ПОДКЛЮЧЕНИЕ Firebase + Онлайн + Чат -->
+    <!-- ПОДКЛЮЧЕНИЕ Firebase И ОНЛАЙН-ЧАТА -->
     <script type="module" src="online.js"></script>
 
     <script type="module">
