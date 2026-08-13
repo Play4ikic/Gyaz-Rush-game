@@ -6,7 +6,7 @@ const PRICES = {
     tott: 50000,
     national_stars: 80000,
     time_travels: 100000, 
-    chaos: 800000, // Установлена цена 800,000 CY
+    chaos: 800000,
     toty: 200000 
 };
 
@@ -48,15 +48,13 @@ const nationalStarsPlayers = [
 ];
 
 const timeTravelsPlayers = [
-    { name: 'Bugday', rating: 96, pos: 'GK', club: 'cheer', file: 'Bugday-95.png', folder: 'Timetravlers' },
+    { name: 'Bugday', rating: 96, pos: 'GK', club: 'toxic', file: 'Bugday-95.png', folder: 'Timetravlers' },
     { name: 'Elcan', rating: 92, pos: 'CAM', club: 'toxic', file: 'Elcan-92.png', folder: 'Timetravlers' },
-    { name: 'Nazrin', rating: 87, pos: 'CB', club: 'toxic', file: 'Nazrin-87.png', folder: 'Timetravlers' },
-    { name: 'Tuncay', rating: 92, pos: 'CB', club: 'icon', file: 'Tuncay-92.png', folder: 'Timetravlers' },
+    { name: 'Nazrin', rating: 87, pos: 'CB', club: 'cheer', file: 'Nazrin-87.png', folder: 'Timetravlers' },
+    { name: 'Tuncay', rating: 92, pos: 'CB', club: 'cheer', file: 'Tuncay-92.png', folder: 'Timetravlers' },
     { name: 'Turgay', rating: 92, pos: 'ST', club: 'cheer', file: 'Turgay-92.png', folder: 'Timetravlers' }
 ];
 
-// НОВЫЙ ПУЛ ИГРОКОВ CHAOS (на основе скриншота image_4.png)
-// Я предполагаю pos и club на основе существующих игроков
 const chaosPlayers = [
     { name: 'Bugday', rating: 99, pos: 'GK', club: 'cheer', file: 'Bugday-99.png', folder: 'CHAOS' },
     { name: 'Elcan', rating: 99, pos: 'RW', club: 'toxic', file: 'Elcan-99.png', folder: 'CHAOS' },
@@ -75,57 +73,36 @@ const totyPlayers = [
 
 let currentDroppedPlayer = null;
 
-// --- НОВАЯ ВСТАВКА: Логика шансов ---
-
-/**
- * Определяет "вес" игрока на основе его рейтинга.
- * Чем выше рейтинг, тем меньше вес (меньше шанс выпадения).
- * Это абстрактные числа для расчета пропорций.
- */
+// Логика расчета шансов выпадения
 function getPlayerWeight(rating) {
-    // Настраиваемый баланс:
-    if (rating >= 97) return 1;   // Ультра редкие (например, TOTY 97)
+    if (rating >= 97) return 1;   // Ультра редкие
     if (rating >= 95) return 3;   // Очень редкие
     if (rating >= 90) return 10;  // Редкие
     if (rating >= 85) return 40;  // Необычные
     if (rating >= 80) return 100; // Частые
-    return 250;                   // Очень частые (рейтинг < 80)
+    return 250;                   // Очень частые (< 80)
 }
 
-/**
- * Выбирает игрока из массива, используя веса на основе рейтинга.
- */
 function pickPlayerByChance(pool) {
     if (!pool || pool.length === 0) return null;
 
-    // 1. Рассчитываем веса для каждого игрока в текущем пуле
-    const weightedPool = pool.map(player => {
-        return {
-            player: player,
-            weight: getPlayerWeight(player.rating)
-        };
-    });
+    const weightedPool = pool.map(player => ({
+        player: player,
+        weight: getPlayerWeight(player.rating)
+    }));
 
-    // 2. Считаем общий вес всего пула
     const totalWeight = weightedPool.reduce((sum, item) => sum + item.weight, 0);
-
-    // 3. Выбираем случайное число от 0 до totalWeight
     let randomNum = Math.random() * totalWeight;
 
-    // 4. Перебираем пул, вычитая веса, чтобы найти, куда попало число
     for (let i = 0; i < weightedPool.length; i++) {
         if (randomNum < weightedPool[i].weight) {
-            return weightedPool[i].player; // Нашли игрока
+            return weightedPool[i].player;
         }
         randomNum -= weightedPool[i].weight;
     }
 
-    // Фаллбэк (на всякий случай, если Math.random выдаст ровно 1.0)
     return pool[pool.length - 1];
 }
-
-// --- КОНЕЦ НОВОЙ ВСТАВКИ ---
-
 
 // ОСНОВНАЯ ФУНКЦИЯ ОТКРЫТИЯ
 window.openPack = async function(type, videoFile) {
@@ -142,7 +119,7 @@ window.openPack = async function(type, videoFile) {
         pool = nationalStarsPlayers;
     } else if (type === 'time_travels') {
         pool = timeTravelsPlayers;
-    } else if (type === 'chaos') { // Обработка нового типа пака
+    } else if (type === 'chaos') {
         pool = chaosPlayers;
     } else {
         pool = totyPlayers;
@@ -151,10 +128,7 @@ window.openPack = async function(type, videoFile) {
     const success = await updateBalance(-price);
 
     if (success) {
-        // --- ИЗМЕНЕНО: Теперь используем функцию с шансами ---
-        // Было: currentDroppedPlayer = pool[Math.floor(Math.random() * pool.length)];
         currentDroppedPlayer = pickPlayerByChance(pool);
-        // ---------------------------------------------------
 
         if (type === 'gold') {
             showInstantReveal();

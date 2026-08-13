@@ -77,7 +77,7 @@ body {
 
 .pack-container { 
     display: flex; 
-    flex-direction: column; /* Размещение сверху вниз */
+    flex-direction: column; 
     gap: 18px; 
     width: 100%;
     max-width: 820px; 
@@ -93,7 +93,7 @@ body {
     border-radius: 20px; 
     border: 1px solid rgba(255, 255, 255, 0.08); 
     display: flex;
-    flex-direction: row; /* Горизонтальная компоновка внутри каждого баннера */
+    flex-direction: row; 
     align-items: center;
     justify-content: space-between;
     gap: 20px;
@@ -138,7 +138,7 @@ body {
 
 /* ЭФФЕКТЫ НАВЕДЕНИЯ */
 .pack-card:hover { 
-    transform: translateX(10px); /* Смещение вправо при наведении */
+    transform: translateX(10px); 
     background: rgba(26, 31, 52, 0.85);
 }
 
