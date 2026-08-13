@@ -3,62 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FixOne FC - Трейды</title>
+    <title>Gyaz Rush - Трейды</title>
     <link rel="icon" href="favicon.png" type="image/png">
     <link rel="stylesheet" href="style.css">
+    <!-- СТИЛИ ЧАТА -->
+    <link rel="stylesheet" href="chat.css">
+
     <style>
+        :root {
+            --bg-dark: #0a0d14;
+            --panel-bg: rgba(17, 22, 31, 0.85);
+            --neon-green: #00ff88;
+            --neon-gold: #e1b12c;
+            --neon-red: #ff4444;
+            --border-green: rgba(0, 255, 136, 0.3);
+            --border-gold: rgba(225, 177, 44, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
         body {
             background: #0d0f17;
             color: #fff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            min-height: 100vh;
         }
 
-        .header-bar {
+        /* --- ШАПКА B СТИЛЕ INDEX.HTML --- */
+        .top-nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
-            background: rgba(0,0,0,0.6);
-            padding: 15px 25px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 25px;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .logo-title {
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 2px;
+            font-size: 18px;
+        }
+
+        .header-page-name {
+            color: var(--neon-green);
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: 16px;
         }
 
         .back-btn {
-            background: #e1b12c;
+            background: var(--neon-green);
             color: #000;
-            padding: 10px 20px;
+            padding: 8px 18px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: bold;
+            font-size: 13px;
             transition: 0.2s;
         }
-        .back-btn:hover { background: #fbc531; }
 
-        /* Список игроков */
-        .players-section {
-            max-width: 800px;
-            margin: 0 auto;
-            background: rgba(20, 25, 40, 0.8);
-            border-radius: 16px;
-            padding: 20px;
-            border: 1px solid rgba(0, 255, 136, 0.2);
+        .back-btn:hover {
+            background: #00cc6a;
+            transform: scale(1.03);
         }
 
+        /* --- ОСНОВНОЙ КОНТЕЙНЕР --- */
+        .main-container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 15px;
+        }
+
+        .players-section {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-green);
+            border-radius: 18px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .section-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .section-header h3 {
+            margin: 0 0 5px 0;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .section-header p {
+            margin: 0;
+            color: #8899a6;
+            font-size: 13px;
+        }
+
+        /* Игроки в списке */
         .player-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 18px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
             margin-bottom: 10px;
+            transition: 0.2s;
+        }
+
+        .player-row:hover {
+            border-color: var(--border-green);
+            background: rgba(0, 255, 136, 0.04);
         }
 
         .trade-invite-btn {
-            background: #00ff88;
+            background: var(--neon-green);
             color: #000;
             border: none;
             padding: 8px 16px;
@@ -67,13 +142,17 @@
             cursor: pointer;
             transition: 0.2s;
         }
-        .trade-invite-btn:hover { background: #00cc6a; transform: scale(1.03); }
 
-        /* Окно комнаты Трейда (Modal) */
+        .trade-invite-btn:hover {
+            background: #00cc6a;
+            transform: scale(1.04);
+        }
+
+        /* --- МОДАЛЬНЫЕ ОКНА В СТИЛЕ ЛЮДИ/КЛУБ --- */
         .trade-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.92);
+            background: rgba(0, 0, 0, 0.9);
             display: none;
             justify-content: center;
             align-items: center;
@@ -82,14 +161,21 @@
         }
 
         .trade-room {
-            background: #141928;
-            border: 2px solid #e1b12c;
+            background: #11141e;
+            border: 2px solid var(--neon-gold);
             border-radius: 20px;
             width: 90%;
-            max-width: 850px;
+            max-width: 800px;
             padding: 25px;
-            box-shadow: 0 0 30px rgba(225, 177, 44, 0.3);
+            box-shadow: 0 0 40px rgba(225, 177, 44, 0.2);
             text-align: center;
+        }
+
+        .trade-room h2 {
+            margin: 0 0 6px 0;
+            color: var(--neon-gold);
+            font-weight: 900;
+            letter-spacing: 1px;
         }
 
         .trade-grid {
@@ -100,27 +186,34 @@
         }
 
         .trade-side {
-            background: rgba(0,0,0,0.4);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 14px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 250px;
+            min-height: 270px;
+        }
+
+        .trade-side h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            text-transform: uppercase;
+            color: #aaa;
         }
 
         .card-slot {
             width: 140px;
             height: 190px;
-            border: 2px dashed #444;
+            border: 2px dashed rgba(255, 255, 255, 0.15);
             border-radius: 12px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            margin: 15px 0;
-            background: rgba(255,255,255,0.02);
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.02);
             position: relative;
         }
 
@@ -128,38 +221,64 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
-            border-radius: 10px;
         }
 
+        /* Кнопки */
         .btn-action {
             padding: 10px 20px;
             border-radius: 8px;
             border: none;
             font-weight: bold;
             cursor: pointer;
-            margin: 5px;
+            margin: 4px;
+            transition: 0.2s;
         }
 
-        .btn-ready { background: #00ff88; color: #000; }
-        .btn-cancel { background: #ff4757; color: #fff; }
-        .btn-add { background: #38ada9; color: #fff; }
+        .btn-add {
+            background: #0099ff;
+            color: #fff;
+        }
+
+        .btn-ready {
+            background: var(--neon-green);
+            color: #000;
+        }
+
+        .btn-ready:hover {
+            background: #00cc6a;
+        }
+
+        .btn-cancel {
+            background: var(--neon-red);
+            color: #fff;
+        }
 
         .status-badge {
-            font-size: 12px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            margin-top: 5px;
-            text-transform: uppercase;
+            font-size: 11px;
             font-weight: bold;
+            padding: 5px 12px;
+            border-radius: 15px;
+            margin-top: 6px;
+            text-transform: uppercase;
         }
-        .status-wait { background: #ffa502; color: #000; }
-        .status-ok { background: #2ed573; color: #000; }
 
-        /* Выбор карточки из инвентаря */
+        .status-wait {
+            background: rgba(255, 190, 26, 0.15);
+            color: var(--neon-gold);
+            border: 1px solid var(--neon-gold);
+        }
+
+        .status-ok {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--neon-green);
+            border: 1px solid var(--neon-green);
+        }
+
+        /* МОДАЛКА ИНВЕНТАРЯ */
         .inventory-modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0, 0, 0, 0.92);
             display: none;
             justify-content: center;
             align-items: center;
@@ -167,13 +286,15 @@
         }
 
         .inventory-box {
-            background: #1a2035;
+            background: #11141e;
+            border: 1px solid var(--border-green);
             padding: 20px;
-            border-radius: 15px;
-            max-width: 600px;
+            border-radius: 18px;
+            max-width: 620px;
             width: 90%;
             max-height: 80vh;
-            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
 
         .card-picker-grid {
@@ -181,94 +302,132 @@
             grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
             gap: 12px;
             margin-top: 15px;
+            overflow-y: auto;
+            padding-right: 4px;
         }
 
         .pickable-card {
-            background: #0d0f17;
-            border: 1px solid #333;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             padding: 8px;
             cursor: pointer;
             text-align: center;
             transition: 0.2s;
         }
-        .pickable-card:hover { border-color: #00ff88; transform: scale(1.05); }
+
+        .pickable-card:hover {
+            border-color: var(--neon-green);
+            transform: scale(1.04);
+            background: rgba(0, 255, 136, 0.05);
+        }
     </style>
 </head>
 <body>
 
-    <div class="header-bar">
-        <h2>🔄 ЦЕНТР ОБМЕНА (ТРЕЙДЫ)</h2>
-        <a href="index.html" class="back-btn">← В ГЛАВНОЕ МЕНЮ</a>
+    <!-- ШАПКА -->
+    <header class="top-nav">
+        <div class="logo-title">GYAZ RUSH</div>
+        <div class="header-page-name">🔄 ТРЕЙДЫ</div>
+        <a href="index.html" class="back-btn">← НА ГЛАВНУЮ</a>
+    </header>
+
+    <!-- ОСНОВНОЙ БЛОК -->
+    <div class="main-container">
+        <div class="players-section">
+            <div class="section-header">
+                <h3>Игроки онлайн</h3>
+                <p>Выберите игрока в сети и отправьте предложение обмена</p>
+            </div>
+            <div id="online-trade-list">
+                <p style="color: #666; text-align: center;">Загрузка списка игроков...</p>
+            </div>
+        </div>
     </div>
 
-    <div class="players-section">
-        <h3>Игроки онлайн для обмена</h3>
-        <p style="color: #888; font-size: 14px;">Выберите игрока со статусом "В сети" и нажмите «Предложить трейд»</p>
-        <div id="online-trade-list">Загрузка игроков...</div>
-    </div>
-
-    <!-- ВСПЛЫВАЮЩЕЕ ПРИГЛАШЕНИЕ (Для получателя) -->
+    <!-- ВХОДЯЩЕЕ ПРИГЛАШЕНИЕ -->
     <div id="trade-invite-modal" class="trade-overlay">
         <div class="trade-room" style="max-width: 400px;">
-            <h3 id="invite-sender-title">Приглашение в трейд!</h3>
-            <p id="invite-desc-text">Игрок хочет обменяться с вами карточками.</p>
-            <div style="margin-top: 20px;">
+            <h3 id="invite-sender-title" style="color: var(--neon-gold); margin-bottom: 10px;">Входящий трейд!</h3>
+            <p id="invite-desc-text" style="color: #aaa; font-size: 13px; margin-bottom: 20px;">Игрок хочет обменяться карточками.</p>
+            <div>
                 <button class="btn-action btn-ready" id="accept-invite-btn">ПРИНЯТЬ</button>
                 <button class="btn-action btn-cancel" id="decline-invite-btn">ОТКЛОНИТЬ</button>
             </div>
         </div>
     </div>
 
-    <!-- ОКНО КОМНАТЫ ОБМЕНА -->
+    <!-- КОМНАТА ОБМЕНА -->
     <div id="trade-room-modal" class="trade-overlay">
         <div class="trade-room">
             <h2>ОКНО ОБМЕНА</h2>
-            <p style="color: #aaa; font-size: 13px;">Выберите карточку. Когда оба игрока нажмут «ГОТОВ», обмен произойдет автоматически!</p>
+            <p style="color: #888; font-size: 12px; margin: 0;">Выберите карточку. Когда оба подтвердят готовность, обмен произойдет автоматически.</p>
 
             <div class="trade-grid">
-                <!-- МОЯ СТОРОНА -->
+                <!-- ВЫ -->
                 <div class="trade-side">
-                    <h4>ВЫ (<span id="my-name">...</span>)</h4>
+                    <h4>ВЫ (<span id="my-name" style="color: var(--neon-green);">...</span>)</h4>
                     <div class="card-slot" id="my-card-slot">
-                        <span style="color:#666; font-size: 12px;">Пусто</span>
+                        <span style="color:#555; font-size: 12px;">Пусто</span>
                     </div>
-                    <button class="btn-action btn-add" id="select-card-btn">Добавить карточку</button>
+                    <button class="btn-action btn-add" id="select-card-btn">Выбрать карту</button>
                     <div id="my-status-badge" class="status-badge status-wait">Не готов</div>
                 </div>
 
-                <!-- СТОРОНА СОПЕРНИКА -->
+                <!-- СОПЕРНИК -->
                 <div class="trade-side">
-                    <h4>СОПЕРНИК (<span id="partner-name">...</span>)</h4>
+                    <h4>СОПЕРНИК (<span id="partner-name" style="color: var(--neon-gold);">...</span>)</h4>
                     <div class="card-slot" id="partner-card-slot">
-                        <span style="color:#666; font-size: 12px;">Пусто</span>
+                        <span style="color:#555; font-size: 12px;">Пусто</span>
                     </div>
-                    <div style="height: 38px;"></div> <!-- Отступ для выравнивания -->
+                    <div style="height: 38px;"></div>
                     <div id="partner-status-badge" class="status-badge status-wait">Не готов</div>
                 </div>
             </div>
 
-            <div>
-                <button class="btn-action btn-ready" id="confirm-trade-btn" style="padding: 12px 30px; font-size: 16px;">СОГЛАСИСТЬСЯ (ГОТОВ)</button>
-                <button class="btn-action btn-cancel" id="cancel-trade-btn">ОТМЕНИТЬ ТРЕЙД</button>
+            <div style="margin-top: 10px;">
+                <button class="btn-action btn-ready" id="confirm-trade-btn" style="padding: 12px 28px; font-size: 14px;">ПОДТВЕРДИТЬ (ГОТОВ)</button>
+                <button class="btn-action btn-cancel" id="cancel-trade-btn">ОТМЕНИТЬ</button>
             </div>
         </div>
     </div>
 
-    <!-- МОДАЛКА ВЫБОРА КАРТОЧКИ ИЗ МОЕГО КЛУБА -->
+    <!-- МОДАЛКА ВЫБОРА КАРТЫ -->
     <div id="inventory-modal" class="inventory-modal">
         <div class="inventory-box">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3>Выберите карточку для обмена</h3>
-                <button class="btn-action btn-cancel" onclick="closeInventory()">✕</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="margin:0; font-size: 16px; color: #fff;">ВАШ КЛУБ</h3>
+                <button class="btn-action btn-cancel" onclick="closeInventory()" style="padding: 5px 12px;">✕</button>
             </div>
             <div class="card-picker-grid" id="club-cards-container">
-                <!-- Карточки сгенерируются скриптом -->
+                <!-- Карточки -->
             </div>
         </div>
     </div>
 
-    <!-- Скрипт Трейдов -->
-    <script type="module" src="trade.js"></script>
+    <!-- 💬 ВИДЖЕТ ЧАТА С КНОПКОЙ ИЗМЕНЕНИЯ РАЗМЕРА -->
+    <div id="chat-widget" class="chat-widget collapsed">
+        <div class="chat-header">
+            <div class="chat-header-title" id="chat-header-btn">
+                <span class="online-status-dot"></span>
+                <span>ЧАТ ИГРОКОВ</span>
+            </div>
+            <div class="chat-controls">
+                <button class="chat-control-btn" id="chat-size-btn" title="Увеличить размер">⤢</button>
+                <button class="chat-control-btn" id="chat-toggle-icon" title="Свернуть/Развернуть">▲</button>
+            </div>
+        </div>
+        <div class="chat-body">
+            <div class="chat-messages" id="chat-messages-list"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Напиши сообщение..." maxlength="120">
+                <button class="chat-send-btn" id="chat-send-btn">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Скрипты -->
+    <script type="module" src="trade.js?v=3"></script>
+    <script type="module" src="online.js"></script>
 </body>
 </html>

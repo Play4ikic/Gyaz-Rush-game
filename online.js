@@ -29,32 +29,29 @@ let userData = JSON.parse(localStorage.getItem('gyaz_user')) || {
     nickname: "Player" 
 };
 
-// Флаг для предотвращения уведомлений при первой загрузке истории
 let isInitialLoad = true;
 
-// 🔔 1. ЗАПРОС РАЗРЕШЕНИЯ НА УВЕДОМЛЕНИЯ
+// 1. ЗАПРОС РАЗРЕШЕНИЯ НА УВЕДОМЛЕНИЯ
 function requestNotificationPermission() {
     if ("Notification" in window && Notification.permission === "default") {
         Notification.requestPermission();
     }
 }
 
-// 🔔 2. ФУНКЦИЯ ПОКАЗА УВЕДОМЛЕНИЯ
+// 2. ОТПРАВКА БРАУЗЕРНЫХ УВЕДОМЛЕНИЙ
 function sendBrowserNotification(sender, text) {
     if (!("Notification" in window) || Notification.permission !== "granted") return;
 
     const chat = document.getElementById('chat-widget');
     const isCollapsed = chat && chat.classList.contains('collapsed');
 
-    // Отправляем уведомление, только если вкладка скрыта ИЛИ чат свёрнут
     if (document.hidden || isCollapsed) {
         const notification = new Notification(`💬 ${sender}`, {
             body: text,
-            icon: 'favicon.png', // Ссылка на иконку твоего сайта
-            tag: 'chat-msg' // Заменяет предыдущее уведомление новым, чтобы не спамить
+            icon: 'favicon.png',
+            tag: 'chat-msg'
         });
 
-        // При клике на уведомление открываем вкладку и разворачиваем чат
         notification.onclick = function() {
             window.focus();
             if (chat && chat.classList.contains('collapsed')) {
@@ -65,43 +62,74 @@ function sendBrowserNotification(sender, text) {
     }
 }
 
-// 3. АВТОМАТИЧЕСКАЯ ВСТАВКА HTML ЧАТА
+// 3. АВТОМАШИЧЕСКАЯ ВСТАВКА HTML ЧАТА (ЕСЛИ ОТСУТСТВУЕТ)
 function injectChatHTML() {
-    if (document.getElementById('chat-widget')) return;
-
-    const chatHTML = `
-    <div id="chat-widget" class="chat-widget collapsed">
-        <div class="chat-header" id="chat-header-btn">
-            <div class="chat-header-title">
-                <span class="online-status-dot"></span>
-                <span>ЧАТ ИГРОКОВ</span>
+    if (!document.getElementById('chat-widget')) {
+        const chatHTML = `
+        <div id="chat-widget" class="chat-widget collapsed">
+            <div class="chat-header">
+                <div class="chat-header-title" id="chat-header-btn">
+                    <span class="online-status-dot"></span>
+                    <span>ЧАТ ИГРОКОВ</span>
+                </div>
+                <div class="chat-controls">
+                    <button class="chat-control-btn" id="chat-size-btn" title="Увеличить размер">⤢</button>
+                    <button class="chat-control-btn" id="chat-toggle-icon" title="Свернуть/Развернуть">▲</button>
+                </div>
             </div>
-            <button class="chat-toggle-btn" id="chat-toggle-icon">▲</button>
-        </div>
-        <div class="chat-body">
-            <div class="chat-messages" id="chat-messages-list"></div>
-            <div class="chat-input-area">
-                <input type="text" id="chat-input" placeholder="Напиши сообщение..." maxlength="120">
-                <button class="chat-send-btn" id="chat-send-btn">➤</button>
+            <div class="chat-body">
+                <div class="chat-messages" id="chat-messages-list"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Напиши сообщение..." maxlength="120">
+                    <button class="chat-send-btn" id="chat-send-btn">➤</button>
+                </div>
             </div>
-        </div>
-    </div>`;
+        </div>`;
 
-    document.body.insertAdjacentHTML('beforeend', chatHTML);
+        document.body.insertAdjacentHTML('beforeend', chatHTML);
+    }
 
-    // Привязка событий + запрос разрешения на уведомления при клике
-    document.getElementById('chat-header-btn').addEventListener('click', () => {
-        requestNotificationPermission();
-        toggleChat();
-    });
-
-    document.getElementById('chat-send-btn').addEventListener('click', sendChatMessage);
-    document.getElementById('chat-input').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') sendChatMessage();
-    });
+    bindChatEvents();
 }
 
-// 4. УПРАВЛЕНИЕ ОКНОМ ЧАТА
+// 4. ПРИВЯЗКА СОБЫТИЙ
+function bindChatEvents() {
+    const headerBtn = document.getElementById('chat-header-btn');
+    const toggleIcon = document.getElementById('chat-toggle-icon');
+    const sizeBtn = document.getElementById('chat-size-btn');
+    const sendBtn = document.getElementById('chat-send-btn');
+    const input = document.getElementById('chat-input');
+
+    if (headerBtn) {
+        headerBtn.addEventListener('click', () => {
+            requestNotificationPermission();
+            toggleChat();
+        });
+    }
+
+    if (toggleIcon) {
+        toggleIcon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleChat();
+        });
+    }
+
+    if (sizeBtn) {
+        sizeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleChatSize();
+        });
+    }
+
+    if (sendBtn) sendBtn.addEventListener('click', sendChatMessage);
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        });
+    }
+}
+
+// 5. СВЕРНУТЬ / РАЗВЕРНУТЬ ЧАТ
 window.toggleChat = function() {
     const chat = document.getElementById('chat-widget');
     const icon = document.getElementById('chat-toggle-icon');
@@ -119,7 +147,32 @@ window.toggleChat = function() {
     }
 };
 
-// 5. УПРАВЛЕНИЕ ОНЛАЙН СТАТУСОМ
+// 6. ИЗМЕНИТЬ РАЗМЕР ЧАТА (УВЕЛИЧИТЬ / УМЕНЬШИТЬ)
+window.toggleChatSize = function() {
+    const chat = document.getElementById('chat-widget');
+    const sizeBtn = document.getElementById('chat-size-btn');
+    if (!chat) return;
+
+    if (chat.classList.contains('collapsed')) {
+        chat.classList.remove('collapsed');
+        const icon = document.getElementById('chat-toggle-icon');
+        if (icon) icon.innerText = '▼';
+    }
+
+    chat.classList.toggle('expanded');
+
+    if (sizeBtn) {
+        sizeBtn.innerText = chat.classList.contains('expanded') ? '❐' : '⤢';
+        sizeBtn.title = chat.classList.contains('expanded') ? 'Уменьшить' : 'Увеличить';
+    }
+
+    const container = document.getElementById('chat-messages-list');
+    if (container) {
+        container.scrollTop = container.scrollHeight;
+    }
+};
+
+// 7. СТАТУС ОНЛАЙН
 function manageStatus() {
     if (!userData.uid) return;
     const myStatusRef = ref(db, `all_players/${userData.uid}`);
@@ -132,51 +185,11 @@ function manageStatus() {
     onDisconnect(myStatusRef).update({ online: false });
 }
 
-// 6. ТАБЛИЦА ИГРОКОВ (Если есть элемент на странице)
-function renderPlayersTable() {
-    const container = document.getElementById('online-list');
-    if (!container) return;
-
-    const listRef = ref(db, 'all_players');
-    onValue(listRef, (snapshot) => {
-        container.innerHTML = "";
-        if (snapshot.exists()) {
-            const players = snapshot.val();
-            Object.keys(players).forEach(id => {
-                const player = players[id];
-                const isOnline = player.online === true;
-                const isMe = id === userData.uid;
-
-                const row = document.createElement('div');
-                row.style.cssText = `
-                    display: flex; justify-content: space-between; align-items: center;
-                    padding: 10px 15px; background: rgba(255, 255, 255, 0.05);
-                    border-radius: 8px; margin-bottom: 5px;
-                    border: 1px solid ${isMe ? '#e1b12c' : 'transparent'};
-                `;
-
-                row.innerHTML = `
-                    <span style="color: white; font-weight: bold;">
-                        ${escapeHtml(player.nickname)} ${isMe ? '<small style="color:#e1b12c">(Вы)</small>' : ''}
-                    </span>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="color: ${isOnline ? '#00ff88' : '#555'}; font-size: 10px; text-transform: uppercase;">
-                            ${isOnline ? 'В сети' : 'Оффлайн'}
-                        </span>
-                        <div style="width: 10px; height: 10px; border-radius: 50%; background: ${isOnline ? '#00ff88' : '#555'};"></div>
-                    </div>
-                `;
-                container.appendChild(row);
-            });
-        }
-    });
-}
-
-// 7. ОТПРАВКА И ЧТЕНИЕ СООБЩЕНИЙ С УВЕДОМЛЕНИЯМИ
+// 8. ОТПРАВКА И СЛУШАТЕЛЬ ЧАТА
 const chatRef = ref(db, 'global_chat');
 
 window.sendChatMessage = function() {
-    requestNotificationPermission(); // Просим разрешение при отправке
+    requestNotificationPermission();
     const input = document.getElementById('chat-input');
     if (!input) return;
     
@@ -226,14 +239,13 @@ function initGlobalChat() {
                 `;
                 container.appendChild(msgEl);
 
-                // 🔔 Вызываем уведомление, только если это НОВОЕ сообщение (после загрузки) и НЕ от нас
                 if (!isInitialLoad && index === keys.length - 1 && !isMe) {
                     sendBrowserNotification(msg.sender, msg.text);
                 }
             });
         }
 
-        isInitialLoad = false; // Первая загрузка завершена
+        isInitialLoad = false;
         container.scrollTop = container.scrollHeight;
     });
 }
@@ -245,10 +257,8 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Запуск при загрузке любой страницы
 document.addEventListener('DOMContentLoaded', () => {
     injectChatHTML();
     manageStatus();
-    renderPlayersTable();
     initGlobalChat();
 });

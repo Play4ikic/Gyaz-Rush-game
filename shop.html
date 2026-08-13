@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Goalyaz Shop - Special Packs</title>
     <link rel="stylesheet" href="shop.css">
+    <!-- СТИЛИ ЧАТА -->
+    <link rel="stylesheet" href="chat.css">
     <script type="module" src="economy.js"></script>
     <script type="module" src="shop.js"></script>
 </head>
@@ -155,6 +157,28 @@
         <input type="range" min="0" max="1" step="0.1" value="0.3" oninput="if(typeof setVolume === 'function') setVolume(this.value)" style="width: 60px; cursor: pointer;">
     </div>
 
+    <!-- 💬 ВИДЖЕТ ЧАТА С КНОПКОЙ ИЗМЕНЕНИЯ РАЗМЕРА -->
+    <div id="chat-widget" class="chat-widget collapsed">
+        <div class="chat-header">
+            <div class="chat-header-title" id="chat-header-btn">
+                <span class="online-status-dot"></span>
+                <span>ЧАТ ИГРОКОВ</span>
+            </div>
+            <div class="chat-controls">
+                <button class="chat-control-btn" id="chat-size-btn" title="Увеличить размер">⤢</button>
+                <button class="chat-control-btn" id="chat-toggle-icon" title="Свернуть/Развернуть">▲</button>
+            </div>
+        </div>
+        <div class="chat-body">
+            <div class="chat-messages" id="chat-messages-list"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Напиши сообщение..." maxlength="120">
+                <button class="chat-send-btn" id="chat-send-btn">➤</button>
+            </div>
+        </div>
+    </div>
+
     <script src="audio.js"></script>
+    <script type="module" src="online.js"></script>
 </body>
 </html>

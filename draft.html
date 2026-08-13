@@ -140,7 +140,7 @@
 
         .used-card { filter: grayscale(1) opacity(0.2) blur(2px) !important; pointer-events: none; }
 
-        /* КНОПКА СБРОСА (ДЛЯ ТЕБЯ) */
+        /* КНОПКА СБРОСА */
         .exit-btn {
             position: fixed; bottom: 20px; left: 20px;
             background: rgba(255,0,0,0.2); border: 1px solid var(--red);
@@ -195,8 +195,28 @@
         </div>
     </div>
 
+    <!-- 💬 ВИДЖЕТ ЧАТА С КНОПКОЙ ИЗМЕНЕНИЯ РАЗМЕРА -->
+    <div id="chat-widget" class="chat-widget collapsed">
+        <div class="chat-header">
+            <div class="chat-header-title" id="chat-header-btn">
+                <span class="online-status-dot"></span>
+                <span>ЧАТ ИГРОКОВ</span>
+            </div>
+            <div class="chat-controls">
+                <button class="chat-control-btn" id="chat-size-btn" title="Увеличить размер">⤢</button>
+                <button class="chat-control-btn" id="chat-toggle-icon" title="Свернуть/Развернуть">▲</button>
+            </div>
+        </div>
+        <div class="chat-body">
+            <div class="chat-messages" id="chat-messages-list"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Напиши сообщение..." maxlength="120">
+                <button class="chat-send-btn" id="chat-send-btn">➤</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Функция принудительного выхода (очистка памяти)
         function forceExit() {
             if(confirm("Очистить данные матча и вернуться в меню?")) {
                 localStorage.removeItem('currentMatchId');
@@ -205,7 +225,6 @@
             }
         }
 
-        // Проверка при загрузке: если в памяти есть матч — сразу в бой
         (function() {
             const matchId = localStorage.getItem('currentMatchId');
             if (matchId) {
@@ -234,8 +253,6 @@
     <script src="audio.js"></script>
     <script src="draft.js"></script> 
     <script type="module" src="online_draft.js"></script>
-    
-    <!-- ПОДКЛЮЧЕНИЕ МОДУЛЯ ЧАТА -->
     <script type="module" src="online.js"></script>
 </body>
 </html>
