@@ -58,7 +58,6 @@
             box-shadow: 0 8px 0 #856404;
         }
 
-        /* Надпись СЕЗОН */
         .pass-season-label {
             font-family: 'Arial Black', sans-serif;
             color: #000;
@@ -112,8 +111,8 @@
         /* ВИДЖЕТ ПРОМОКОДОВ (Справа от Пасса) */
         .promo-widget {
             position: fixed;
-            bottom: 30px;   /* На одном уровне с пассом */
-            left: 350px;   /* Справа от пасса (30px + 300px + 20px зазор) */
+            bottom: 30px;
+            left: 350px;
             width: 300px;
             z-index: 99999;
         }
@@ -208,6 +207,196 @@
             align-items: center;
             z-index: 100000;
         }
+
+        /* ==========================================
+           СТИЛИ ДЛЯ ПАНЕЛИ ЧАТА (TELEGRAM / WHATSAPP)
+           ========================================== */
+        .chat-widget {
+            position: fixed;
+            bottom: 70px;
+            right: 20px;
+            width: 320px;
+            background: rgba(16, 20, 30, 0.95);
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            border-radius: 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 212, 255, 0.2);
+            backdrop-filter: blur(15px);
+            z-index: 99998;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .chat-widget.collapsed {
+            height: 48px;
+            width: 200px;
+        }
+
+        .chat-header {
+            background: linear-gradient(90deg, #0055ff, #00d2ff);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .chat-header-title {
+            font-family: 'Arial Black', sans-serif;
+            font-size: 13px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 1px;
+        }
+
+        .online-status-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff88;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #00ff88;
+        }
+
+        .chat-toggle-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .chat-body {
+            display: flex;
+            flex-direction: column;
+            height: 350px;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            padding: 12px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(5, 8, 15, 0.6);
+        }
+
+        /* Кастомный скроллбар */
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.4);
+            border-radius: 4px;
+        }
+
+        .chat-msg {
+            display: flex;
+            flex-direction: column;
+            max-width: 82%;
+            animation: msgPop 0.2s ease-out forwards;
+        }
+
+        @keyframes msgPop {
+            0% { opacity: 0; transform: translateY(8px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-msg.my-msg {
+            align-self: flex-end;
+        }
+
+        .chat-msg.other-msg {
+            align-self: flex-start;
+        }
+
+        .msg-sender {
+            font-size: 10px;
+            font-weight: bold;
+            color: #00d2ff;
+            margin-bottom: 2px;
+            margin-left: 4px;
+        }
+
+        .chat-msg.my-msg .msg-sender {
+            display: none;
+        }
+
+        .msg-bubble {
+            padding: 8px 12px;
+            border-radius: 14px;
+            font-size: 12px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .chat-msg.my-msg .msg-bubble {
+            background: linear-gradient(135deg, #0088cc, #0055ff);
+            color: #fff;
+            border-bottom-right-radius: 2px;
+        }
+
+        .chat-msg.other-msg .msg-bubble {
+            background: rgba(255, 255, 255, 0.1);
+            color: #eee;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom-left-radius: 2px;
+        }
+
+        .msg-time {
+            font-size: 8px;
+            color: rgba(255, 255, 255, 0.6);
+            align-self: flex-end;
+            margin-top: 2px;
+            margin-left: 6px;
+            float: right;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 6px;
+            padding: 10px;
+            background: rgba(10, 14, 22, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .chat-input-area input {
+            flex-grow: 1;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 8px 12px;
+            color: white;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .chat-input-area input:focus {
+            border-color: #00d2ff;
+        }
+
+        .chat-send-btn {
+            background: #00d2ff;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            padding: 0 14px;
+            font-weight: 900;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+        }
+
+        .chat-send-btn:hover {
+            background: #00ff88;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -221,8 +410,9 @@
             <div class="tab-item" onclick="selectTab('draft')">DRAFT</div>
             <div class="tab-item" onclick="selectTab('market')">РЫНОК</div>
             <div class="tab-item" onclick="selectTab('betting')">СТАВКИ</div>
-            <!-- НОВАЯ ВКЛАДКА ТРЕЙДЫ -->
             <div class="tab-item" onclick="window.location.href='trade.html'" style="color: #00ff88; font-weight: bold;">ТРЕЙДЫ</div>
+            <!-- ВКЛАДКА ЧАТ -->
+            <div class="tab-item" onclick="toggleChat()" style="color: #00d2ff; font-weight: bold;">ЧАТ</div>
             <div class="tab-item" onclick="openOnline()" style="color: #e1b12c; font-weight: bold;">ЛЮДИ</div>
         </nav>
 
@@ -263,6 +453,26 @@
                 <button class="promo-btn" onclick="activatePromoCode()">ОК</button>
             </div>
             <div id="promo-msg" class="promo-message"></div>
+        </div>
+    </div>
+
+    <!-- ИНТЕРАКТИВНАЯ ПАНЕЛЬ ЧАТА (WHATSAPP / TELEGRAM STYLE) -->
+    <div id="chat-widget" class="chat-widget collapsed">
+        <div class="chat-header" onclick="toggleChat()">
+            <div class="chat-header-title">
+                <span class="online-status-dot"></span>
+                <span>ЧАТ ИГРОКОВ</span>
+            </div>
+            <button class="chat-toggle-btn" id="chat-toggle-icon">▲</button>
+        </div>
+        <div class="chat-body">
+            <div class="chat-messages" id="chat-messages-list">
+                <!-- Сообщения генерируются динамически -->
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Напиши сообщение..." maxlength="120" onkeydown="if(event.key==='Enter') sendChatMessage()">
+                <button class="chat-send-btn" onclick="sendChatMessage()">➤</button>
+            </div>
         </div>
     </div>
 
@@ -310,10 +520,134 @@
         window.addEventListener('DOMContentLoaded', () => {
             updateWidgetXP();
             updateHubBalance();
+            initChat();
         });
 
         function openOnline() { document.getElementById('online-modal').style.display = 'flex'; }
         function closeOnline() { document.getElementById('online-modal').style.display = 'none'; }
+
+        /* ==========================================
+           ЛОГИКА РАБОТЫ ЧАТА ИГРОКОВ
+           ========================================== */
+        const CHAT_STORAGE_KEY = 'gyaz_hub_chat_messages';
+        const USERNAME_KEY = 'gyaz_player_nickname';
+
+        // Стартовые приветственные сообщения
+        const defaultMessages = [
+            { id: 1, sender: 'Eldjan', text: 'Всем салам! Кто-то уже выбил TOTY 99?', time: '18:30', isMe: false },
+            { id: 2, sender: 'Turgay', text: 'Да, мне только что выпал карточка из Chaos пака! 🔥', time: '18:32', isMe: false }
+        ];
+
+        function getPlayerNickname() {
+            let name = localStorage.getItem(USERNAME_KEY);
+            if (!name) {
+                name = 'Игрок_' + Math.floor(1000 + Math.random() * 9000);
+                localStorage.setItem(USERNAME_KEY, name);
+            }
+            return name;
+        }
+
+        function toggleChat() {
+            const chat = document.getElementById('chat-widget');
+            const icon = document.getElementById('chat-toggle-icon');
+            chat.classList.toggle('collapsed');
+            
+            if (chat.classList.contains('collapsed')) {
+                icon.innerText = '▲';
+            } else {
+                icon.innerText = '▼';
+                scrollChatToBottom();
+            }
+        }
+
+        function initChat() {
+            let messages = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY));
+            if (!messages || messages.length === 0) {
+                messages = defaultMessages;
+                localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+            }
+            renderChatMessages();
+        }
+
+        function renderChatMessages() {
+            const container = document.getElementById('chat-messages-list');
+            const messages = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY)) || [];
+            const myName = getPlayerNickname();
+
+            container.innerHTML = '';
+
+            messages.forEach(msg => {
+                const isMe = (msg.sender === myName);
+                const msgEl = document.createElement('div');
+                msgEl.className = `chat-msg ${isMe ? 'my-msg' : 'other-msg'}`;
+
+                msgEl.innerHTML = `
+                    <span class="msg-sender">${msg.sender}</span>
+                    <div class="msg-bubble">
+                        ${escapeHtml(msg.text)}
+                        <span class="msg-time">${msg.time}</span>
+                    </div>
+                `;
+                container.appendChild(msgEl);
+            });
+
+            scrollChatToBottom();
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const myName = getPlayerNickname();
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+
+            const messages = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY)) || [];
+            
+            const newMsg = {
+                id: Date.now(),
+                sender: myName,
+                text: text,
+                time: timeStr
+            };
+
+            messages.push(newMsg);
+            
+            // Храним максимум 50 последних сообщений
+            if (messages.length > 50) messages.shift();
+
+            localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+            input.value = '';
+
+            renderChatMessages();
+
+            // Автоматическое разворачивание при отправке
+            const chat = document.getElementById('chat-widget');
+            if (chat.classList.contains('collapsed')) {
+                toggleChat();
+            }
+        }
+
+        function scrollChatToBottom() {
+            const container = document.getElementById('chat-messages-list');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.innerText = text;
+            return div.innerHTML;
+        }
+
+        // Реальное обновление между открытыми вкладками
+        window.addEventListener('storage', (e) => {
+            if (e.key === CHAT_STORAGE_KEY) {
+                renderChatMessages();
+            }
+        });
     </script>
 
     <div class="audio-controls" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 15px;">
