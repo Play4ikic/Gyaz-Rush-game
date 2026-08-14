@@ -12,7 +12,7 @@ const firebaseConfig = {
     apiKey: "AIzaSyDq3-wPkua6nMUt3cetwwC_-4iVtx-7PiQ",
     authDomain: "play4ik-473ef.firebaseapp.com",
     projectId: "play4ik-473ef",
-    databaseURL: "https://play4ik-473ef-default-rtdb.firebaseio.com", // <-- ДОБАВЛЕНО!
+    databaseURL: "https://play4ik-473ef-default-rtdb.firebaseio.com",
     storageBucket: "play4ik-473ef.firebasestorage.app",
     messagingSenderId: "115893557892",
     appId: "1:115893557892:web:731ac77c3f00328c1200d1",
@@ -65,7 +65,10 @@ async function checkUser(user) {
         const snapshot = await get(userRef);
 
         if (snapshot.exists()) {
-            const userData = snapshot.val();
+            const userData = snapshot.val() || {};
+
+            // КРИТИЧЕСКИ ВАЖНО: Принудительно вшиваем UID пользователя
+            userData.uid = user.uid;
 
             // 1. ОСНОВНОЙ ПРОФИЛЬ И НИК
             localStorage.setItem('gyaz_user', JSON.stringify(userData));
@@ -82,7 +85,7 @@ async function checkUser(user) {
             }
 
             // 3. КАРТОЧКИ ИГРОКА (КЛУБ)
-            if (userData.myPlayers) {
+            if (userData.myPlayers !== undefined) {
                 const playersStr = typeof userData.myPlayers === 'string' 
                     ? userData.myPlayers 
                     : JSON.stringify(userData.myPlayers);
@@ -90,7 +93,7 @@ async function checkUser(user) {
             }
 
             // 4. АКТИВНЫЙ СОСТАВ (SQUAD)
-            if (userData.activeSquad) {
+            if (userData.activeSquad !== undefined) {
                 const squadStr = typeof userData.activeSquad === 'string' 
                     ? userData.activeSquad 
                     : JSON.stringify(userData.activeSquad);
@@ -108,7 +111,7 @@ async function checkUser(user) {
                 localStorage.setItem('claimedRewards', rewardsStr);
             }
 
-            // 6. ДОПОЛНИТЕЛЬНО (Промокоды, Квесты)
+            // 6. ДОПОЛНИТЕЛЬНО
             if (userData.gyaz_used_promos) {
                 const promosStr = typeof userData.gyaz_used_promos === 'string'
                     ? userData.gyaz_used_promos
@@ -122,7 +125,6 @@ async function checkUser(user) {
             if (statusMsg) statusMsg.innerText = "Успешный вход! Загрузка...";
             window.location.href = "index.html";
         } else {
-            // Если игрок заходит в первый раз
             if (loginBtn) loginBtn.style.display = 'none';
             if (guestBtn) guestBtn.style.display = 'none';
             if (statusMsg) statusMsg.innerText = "Регистрация нового игрока:";
@@ -163,7 +165,6 @@ if (finishBtn) {
         try {
             await set(ref(db, 'users/' + user.uid), userData);
 
-            // Записываем стартовые значения в LocalStorage
             localStorage.setItem('gyaz_user', JSON.stringify(userData));
             localStorage.setItem('gyaz_player_nickname', nick);
             localStorage.setItem('fixone_balance', '10000');

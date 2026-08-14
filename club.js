@@ -1,4 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 import { getDatabase, ref, update, onValue } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -12,24 +13,38 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getDatabase(app);
 
-// Получение UID авторизованного пользователя
+// Надежное получение UID (сначала из Firebase Auth, затем из localStorage)
 function getUserId() {
+    if (auth.currentUser) return auth.currentUser.uid;
     const userStr = localStorage.getItem('gyaz_user');
     if (userStr) {
-        try { return JSON.parse(userStr).uid; } catch(e) {}
+        try { 
+            const parsed = JSON.parse(userStr);
+            return parsed.uid || parsed.id || null;
+        } catch(e) {}
     }
     return null;
 }
 
-// Универсальное и безопасное извлечение карточек из localStorage
+// Безопасная генерация пути к изображению карточки
+function getCardImgSrc(player) {
+    if (!player || !player.file) return '';
+    if (player.file.includes('/') || player.file.startsWith('http') || player.file.startsWith('data:')) {
+        return player.file;
+    }
+    const folder = player.folder || (Number(player.rating) >= 97 ? 'Toty' : 'Champions');
+    return `${folder}/${player.file}`;
+}
+
+// Универсальное извлечение карточек из localStorage
 function getMyClubPlayers() {
     try {
         let raw = localStorage.getItem('myPlayers');
         if (!raw) return [];
 
-        // Разворачиваем возможную многократную JSON-строку
         while (typeof raw === 'string') {
             try {
                 const parsed = JSON.parse(raw);
@@ -40,19 +55,18 @@ function getMyClubPlayers() {
             }
         }
 
-        // Если Firebase вернул объект вида { "0": {...}, "1": {...} }
         if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
             return Object.values(raw);
         }
 
         return Array.isArray(raw) ? raw : [];
     } catch (e) {
-        console.error("Ошибка загрузки карточек:", e);
+        console.error("Ошибка загрузки карточек клуба:", e);
         return [];
     }
 }
 
-// Универсальное извлечение активного состава
+// Извлечение состава
 function getActiveSquad() {
     try {
         let raw = localStorage.getItem('activeSquad');
@@ -83,7 +97,7 @@ function getActiveSquad() {
     }
 }
 
-// Сохранение состава в LocalStorage и Firebase
+// Сохранение состава
 function saveSquadState(squad) {
     const jsonStr = JSON.stringify(squad);
     localStorage.setItem('activeSquad', jsonStr);
@@ -94,9 +108,8 @@ function saveSquadState(squad) {
     }
 }
 
-// Слушатель Firebase: в реальном времени обновляет клуб и состав
-function listenToFirebaseData() {
-    const uid = getUserId();
+// Запуск слушателя Firebase Realtime Database
+function startFirebaseListener(uid) {
     if (!uid) return;
 
     const userRef = ref(db, `users/${uid}`);
@@ -118,7 +131,6 @@ function listenToFirebaseData() {
                 localStorage.setItem('activeSquad', squadStr);
             }
 
-            // Перерисовываем интерфейс с новыми данными
             renderClub();
             renderSquad();
         }
@@ -153,7 +165,11 @@ window.addToSquad = function(inventoryIndex) {
 
     if (!player) return;
 
-    const isAlreadyOnField = activeSquad.some(p => p && p.file === player.file);
+    const isAlreadyOnField = activeSquad.some(p => p && (
+        (p.file && p.file === player.file) || 
+        (p.id && p.id === player.id)
+    ));
+
     if (isAlreadyOnField) {
         alert("Эта карточка уже в составе!");
         return;
@@ -177,7 +193,7 @@ window.addToSquad = function(inventoryIndex) {
     renderSquad();
 };
 
-// Отрисовка списка всех карточек клуба
+// Отрисовка клуба
 function renderClub() {
     const container = document.getElementById('club-inventory');
     if (!container) return;
@@ -194,10 +210,10 @@ function renderClub() {
         if (!player) return;
         const card = document.createElement('div');
         card.className = 'inventory-card-mini';
-        const folder = player.folder || (player.rating >= 97 ? 'Toty' : 'Champions');
+        const imgSrc = getCardImgSrc(player);
         
         card.innerHTML = `
-            <img src="${folder}/${player.file}" 
+            <img src="${imgSrc}" 
                  class="mini-card-img" 
                  onclick="addToSquad(${index})"
                  title="${player.name || 'Игрок'} (${player.pos || '---'})">
@@ -215,8 +231,8 @@ function renderSquad() {
         if (!slot) return;
 
         if (player && typeof player === 'object') {
-            const folder = player.folder || (player.rating >= 97 ? 'Toty' : 'Champions');
-            slot.innerHTML = `<img src="${folder}/${player.file}" class="field-card-img" onclick="handleSlotClick(${i})">`;
+            const imgSrc = getCardImgSrc(player);
+            slot.innerHTML = `<img src="${imgSrc}" class="field-card-img" onclick="handleSlotClick(${i})">`;
             slot.className = "player-slot has-player";
         } else {
             const labelText = i === 4 ? 'GK' : 'FLD';
@@ -261,9 +277,18 @@ window.clearSquad = function() {
     }
 };
 
-// Старт при загрузке страницы
+// Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
     renderClub(); 
     renderSquad(); 
-    listenToFirebaseData();
+
+    // Слушаем авторизацию Firebase Auth
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            startFirebaseListener(user.uid);
+        } else {
+            const localUid = getUserId();
+            if (localUid) startFirebaseListener(localUid);
+        }
+    });
 });
