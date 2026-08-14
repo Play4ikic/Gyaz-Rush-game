@@ -3,7 +3,7 @@ import {
     getAuth, 
     signInWithPopup, 
     GoogleAuthProvider, 
-    signInAnonymously // ПРОВЕРЬ ЭТОТ ИМПОРТ
+    signInAnonymously 
 } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
@@ -38,14 +38,7 @@ loginBtn.addEventListener('click', () => {
 // ВХОД КАК ГОСТЬ
 guestBtn.addEventListener('click', () => {
     signInAnonymously(auth)
-        .then((result) => {
-            // Скрываем выбор входа
-            loginBtn.style.display = 'none';
-            guestBtn.style.display = 'none';
-            // Показываем поле ника
-            statusMsg.innerText = "Вход выполнен (Гость). Как тебя звать?";
-            nickForm.style.display = 'flex';
-        })
+        .then((result) => checkUser(result.user))
         .catch((err) => {
             console.error("Ошибка анонимного входа:", err);
             alert("Не удалось зайти гостем: " + err.message);
@@ -53,17 +46,45 @@ guestBtn.addEventListener('click', () => {
 });
 
 async function checkUser(user) {
-    const userRef = ref(db, 'users/' + user.uid);
-    const snapshot = await get(userRef);
+    try {
+        statusMsg.innerText = "Проверка аккаунта...";
+        const userRef = ref(db, 'users/' + user.uid);
+        const snapshot = await get(userRef);
 
-    if (snapshot.exists()) {
-        localStorage.setItem('gyaz_user', JSON.stringify(snapshot.val()));
-        window.location.href = "index.html";
-    } else {
-        loginBtn.style.display = 'none';
-        guestBtn.style.display = 'none';
-        statusMsg.innerText = "Регистрация нового игрока:";
-        nickForm.style.display = 'flex';
+        if (snapshot.exists()) {
+            const userData = snapshot.val();
+
+            // 1. Сохраняем основной профиль
+            localStorage.setItem('gyaz_user', JSON.stringify(userData));
+
+            // 2. ВОССТАНАВЛИВАЕМ БАЛАНС ДЛЯ ЭКОНОМИКИ
+            if (userData.balance !== undefined) {
+                localStorage.setItem('fixone_balance', userData.balance.toString());
+            }
+
+            // 3. ВОССТАНАВЛИВАЕМ КАРТОЧКИ И КЛУБ
+            if (userData.club || userData.cards || userData.inventory) {
+                const clubData = userData.club || userData.cards || userData.inventory;
+                localStorage.setItem('gyaz_club', JSON.stringify(clubData));
+            }
+
+            // 4. ВОССТАНАВЛИВАЕМ СОСТАВ (SQUAD)
+            if (userData.squad) {
+                localStorage.setItem('gyaz_squad', JSON.stringify(userData.squad));
+            }
+
+            statusMsg.innerText = "Успешный вход! Перенаправление...";
+            window.location.href = "index.html";
+        } else {
+            // Если аккаунт действительно новый — показываем форму создания ника
+            loginBtn.style.display = 'none';
+            guestBtn.style.display = 'none';
+            statusMsg.innerText = "Регистрация нового игрока:";
+            nickForm.style.display = 'flex';
+        }
+    } catch (err) {
+        console.error("Ошибка при загрузке данных:", err);
+        alert("Ошибка авторизации: " + err.message);
     }
 }
 
@@ -72,17 +93,27 @@ finishBtn.addEventListener('click', async () => {
     if (nick.length < 3) return alert("Ник слишком короткий!");
 
     const user = auth.currentUser;
+    if (!user) return alert("Ошибка авторизации!");
+
+    // Начальный датасет ТОЛЬКО для НОВОГО игрока
     const userData = {
         uid: user.uid,
         nickname: nick,
         balance: 10000,
         level: 1,
-        isGuest: user.isAnonymous
+        isGuest: user.isAnonymous,
+        club: [],
+        squad: {}
     };
 
+    // Записываем в Firebase
     await set(ref(db, 'users/' + user.uid), userData);
+
+    // Полная синхронизация с LocalStorage
     localStorage.setItem('gyaz_user', JSON.stringify(userData));
-    localStorage.setItem('fixone_balance', '10000'); // Синхронизация с экономикой
+    localStorage.setItem('fixone_balance', '10000');
+    localStorage.setItem('gyaz_club', JSON.stringify([]));
+    localStorage.setItem('gyaz_squad', JSON.stringify({}));
     
     window.location.href = "index.html";
 });
