@@ -29,14 +29,12 @@ const nickForm = document.getElementById('nick-form');
 const finishBtn = document.getElementById('finish-btn');
 const statusMsg = document.getElementById('status-msg');
 
-// Проверка сессии при загрузке страницы
 onAuthStateChanged(auth, (user) => {
     if (user) {
         checkUser(user);
     }
 });
 
-// ВХОД ЧЕРЕЗ GOOGLE
 if (loginBtn) {
     loginBtn.addEventListener('click', () => {
         const provider = new GoogleAuthProvider();
@@ -46,7 +44,6 @@ if (loginBtn) {
     });
 }
 
-// ВХОД КАК ГОСТЬ
 if (guestBtn) {
     guestBtn.addEventListener('click', () => {
         signInAnonymously(auth)
@@ -66,17 +63,13 @@ async function checkUser(user) {
 
         if (snapshot.exists()) {
             const userData = snapshot.val() || {};
+            userData.uid = user.uid; // Принудительно вшиваем UID
 
-            // КРИТИЧЕСКИ ВАЖНО: Принудительно вшиваем UID пользователя
-            userData.uid = user.uid;
-
-            // 1. ОСНОВНОЙ ПРОФИЛЬ И НИК
             localStorage.setItem('gyaz_user', JSON.stringify(userData));
             if (userData.nickname) {
                 localStorage.setItem('gyaz_player_nickname', userData.nickname);
             }
 
-            // 2. БАЛАНС И СИГНАТУРА
             if (userData.balance !== undefined) {
                 localStorage.setItem('fixone_balance', userData.balance.toString());
             }
@@ -84,7 +77,7 @@ async function checkUser(user) {
                 localStorage.setItem('fixone_sig', userData.fixone_sig);
             }
 
-            // 3. КАРТОЧКИ ИГРОКА (КЛУБ)
+            // КАРТОЧКИ ИГРОКА (КЛУБ)
             if (userData.myPlayers !== undefined) {
                 const playersStr = typeof userData.myPlayers === 'string' 
                     ? userData.myPlayers 
@@ -92,7 +85,7 @@ async function checkUser(user) {
                 localStorage.setItem('myPlayers', playersStr);
             }
 
-            // 4. АКТИВНЫЙ СОСТАВ (SQUAD)
+            // АКТИВНЫЙ СОСТАВ (SQUAD)
             if (userData.activeSquad !== undefined) {
                 const squadStr = typeof userData.activeSquad === 'string' 
                     ? userData.activeSquad 
@@ -100,7 +93,6 @@ async function checkUser(user) {
                 localStorage.setItem('activeSquad', squadStr);
             }
 
-            // 5. SEASON PASS (Опыт и Награды)
             if (userData.playerXP !== undefined) {
                 localStorage.setItem('playerXP', userData.playerXP.toString());
             }
@@ -111,7 +103,6 @@ async function checkUser(user) {
                 localStorage.setItem('claimedRewards', rewardsStr);
             }
 
-            // 6. ДОПОЛНИТЕЛЬНО
             if (userData.gyaz_used_promos) {
                 const promosStr = typeof userData.gyaz_used_promos === 'string'
                     ? userData.gyaz_used_promos
