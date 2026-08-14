@@ -14,6 +14,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// Получение UID авторизованного пользователя
 function getUserId() {
     const userStr = localStorage.getItem('gyaz_user');
     if (userStr) {
@@ -22,32 +23,67 @@ function getUserId() {
     return null;
 }
 
-// Функция для безопасного получения списка карточек из localStorage
+// Универсальное и безопасное извлечение карточек из localStorage
 function getMyClubPlayers() {
     try {
-        const raw = localStorage.getItem('myPlayers');
+        let raw = localStorage.getItem('myPlayers');
         if (!raw) return [];
-        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        return Array.isArray(parsed) ? parsed : (typeof parsed === 'string' ? JSON.parse(parsed) : []);
+
+        // Разворачиваем возможную многократную JSON-строку
+        while (typeof raw === 'string') {
+            try {
+                const parsed = JSON.parse(raw);
+                if (parsed === raw) break;
+                raw = parsed;
+            } catch (e) {
+                break;
+            }
+        }
+
+        // Если Firebase вернул объект вида { "0": {...}, "1": {...} }
+        if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+            return Object.values(raw);
+        }
+
+        return Array.isArray(raw) ? raw : [];
     } catch (e) {
-        console.error("Ошибка парсинга myPlayers:", e);
+        console.error("Ошибка загрузки карточек:", e);
         return [];
     }
 }
 
-// Функция для безопасного получения состава из localStorage
+// Универсальное извлечение активного состава
 function getActiveSquad() {
     try {
-        const raw = localStorage.getItem('activeSquad');
+        let raw = localStorage.getItem('activeSquad');
         if (!raw) return [null, null, null, null, null];
-        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        const arr = Array.isArray(parsed) ? parsed : (typeof parsed === 'string' ? JSON.parse(parsed) : [null, null, null, null, null]);
-        return arr.length === 5 ? arr : [null, null, null, null, null];
+
+        while (typeof raw === 'string') {
+            try {
+                const parsed = JSON.parse(raw);
+                if (parsed === raw) break;
+                raw = parsed;
+            } catch (e) {
+                break;
+            }
+        }
+
+        if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+            raw = Object.values(raw);
+        }
+
+        if (Array.isArray(raw)) {
+            while (raw.length < 5) raw.push(null);
+            return raw.slice(0, 5);
+        }
+
+        return [null, null, null, null, null];
     } catch (e) {
         return [null, null, null, null, null];
     }
 }
 
+// Сохранение состава в LocalStorage и Firebase
 function saveSquadState(squad) {
     const jsonStr = JSON.stringify(squad);
     localStorage.setItem('activeSquad', jsonStr);
@@ -58,7 +94,7 @@ function saveSquadState(squad) {
     }
 }
 
-// Живое прослушивание данных из Firebase
+// Слушатель Firebase: в реальном времени обновляет клуб и состав
 function listenToFirebaseData() {
     const uid = getUserId();
     if (!uid) return;
@@ -68,22 +104,28 @@ function listenToFirebaseData() {
         if (snapshot.exists()) {
             const data = snapshot.val();
             
-            if (data.myPlayers) {
-                const playersStr = typeof data.myPlayers === 'string' ? data.myPlayers : JSON.stringify(data.myPlayers);
+            if (data.myPlayers !== undefined) {
+                const playersStr = typeof data.myPlayers === 'string' 
+                    ? data.myPlayers 
+                    : JSON.stringify(data.myPlayers);
                 localStorage.setItem('myPlayers', playersStr);
             }
-            if (data.activeSquad) {
-                const squadStr = typeof data.activeSquad === 'string' ? data.activeSquad : JSON.stringify(data.activeSquad);
+
+            if (data.activeSquad !== undefined) {
+                const squadStr = typeof data.activeSquad === 'string' 
+                    ? data.activeSquad 
+                    : JSON.stringify(data.activeSquad);
                 localStorage.setItem('activeSquad', squadStr);
             }
 
-            // Перерисовываем интерфейс при получении свежих данных
+            // Перерисовываем интерфейс с новыми данными
             renderClub();
             renderSquad();
         }
     });
 }
 
+// Показать / Скрыть панель клуба
 window.toggleInventory = function() {
     const panel = document.getElementById('inventory-panel');
     const pitch = document.getElementById('pitch-area');
@@ -103,6 +145,7 @@ window.toggleInventory = function() {
     }
 };
 
+// Добавление карточки из клуба на поле
 window.addToSquad = function(inventoryIndex) {
     const playerInventory = getMyClubPlayers();
     const activeSquad = getActiveSquad();
@@ -134,6 +177,7 @@ window.addToSquad = function(inventoryIndex) {
     renderSquad();
 };
 
+// Отрисовка списка всех карточек клуба
 function renderClub() {
     const container = document.getElementById('club-inventory');
     if (!container) return;
@@ -147,6 +191,7 @@ function renderClub() {
     }
 
     playerInventory.forEach((player, index) => {
+        if (!player) return;
         const card = document.createElement('div');
         card.className = 'inventory-card-mini';
         const folder = player.folder || (player.rating >= 97 ? 'Toty' : 'Champions');
@@ -155,12 +200,13 @@ function renderClub() {
             <img src="${folder}/${player.file}" 
                  class="mini-card-img" 
                  onclick="addToSquad(${index})"
-                 title="${player.name} (${player.pos || '---'})">
+                 title="${player.name || 'Игрок'} (${player.pos || '---'})">
         `;
         container.appendChild(card);
     });
 }
 
+// Отрисовка расстановки на поле
 function renderSquad() {
     const activeSquad = getActiveSquad();
 
@@ -168,18 +214,20 @@ function renderSquad() {
         const slot = document.getElementById(`slot-${i}`);
         if (!slot) return;
 
-        if (player) {
+        if (player && typeof player === 'object') {
             const folder = player.folder || (player.rating >= 97 ? 'Toty' : 'Champions');
             slot.innerHTML = `<img src="${folder}/${player.file}" class="field-card-img" onclick="handleSlotClick(${i})">`;
             slot.className = "player-slot has-player";
         } else {
-            slot.innerHTML = `<div class="slot-label">ИГРОК ${i + 1}</div>`;
+            const labelText = i === 4 ? 'GK' : 'FLD';
+            slot.innerHTML = `<div class="slot-label">${labelText}</div>`;
             slot.className = "player-slot";
         }
     });
     updateAvg();
 }
 
+// Удаление игрока с поля по клику на слот
 window.handleSlotClick = function(index) {
     const activeSquad = getActiveSquad();
     if (activeSquad[index]) {
@@ -189,6 +237,7 @@ window.handleSlotClick = function(index) {
     }
 };
 
+// Перерасчет среднего рейтинга
 function updateAvg() {
     const activeSquad = getActiveSquad();
     const onField = activeSquad.filter(p => p !== null);
@@ -203,6 +252,7 @@ function updateAvg() {
     }
 }
 
+// Очистка состава
 window.clearSquad = function() {
     if (confirm("Очистить весь состав?")) {
         const emptySquad = [null, null, null, null, null];
@@ -211,8 +261,9 @@ window.clearSquad = function() {
     }
 };
 
+// Старт при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     renderClub(); 
     renderSquad(); 
-    listenToFirebaseData(); // Подключаем автоматическую загрузку карточек из Firebase
+    listenToFirebaseData();
 });
