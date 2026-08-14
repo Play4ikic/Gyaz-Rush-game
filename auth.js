@@ -47,44 +47,77 @@ guestBtn.addEventListener('click', () => {
 
 async function checkUser(user) {
     try {
-        statusMsg.innerText = "Проверка аккаунта...";
+        statusMsg.innerText = "Загрузка профиля и карточек...";
         const userRef = ref(db, 'users/' + user.uid);
         const snapshot = await get(userRef);
 
         if (snapshot.exists()) {
             const userData = snapshot.val();
 
-            // 1. Сохраняем основной профиль
+            // 1. ОСНОВНОЙ ПРОФИЛЬ И НИК
             localStorage.setItem('gyaz_user', JSON.stringify(userData));
+            if (userData.nickname) {
+                localStorage.setItem('gyaz_player_nickname', userData.nickname);
+            }
 
-            // 2. ВОССТАНАВЛИВАЕМ БАЛАНС ДЛЯ ЭКОНОМИКИ
+            // 2. БАЛАНС И СИГНАТУРА
             if (userData.balance !== undefined) {
                 localStorage.setItem('fixone_balance', userData.balance.toString());
             }
-
-            // 3. ВОССТАНАВЛИВАЕМ КАРТОЧКИ И КЛУБ
-            if (userData.club || userData.cards || userData.inventory) {
-                const clubData = userData.club || userData.cards || userData.inventory;
-                localStorage.setItem('gyaz_club', JSON.stringify(clubData));
+            if (userData.fixone_sig) {
+                localStorage.setItem('fixone_sig', userData.fixone_sig);
             }
 
-            // 4. ВОССТАНАВЛИВАЕМ СОСТАВ (SQUAD)
-            if (userData.squad) {
-                localStorage.setItem('gyaz_squad', JSON.stringify(userData.squad));
+            // 3. КАРТОЧКИ ИГРОКА (КЛУБ)
+            if (userData.myPlayers) {
+                const playersStr = typeof userData.myPlayers === 'string' 
+                    ? userData.myPlayers 
+                    : JSON.stringify(userData.myPlayers);
+                localStorage.setItem('myPlayers', playersStr);
             }
 
-            statusMsg.innerText = "Успешный вход! Перенаправление...";
+            // 4. АКТИВНЫЙ СОСТАВ (SQUAD)
+            if (userData.activeSquad) {
+                const squadStr = typeof userData.activeSquad === 'string' 
+                    ? userData.activeSquad 
+                    : JSON.stringify(userData.activeSquad);
+                localStorage.setItem('activeSquad', squadStr);
+            }
+
+            // 5. SEASON PASS (Опыт и Награды)
+            if (userData.playerXP !== undefined) {
+                localStorage.setItem('playerXP', userData.playerXP.toString());
+            }
+            if (userData.claimedRewards) {
+                const rewardsStr = typeof userData.claimedRewards === 'string' 
+                    ? userData.claimedRewards 
+                    : JSON.stringify(userData.claimedRewards);
+                localStorage.setItem('claimedRewards', rewardsStr);
+            }
+
+            // 6. ДОПОЛНИТЕЛЬНО (Промокоды, Квесты)
+            if (userData.gyaz_used_promos) {
+                const promosStr = typeof userData.gyaz_used_promos === 'string'
+                    ? userData.gyaz_used_promos
+                    : JSON.stringify(userData.gyaz_used_promos);
+                localStorage.setItem('gyaz_used_promos', promosStr);
+            }
+            if (userData.last_daily_claim) {
+                localStorage.setItem('last_daily_claim', userData.last_daily_claim.toString());
+            }
+
+            statusMsg.innerText = "Успешный вход! Загрузка...";
             window.location.href = "index.html";
         } else {
-            // Если аккаунт действительно новый — показываем форму создания ника
+            // Если игрок заходит в первый раз
             loginBtn.style.display = 'none';
             guestBtn.style.display = 'none';
             statusMsg.innerText = "Регистрация нового игрока:";
             nickForm.style.display = 'flex';
         }
     } catch (err) {
-        console.error("Ошибка при загрузке данных:", err);
-        alert("Ошибка авторизации: " + err.message);
+        console.error("Ошибка при проверке пользователя:", err);
+        alert("Ошибка входа: " + err.message);
     }
 }
 
@@ -95,25 +128,30 @@ finishBtn.addEventListener('click', async () => {
     const user = auth.currentUser;
     if (!user) return alert("Ошибка авторизации!");
 
-    // Начальный датасет ТОЛЬКО для НОВОГО игрока
     const userData = {
         uid: user.uid,
         nickname: nick,
         balance: 10000,
         level: 1,
         isGuest: user.isAnonymous,
-        club: [],
-        squad: {}
+        myPlayers: "[]",
+        activeSquad: "[]",
+        playerXP: "0",
+        claimedRewards: "[]",
+        gyaz_used_promos: "[]"
     };
 
-    // Записываем в Firebase
     await set(ref(db, 'users/' + user.uid), userData);
 
-    // Полная синхронизация с LocalStorage
+    // Записываем стартовые значения в LocalStorage
     localStorage.setItem('gyaz_user', JSON.stringify(userData));
+    localStorage.setItem('gyaz_player_nickname', nick);
     localStorage.setItem('fixone_balance', '10000');
-    localStorage.setItem('gyaz_club', JSON.stringify([]));
-    localStorage.setItem('gyaz_squad', JSON.stringify({}));
-    
+    localStorage.setItem('myPlayers', '[]');
+    localStorage.setItem('activeSquad', '[]');
+    localStorage.setItem('playerXP', '0');
+    localStorage.setItem('claimedRewards', '[]');
+    localStorage.setItem('gyaz_used_promos', '[]');
+
     window.location.href = "index.html";
 });
