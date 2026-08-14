@@ -1,7 +1,30 @@
-const SECRET_KEY = "FixOne_Goalyaz_SecureKey_2026_#99!";
-const SIG_VERSION = "v2"; // Версия подписи для отслеживания изменений
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-// 0. Генерация контрольной цифровой подписи (хеша)
+const firebaseConfig = {
+    apiKey: "AIzaSyDq3-wPkua6nMUt3cetwwC_-4iVtx-7PiQ",
+    authDomain: "play4ik-473ef.firebaseapp.com",
+    projectId: "play4ik-473ef",
+    databaseURL: "https://play4ik-473ef-default-rtdb.firebaseio.com",
+    storageBucket: "play4ik-473ef.firebasestorage.app",
+    messagingSenderId: "115893557892",
+    appId: "1:115893557892:web:731ac77c3f00328c1200d1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const SECRET_KEY = "FixOne_Goalyaz_SecureKey_2026_#99!";
+const SIG_VERSION = "v2";
+
+function getUserId() {
+    const userStr = localStorage.getItem('gyaz_user');
+    if (userStr) {
+        try { return JSON.parse(userStr).uid; } catch(e) {}
+    }
+    return null;
+}
+
 function generateSignature(amount) {
     const str = `${amount}:${SECRET_KEY}:${SIG_VERSION}`;
     let hash = 0;
@@ -13,52 +36,44 @@ function generateSignature(amount) {
     return btoa(`sig_${SIG_VERSION}_${hash}_${amount}`);
 }
 
-// Сохранение баланса вместе с защитной подписью
 function setSecureBalance(amount) {
     const safeAmount = Math.max(0, parseInt(amount) || 0);
+    const sig = generateSignature(safeAmount);
+
     localStorage.setItem('fixone_balance', safeAmount.toString());
-    localStorage.setItem('fixone_sig', generateSignature(safeAmount));
+    localStorage.setItem('fixone_sig', sig);
+
+    // Синхронизация с Firebase
+    const uid = getUserId();
+    if (uid) {
+        update(ref(db, `users/${uid}`), {
+            balance: safeAmount,
+            fixone_sig: sig
+        });
+    }
 }
 
-// Безопасное чтение баланса с проверкой целостности
 function getValidBalance() {
     let rawBalance = localStorage.getItem('fixone_balance');
     let rawSig = localStorage.getItem('fixone_sig');
 
-    // ПРОВЕРКА НА ПЕРВЫЙ ВХОД (вообще нет данных)
     if (rawBalance === null && rawSig === null) {
-        setSecureBalance(10000); // 10k на старт
+        setSecureBalance(10000);
         return 10000;
     }
 
-    // Обработка случая, когда баланс null, но подпись почему-то есть
-    if (rawBalance === null) {
-        rawBalance = '0';
-    }
+    if (rawBalance === null) rawBalance = '0';
 
     const currentBalance = parseInt(rawBalance) || 0;
     const expectedSig = generateSignature(currentBalance);
 
-    // ПРОВЕРКА НА МИГРАЦИЮ (баланс есть, подписи нет или она пустая)
-    if (!rawSig || rawSig.trim() === "") {
-        console.log("Включение защиты: создание начальной подписи.");
-        setSecureBalance(currentBalance); // Просто создаем подпись для текущих денег
-        return currentBalance;
-    }
-
-    // ПРОВЕРКА НА СТАРУЮ ВЕРСИЮ ПОДПИСИ
-    // Если подпись есть, но она не начинается с текущей версии,
-    // мы считаем её старой и обновляем под баланс (не сбрасываем!)
-    if (!rawSig.startsWith(`sig_${SIG_VERSION}_`)) {
-        console.log("Обновление версии защиты: пересоздание подписи.");
+    if (!rawSig || rawSig.trim() === "" || !rawSig.startsWith(`sig_${SIG_VERSION}_`)) {
         setSecureBalance(currentBalance);
         return currentBalance;
     }
 
-    // ПРОВЕРКА ВЗЛОМА (защита активна, подписи не совпадают)
     if (rawSig !== expectedSig) {
-        console.warn("ВНИМАНИЕ: Обнаружена попытка изменения баланса!");
-        alert("Обнаружено несанкционированное изменение баланса через консоль! Значение сброшено.");
+        alert("Обнаружено несанкционированное изменение баланса! Значение сброшено.");
         setSecureBalance(0);
         return 0;
     }
@@ -66,31 +81,24 @@ function getValidBalance() {
     return currentBalance;
 }
 
-// 1. Инициализация баланса при старте
 getValidBalance();
 
-// 2. ФУНКЦИЯ ОБНОВЛЕНИЯ БАЛАНСА
 export async function updateBalance(amount) {
     let currentBalance = getValidBalance();
     
-    if (amount < 0) {
-        if (currentBalance + amount < 0) {
-            console.error("Недостаточно средств!");
-            return false;
-        }
+    if (amount < 0 && (currentBalance + amount < 0)) {
+        console.error("Недостаточно средств!");
+        return false;
     }
 
     const newBalance = currentBalance + amount;
     setSecureBalance(newBalance);
     refreshBalanceDisplay();
-    
     return true;
 }
 
-// 3. ФУНКЦИЯ ОТОБРАЖЕНИЯ БАЛАНСА
 export function refreshBalanceDisplay() {
     const balance = getValidBalance();
-    
     const displays = [
         document.getElementById('balance-display'),
         document.getElementById('shop-balance'),
@@ -98,11 +106,8 @@ export function refreshBalanceDisplay() {
     ];
 
     displays.forEach(el => {
-        if (el) {
-            el.innerText = balance.toLocaleString() + " CY";
-        }
+        if (el) el.innerText = balance.toLocaleString() + " CY";
     });
 }
 
-// Авто-обновление при загрузке
 refreshBalanceDisplay();

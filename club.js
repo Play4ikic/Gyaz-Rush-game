@@ -1,9 +1,40 @@
-// --- ИНИЦИАЛИЗАЦИЯ ДАННЫХ ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDq3-wPkua6nMUt3cetwwC_-4iVtx-7PiQ",
+    authDomain: "play4ik-473ef.firebaseapp.com",
+    projectId: "play4ik-473ef",
+    databaseURL: "https://play4ik-473ef-default-rtdb.firebaseio.com",
+    storageBucket: "play4ik-473ef.firebasestorage.app",
+    messagingSenderId: "115893557892",
+    appId: "1:115893557892:web:731ac77c3f00328c1200d1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+function getUserId() {
+    const userStr = localStorage.getItem('gyaz_user');
+    if (userStr) {
+        try { return JSON.parse(userStr).uid; } catch(e) {}
+    }
+    return null;
+}
+
+function saveSquadState(squad) {
+    const jsonStr = JSON.stringify(squad);
+    localStorage.setItem('activeSquad', jsonStr);
+
+    const uid = getUserId();
+    if (uid) {
+        update(ref(db, `users/${uid}`), { activeSquad: jsonStr });
+    }
+}
+
 let playerInventory = JSON.parse(localStorage.getItem('myPlayers')) || [];
-// Массив из 5 элементов (слоты 0-4), изначально пустые (null)
 let activeSquad = JSON.parse(localStorage.getItem('activeSquad')) || [null, null, null, null, null];
 
-// 1. СКРЫТИЕ/ПОКАЗ ИНВЕНТАРЯ (КЛУБА)
 function toggleInventory() {
     const panel = document.getElementById('inventory-panel');
     const pitch = document.getElementById('pitch-area');
@@ -21,42 +52,33 @@ function toggleInventory() {
     }
 }
 
-// 2. ДОБАВЛЕНИЕ ИГРОКА В СОСТАВ (БЕЗ УЧЕТА ПОЗИЦИЙ)
 window.addToSquad = function(inventoryIndex) {
     const player = playerInventory[inventoryIndex];
 
-    // ПРОВЕРКА 1: Нельзя добавить ту же самую карточку (по имени файла)
     const isAlreadyOnField = activeSquad.some(p => p && p.file === player.file);
     if (isAlreadyOnField) {
         alert("Эта карточка уже в составе!");
         return;
     }
 
-    // ПРОВЕРКА 2: Нельзя добавить игрока с таким же ИМЕНЕМ (например, два Месси)
     const isNameDuplicate = activeSquad.some(p => p && p.name === player.name);
     if (isNameDuplicate) {
         alert(`Игрок ${player.name} уже есть в составе! Выберите другого игрока.`);
         return;
     }
 
-    // ЛОГИКА ПОИСКА МЕСТА: Ищем первый попавшийся свободный слот (null)
     const targetSlot = activeSquad.findIndex(slot => slot === null);
 
-    // Если свободных мест нет (findIndex вернул -1)
     if (targetSlot === -1) {
         alert("Состав заполнен! Удалите игрока с поля, чтобы освободить место.");
         return;
     }
 
-    // Если место найдено, добавляем игрока
     activeSquad[targetSlot] = player;
-    // Сохраняем обновленный состав в память браузера
-    localStorage.setItem('activeSquad', JSON.stringify(activeSquad));
-    // Перерисовываем поле
+    saveSquadState(activeSquad);
     renderSquad();
 };
 
-// 3. ОТРИСОВКА КЛУБА (ИНВЕНТАРЯ)
 function renderClub() {
     const container = document.getElementById('club-inventory');
     if (!container) return;
@@ -65,8 +87,6 @@ function renderClub() {
     playerInventory.forEach((player, index) => {
         const card = document.createElement('div');
         card.className = 'inventory-card-mini';
-        
-        // Определяем папку (если не указана в данных, берем по рейтингу)
         const folder = player.folder || (player.rating >= 97 ? 'Toty' : 'Champions');
         
         card.innerHTML = `
@@ -79,42 +99,33 @@ function renderClub() {
     });
 }
 
-// 4. ОТРИСОВКА ПОЛЯ (СОСТАВА)
 function renderSquad() {
     activeSquad.forEach((player, i) => {
         const slot = document.getElementById(`slot-${i}`);
         if (!slot) return;
 
         if (player) {
-            // Если в слоте есть игрок, рисуем его карточку
             const folder = player.folder || (player.rating >= 97 ? 'Toty' : 'Champions');
             slot.innerHTML = `<img src="${folder}/${player.file}" class="field-card-img" onclick="handleSlotClick(${i})">`;
             slot.className = "player-slot has-player";
         } else {
-            // Если слот пустой, рисуем заглушку с generic-названием
-            // i+1 чтобы было "ИГРОК 1", "ИГРОК 2" и т.д.
             slot.innerHTML = `<div class="slot-label">ИГРОК ${i + 1}</div>`;
             slot.className = "player-slot";
         }
     });
-    updateAvg(); // Обновляем средний рейтинг
+    updateAvg();
 }
 
-// 5. УДАЛЕНИЕ ИГРОКА ПРИ КЛИКЕ НА СЛОТ НА ПОЛЕ
 window.handleSlotClick = function(index) {
     if (activeSquad[index]) {
-        // Освобождаем слот
         activeSquad[index] = null;
-        // Сохраняем в память
-        localStorage.setItem('activeSquad', JSON.stringify(activeSquad));
-        // Перерисовываем
+        saveSquadState(activeSquad);
         renderSquad();
     }
 };
 
-// 6. РАСЧЕТ И ОТОБРАЖЕНИЕ СРЕДНЕГО РЕЙТИНГА
 function updateAvg() {
-    const onField = activeSquad.filter(p => p !== null); // Берем только тех, кто на поле
+    const onField = activeSquad.filter(p => p !== null);
     const badge = document.getElementById('avg-rating');
     if (!badge) return;
     
@@ -126,16 +137,14 @@ function updateAvg() {
     }
 }
 
-// 7. ОЧИСТКА ВСЕГО СОСТАВА
 window.clearSquad = function() {
     if (confirm("Очистить весь состав?")) {
         activeSquad = [null, null, null, null, null];
-        localStorage.setItem('activeSquad', JSON.stringify(activeSquad));
+        saveSquadState(activeSquad);
         renderSquad();
     }
 };
 
-// ЗАПУСК ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
 window.onload = () => { 
     renderClub(); 
     renderSquad(); 

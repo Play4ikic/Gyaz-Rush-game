@@ -1,12 +1,13 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+import { getDatabase, ref, set, push, onValue, remove, update, get } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+import { refreshBalanceDisplay } from './economy.js';
 
-// Конфигурация Firebase
+// 1. Инициализация Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyDq3-wPkua6nMUt3cetwwC_-4iVtx-7PiQ",
     authDomain: "play4ik-473ef.firebaseapp.com",
     projectId: "play4ik-473ef",
-    databaseURL: "https://play4ik-473ef-default-rtdb.firebaseio.com", 
+    databaseURL: "https://play4ik-473ef-default-rtdb.firebaseio.com",
     storageBucket: "play4ik-473ef.firebasestorage.app",
     messagingSenderId: "115893557892",
     appId: "1:115893557892:web:731ac77c3f00328c1200d1"
@@ -15,334 +16,263 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Данные пользователя
+// 2. Данные пользователя
 let userData = JSON.parse(localStorage.getItem('gyaz_user')) || { 
     uid: "player_" + Math.floor(Math.random() * 10000), 
     nickname: "Игрок #" + Math.floor(Math.random() * 100) 
 };
-localStorage.setItem('gyaz_user', JSON.stringify(userData));
 
-let currentTradeId = null;
-let currentTradeData = null;
+let currentRoomId = null;
+let isHost = false;
 let selectedMyCard = null;
-let isTradeProcessing = false; // Флаг-защита от дюпа и повторного срабатывания
+let roomListener = null;
+let tradeExecuted = false;
 
-// Поиск карточек в инвентаре
-function getMyClubCards() {
-    const keys = ['myPlayers', 'myCards', 'gyaz_club', 'playerInventory', 'club_cards'];
-    for (let key of keys) {
-        const raw = localStorage.getItem(key);
-        if (raw) {
-            try {
-                const parsed = JSON.parse(raw);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    return { storageKey: key, cards: parsed };
-                }
-            } catch(e) {}
-        }
+// Вспомогательные функции взаимодействия с клубом
+function getMyClub() {
+    return JSON.parse(localStorage.getItem('myPlayers')) || [];
+}
+
+function saveMyClub(club) {
+    const jsonStr = JSON.stringify(club);
+    localStorage.setItem('myPlayers', jsonStr);
+    
+    if (userData && userData.uid) {
+        update(ref(db, `users/${userData.uid}`), { myPlayers: jsonStr });
     }
-    return { storageKey: 'myPlayers', cards: [] };
 }
 
-// 1. Статус Онлайн
-function manageStatus() {
-    const myStatusRef = ref(db, `all_players/${userData.uid}`);
-    update(myStatusRef, { nickname: userData.nickname, online: true });
-    onDisconnect(myStatusRef).update({ online: false });
-}
+// 3. Создание комнаты обмена
+window.createTradeRoom = function() {
+    const roomId = Math.floor(100000 + Math.random() * 900000).toString(); // 6-значный код
+    currentRoomId = roomId;
+    isHost = true;
+    tradeExecuted = false;
 
-// 2. Игроки Онлайн
-function renderOnlinePlayers() {
-    const listRef = ref(db, 'all_players');
-    const container = document.getElementById('online-trade-list');
-
-    onValue(listRef, (snapshot) => {
-        if (!container) return;
-        container.innerHTML = "";
-
-        if (snapshot.exists()) {
-            const players = snapshot.val();
-            let count = 0;
-
-            Object.keys(players).forEach(id => {
-                if (id === userData.uid) return;
-                const player = players[id];
-
-                if (player.online) {
-                    count++;
-                    const row = document.createElement('div');
-                    row.className = 'player-row';
-                    row.innerHTML = `
-                        <span style="font-weight: bold; color: #fff;">⚽ ${player.nickname}</span>
-                        <button class="trade-invite-btn" onclick="sendTradeRequest('${id}', '${player.nickname}')">
-                            Предложить трейд
-                        </button>
-                    `;
-                    container.appendChild(row);
-                }
-            });
-
-            if (count === 0) {
-                container.innerHTML = "<p style='color: #777;'>Сейчас нет других игроков в сети</p>";
-            }
-        }
-    });
-}
-
-// 3. Запрос на трейд
-window.sendTradeRequest = function(targetUid, targetName) {
-    const requestRef = ref(db, `trade_requests/${targetUid}/${userData.uid}`);
-    set(requestRef, {
-        senderUid: userData.uid,
-        senderName: userData.nickname,
-        status: "pending"
+    const roomRef = ref(db, `trade_rooms/${roomId}`);
+    set(roomRef, {
+        hostUid: userData.uid,
+        hostName: userData.nickname,
+        hostCard: null,
+        hostReady: false,
+        guestUid: null,
+        guestName: null,
+        guestCard: null,
+        guestReady: false,
+        status: "waiting", // waiting | active | completed
+        createdAt: Date.now()
+    }).then(() => {
+        setupTradeUI(roomId);
+        listenToRoom(roomId);
     });
 };
 
-// 4. Приглашения
-function listenForInvites() {
-    const myInvitesRef = ref(db, `trade_requests/${userData.uid}`);
+// 4. Подключение к комнате обмена по коду
+window.joinTradeRoom = function() {
+    const inputCode = document.getElementById('trade-room-code-input');
+    const roomId = inputCode ? inputCode.value.trim() : prompt("Введите код комнаты:");
 
-    onValue(myInvitesRef, (snapshot) => {
-        if (snapshot.exists()) {
-            const requests = snapshot.val();
-            const senderUid = Object.keys(requests)[0];
-            const reqData = requests[senderUid];
+    if (!roomId) {
+        alert("Введите код комнаты!");
+        return;
+    }
 
-            if (reqData && reqData.status === "pending") {
-                document.getElementById('invite-sender-title').innerText = `Трейд от ${reqData.senderName}`;
-                document.getElementById('trade-invite-modal').style.display = 'flex';
-
-                document.getElementById('accept-invite-btn').onclick = () => acceptInvite(senderUid, reqData.senderName);
-                document.getElementById('decline-invite-btn').onclick = () => declineInvite(senderUid);
-            }
-        }
-    });
-}
-
-function acceptInvite(senderUid, senderName) {
-    document.getElementById('trade-invite-modal').style.display = 'none';
-    currentTradeId = `trade_${senderUid}_${userData.uid}`;
-
-    const tradeRoomRef = ref(db, `trades/${currentTradeId}`);
-    set(tradeRoomRef, {
-        p1_uid: senderUid,
-        p1_name: senderName,
-        p1_card: null,
-        p1_ready: false,
-        p2_uid: userData.uid,
-        p2_name: userData.nickname,
-        p2_card: null,
-        p2_ready: false,
-        status: "active"
-    });
-
-    remove(ref(db, `trade_requests/${userData.uid}/${senderUid}`));
-    openTradeRoom(currentTradeId);
-}
-
-function declineInvite(senderUid) {
-    document.getElementById('trade-invite-modal').style.display = 'none';
-    remove(ref(db, `trade_requests/${userData.uid}/${senderUid}`));
-}
-
-function listenForMySentRequests() {
-    const allRequestsRef = ref(db, `trade_requests`);
-    onValue(allRequestsRef, (snapshot) => {
-        if (!snapshot.exists()) return;
-
-        const all = snapshot.val();
-        Object.keys(all).forEach(targetUid => {
-            if (all[targetUid] && all[targetUid][userData.uid]) {
-                const tradeId = `trade_${userData.uid}_${targetUid}`;
-                
-                onValue(ref(db, `trades/${tradeId}`), (tradeSnap) => {
-                    if (tradeSnap.exists() && tradeSnap.val().status === "active") {
-                        currentTradeId = tradeId;
-                        openTradeRoom(tradeId);
-                    }
-                });
-            }
-        });
-    });
-}
-
-// 5. Комната трейда
-function openTradeRoom(tradeId) {
-    document.getElementById('trade-room-modal').style.display = 'flex';
-    isTradeProcessing = false; // Сбрасываем защиту при открытии
-
-    const roomRef = ref(db, `trades/${tradeId}`);
-    onValue(roomRef, (snapshot) => {
+    const roomRef = ref(db, `trade_rooms/${roomId}`);
+    get(roomRef).then((snapshot) => {
         if (!snapshot.exists()) {
-            closeTradeRoom();
+            alert("Комната не найдена!");
             return;
         }
 
         const data = snapshot.val();
-        currentTradeData = data;
-
-        if (data.status === "cancelled" || data.status === "completed") {
-            closeTradeRoom();
+        if (data.guestUid && data.guestUid !== userData.uid) {
+            alert("Комната уже заполнена!");
             return;
         }
 
-        const isP1 = userData.uid === data.p1_uid;
-        const myKey = isP1 ? 'p1' : 'p2';
-        const partnerKey = isP1 ? 'p2' : 'p1';
+        currentRoomId = roomId;
+        isHost = false;
+        tradeExecuted = false;
 
-        document.getElementById('my-name').innerText = data[`${myKey}_name`];
-        document.getElementById('partner-name').innerText = data[`${partnerKey}_name`];
-
-        renderCardSlot('my-card-slot', data[`${myKey}_card`]);
-        renderCardSlot('partner-card-slot', data[`${partnerKey}_card`]);
-
-        updateStatusBadge('my-status-badge', data[`${myKey}_ready`]);
-        updateStatusBadge('partner-status-badge', data[`${partnerKey}_ready`]);
-
-        // БЕЗОПАСНОЕ ЗАВЕРШЕНИЕ БЕЗ ALERT И БЕЗ ДЮПА
-        if (data.p1_ready && data.p2_ready && data.status === "active" && !isTradeProcessing) {
-            isTradeProcessing = true; // Сразу ставим замок, чтобы код не запустился повторно!
-
-            // 1. Меняем статус в Firebase
-            if (isP1) {
-                update(ref(db, `trades/${tradeId}`), { status: "completed" });
-            }
-
-            // 2. Делаем обмен ровно 1 раз
-            executeTradeSwap(data[`${myKey}_card`], data[`${partnerKey}_card`]);
-
-            // 3. Просто тихо закрываем окно обмена
-            closeTradeRoom();
-        }
+        update(roomRef, {
+            guestUid: userData.uid,
+            guestName: userData.nickname,
+            status: "active"
+        }).then(() => {
+            setupTradeUI(roomId);
+            listenToRoom(roomId);
+        });
     });
-}
+};
 
-function renderCardSlot(elementId, card) {
-    const slot = document.getElementById(elementId);
-    if (!card) {
-        slot.innerHTML = `<span style="color:#666; font-size: 12px;">Пусто</span>`;
-        return;
-    }
+// 5. Настройка интерфейса комнаты
+function setupTradeUI(roomId) {
+    const roomCodeDisplay = document.getElementById('current-room-code');
+    if (roomCodeDisplay) roomCodeDisplay.innerText = roomId;
+
+    const lobbyPanel = document.getElementById('trade-lobby');
+    const roomPanel = document.getElementById('trade-room-active');
     
-    let imgSrc = card.image || card.file || "";
-    if (card.folder && card.file && !card.image) {
-        imgSrc = `${card.folder}/${card.file}`;
-    } else if (!card.image && card.file) {
-        const folder = card.rating >= 97 ? 'Toty' : 'Champions';
-        imgSrc = `${folder}/${card.file}`;
-    }
+    if (lobbyPanel) lobbyPanel.style.display = 'none';
+    if (roomPanel) roomPanel.style.display = 'block';
 
-    slot.innerHTML = `
-        <img src="${imgSrc}" style="width:100%; height:100%; object-fit:contain;">
-        <div style="font-weight:bold; font-size:11px; margin-top:2px;">${card.name || 'Игрок'}</div>
-    `;
+    renderMyClubForTrade();
 }
 
-function updateStatusBadge(elementId, isReady) {
-    const badge = document.getElementById(elementId);
-    if (isReady) {
-        badge.innerText = "ГОТОВ";
-        badge.className = "status-badge status-ok";
-    } else {
-        badge.innerText = "Не готов";
-        badge.className = "status-badge status-wait";
-    }
-}
+// 6. Отрисовка своего клуба для выбора карточки на обмен
+function renderMyClubForTrade() {
+    const container = document.getElementById('my-trade-inventory');
+    if (!container) return;
 
-// Открытие списка карточек
-document.getElementById('select-card-btn').onclick = () => {
-    document.getElementById('inventory-modal').style.display = 'flex';
-    renderMyClubCards();
-};
-
-window.closeInventory = function() {
-    document.getElementById('inventory-modal').style.display = 'none';
-};
-
-function renderMyClubCards() {
-    const container = document.getElementById('club-cards-container');
+    const club = getMyClub();
     container.innerHTML = "";
 
-    const { cards } = getMyClubCards();
-
-    if (cards.length === 0) {
-        container.innerHTML = "<p style='color:#aaa;'>У вас нет доступных карточек в клубе!</p>";
+    if (club.length === 0) {
+        container.innerHTML = "<p class='empty-msg'>В вашем клубе нет карточек.</p>";
         return;
     }
 
-    cards.forEach((player) => {
-        let imgSrc = player.image || player.file || "";
-        if (player.folder && player.file && !player.image) {
-            imgSrc = `${player.folder}/${player.file}`;
-        } else if (!player.image && player.file) {
-            const folder = player.rating >= 97 ? 'Toty' : 'Champions';
-            imgSrc = `${folder}/${player.file}`;
-        }
+    club.forEach((player, index) => {
+        const folder = player.folder || (player.rating >= 97 ? 'Toty' : 'Champions');
+        const imagePath = player.image || `${folder}/${player.file}`;
 
-        const item = document.createElement('div');
-        item.className = 'pickable-card';
-        item.innerHTML = `
-            <img src="${imgSrc}" style="width:100%; height:90px; object-fit:contain;">
-            <div style="font-size:11px; font-weight:bold; color:#fff; margin-top:4px;">${player.name || 'Игрок'}</div>
-        `;
-        item.onclick = () => pickCardForTrade(player);
-        container.appendChild(item);
+        const cardEl = document.createElement('div');
+        cardEl.className = 'trade-inventory-card';
+        cardEl.innerHTML = `<img src="${imagePath}" class="mini-card-img">`;
+        
+        cardEl.onclick = () => selectCardForTrade(player, cardEl);
+        container.appendChild(cardEl);
     });
 }
 
-function pickCardForTrade(card) {
-    selectedMyCard = card;
-    closeInventory();
+// 7. Выбор карточки для оффера
+function selectCardForTrade(player, element) {
+    document.querySelectorAll('.trade-inventory-card').forEach(el => el.classList.remove('selected'));
+    element.classList.add('selected');
+    
+    selectedMyCard = player;
 
-    if (!currentTradeId) return;
+    if (!currentRoomId) return;
 
-    const isP1 = currentTradeData.p1_uid === userData.uid;
-    const cardKey = isP1 ? 'p1_card' : 'p2_card';
-    const readyKey = isP1 ? 'p1_ready' : 'p2_ready';
-
-    update(ref(db, `trades/${currentTradeId}`), {
-        [cardKey]: card,
-        [readyKey]: false
-    });
+    const roomRef = ref(db, `trade_rooms/${currentRoomId}`);
+    const updates = isHost ? { hostCard: player, hostReady: false } : { guestCard: player, guestReady: false };
+    
+    update(roomRef, updates);
 }
 
-document.getElementById('confirm-trade-btn').onclick = () => {
-    if (!currentTradeId || !currentTradeData) return;
-
-    const isP1 = currentTradeData.p1_uid === userData.uid;
-    const myCard = isP1 ? currentTradeData.p1_card : currentTradeData.p2_card;
-
-    if (!myCard) {
+// 8. Подтверждение готовности (Ready)
+window.toggleTradeReady = function() {
+    if (!selectedMyCard) {
         alert("Сначала выберите карточку для обмена!");
         return;
     }
 
-    const readyKey = isP1 ? 'p1_ready' : 'p2_ready';
-    const currentReadyState = isP1 ? currentTradeData.p1_ready : currentTradeData.p2_ready;
+    if (!currentRoomId) return;
 
-    update(ref(db, `trades/${currentTradeId}`), {
-        [readyKey]: !currentReadyState
+    const roomRef = ref(db, `trade_rooms/${currentRoomId}`);
+    get(roomRef).then((snapshot) => {
+        if (!snapshot.exists()) return;
+        const data = snapshot.val();
+        const newReadyState = isHost ? !data.hostReady : !data.guestReady;
+
+        const updates = isHost ? { hostReady: newReadyState } : { guestReady: newReadyState };
+        update(roomRef, updates);
     });
 };
 
-document.getElementById('cancel-trade-btn').onclick = () => {
-    if (currentTradeId) {
-        update(ref(db, `trades/${currentTradeId}`), { status: "cancelled" });
-    }
-};
+// 9. Прослушивание изменений в комнате в реальном времени
+function listenToRoom(roomId) {
+    const roomRef = ref(db, `trade_rooms/${roomId}`);
+    
+    roomListener = onValue(roomRef, (snapshot) => {
+        if (!snapshot.exists()) {
+            alert("Комната была закрыта.");
+            leaveTradeRoom();
+            return;
+        }
 
-function closeTradeRoom() {
-    document.getElementById('trade-room-modal').style.display = 'none';
-    currentTradeId = null;
-    currentTradeData = null;
-    selectedMyCard = null;
+        const data = snapshot.val();
+        updateRoomView(data);
+
+        // Проверка готовности обоих участников к обмену
+        if (data.hostReady && data.guestReady && !tradeExecuted) {
+            tradeExecuted = true;
+            processTradeSwap(data);
+        }
+    });
 }
 
-// Точный обмен 1 к 1 без дублирования
+// 10. Обновление внешнего вида комнаты
+function updateRoomView(data) {
+    const myOfferImg = document.getElementById('my-offer-img');
+    const partnerOfferImg = document.getElementById('partner-offer-img');
+    const partnerNameEl = document.getElementById('partner-name');
+    const readyBtn = document.getElementById('trade-ready-btn');
+
+    const myData = isHost ? { card: data.hostCard, ready: data.hostReady } : { card: data.guestCard, ready: data.guestReady };
+    const partnerData = isHost ? { name: data.guestName, card: data.guestCard, ready: data.guestReady } : { name: data.hostName, card: data.hostCard, ready: data.hostReady };
+
+    // Имя партнёра
+    if (partnerNameEl) {
+        partnerNameEl.innerText = partnerData.name ? partnerData.name : "Ожидание второго игрока...";
+    }
+
+    // Моя выбранная карточка
+    if (myOfferImg) {
+        if (myData.card) {
+            const folder = myData.card.folder || (myData.card.rating >= 97 ? 'Toty' : 'Champions');
+            myOfferImg.src = myData.card.image || `${folder}/${myData.card.file}`;
+            myOfferImg.style.display = 'block';
+        } else {
+            myOfferImg.style.display = 'none';
+        }
+    }
+
+    // Карточка партнёра
+    if (partnerOfferImg) {
+        if (partnerData.card) {
+            const folder = partnerData.card.folder || (partnerData.card.rating >= 97 ? 'Toty' : 'Champions');
+            partnerOfferImg.src = partnerData.card.image || `${folder}/${partnerData.card.file}`;
+            partnerOfferImg.style.display = 'block';
+        } else {
+            partnerOfferImg.style.display = 'none';
+        }
+    }
+
+    // Статус кнопки готовности
+    if (readyBtn) {
+        if (myData.ready) {
+            readyBtn.innerText = "ГОТОВ! (Нажмите для отмены)";
+            readyBtn.classList.add('is-ready');
+        } else {
+            readyBtn.innerText = "ПОДТВЕРДИТЬ ОБМЕН";
+            readyBtn.classList.remove('is-ready');
+        }
+    }
+}
+
+// 11. Выполнение обмена карточками
+function processTradeSwap(roomData) {
+    const myGivenCard = isHost ? roomData.hostCard : roomData.guestCard;
+    const receivedCard = isHost ? roomData.guestCard : roomData.hostCard;
+
+    executeTradeSwap(myGivenCard, receivedCard);
+
+    alert("🎉 Обмен успешно завершён!");
+
+    // Хост удаляет комнату после обмена
+    if (isHost) {
+        setTimeout(() => {
+            remove(ref(db, `trade_rooms/${currentRoomId}`));
+        }, 1500);
+    }
+
+    leaveTradeRoom();
+}
+
+// 12. Обновление локального хранилища и Firebase при совершении обмена
 function executeTradeSwap(myGivenCard, receivedCard) {
-    const { storageKey, cards } = getMyClubCards();
-    let club = [...cards];
+    let club = getMyClub();
 
     // Удаляем отданную карточку
     if (myGivenCard) {
@@ -351,20 +281,56 @@ function executeTradeSwap(myGivenCard, receivedCard) {
             (p.name && p.name === myGivenCard.name)
         );
         if (index !== -1) club.splice(index, 1);
+
+        // Если отданная карточка стояла в активном составе — убираем её оттуда
+        let activeSquad = JSON.parse(localStorage.getItem('activeSquad')) || [null, null, null, null, null];
+        let squadChanged = false;
+        activeSquad = activeSquad.map(slot => {
+            if (slot && slot.file === myGivenCard.file) {
+                squadChanged = true;
+                return null;
+            }
+            return slot;
+        });
+
+        if (squadChanged) {
+            const squadStr = JSON.stringify(activeSquad);
+            localStorage.setItem('activeSquad', squadStr);
+            if (userData && userData.uid) {
+                update(ref(db, `users/${userData.uid}`), { activeSquad: squadStr });
+            }
+        }
     }
 
-    // Добавляем полученную
+    // Добавляем полученную карточку
     if (receivedCard) {
         club.push(receivedCard);
     }
 
-    // Сохраняем в память
-    localStorage.setItem(storageKey, JSON.stringify(club));
-    localStorage.setItem('myPlayers', JSON.stringify(club));
+    // Сохраняем обновленный клуб локально и отправляем в Firebase Realtime Database
+    saveMyClub(club);
 }
 
-// Запуск
-manageStatus();
-renderOnlinePlayers();
-listenForInvites();
-listenForMySentRequests();
+// 13. Выход из комнаты
+window.leaveTradeRoom = function() {
+    if (currentRoomId && isHost && !tradeExecuted) {
+        remove(ref(db, `trade_rooms/${currentRoomId}`));
+    }
+
+    currentRoomId = null;
+    isHost = false;
+    selectedMyCard = null;
+    tradeExecuted = false;
+
+    const lobbyPanel = document.getElementById('trade-lobby');
+    const roomPanel = document.getElementById('trade-room-active');
+    
+    if (lobbyPanel) lobbyPanel.style.display = 'block';
+    if (roomPanel) roomPanel.style.display = 'none';
+
+    refreshBalanceDisplay();
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    refreshBalanceDisplay();
+});

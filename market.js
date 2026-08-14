@@ -1,8 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 import { updateBalance, refreshBalanceDisplay } from './economy.js';
 
-// Конфигурация Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyDq3-wPkua6nMUt3cetwwC_-4iVtx-7PiQ",
     authDomain: "play4ik-473ef.firebaseapp.com",
@@ -16,7 +15,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Данные пользователя
 let userData = JSON.parse(localStorage.getItem('gyaz_user')) || { 
     uid: "player_" + Math.floor(Math.random() * 10000), 
     nickname: "Игрок #" + Math.floor(Math.random() * 100) 
@@ -24,19 +22,21 @@ let userData = JSON.parse(localStorage.getItem('gyaz_user')) || {
 localStorage.setItem('gyaz_user', JSON.stringify(userData));
 
 let selectedCardIndex = null;
-let isProcessing = false; // Защита от частых кликов
+let isProcessing = false;
 
-// Получить клуб
 function getMyClub() {
     return JSON.parse(localStorage.getItem('myPlayers')) || [];
 }
 
-// Сохранить клуб
 function saveMyClub(club) {
-    localStorage.setItem('myPlayers', JSON.stringify(club));
+    const jsonStr = JSON.stringify(club);
+    localStorage.setItem('myPlayers', jsonStr);
+    
+    if (userData && userData.uid) {
+        update(ref(db, `users/${userData.uid}`), { myPlayers: jsonStr });
+    }
 }
 
-// ПЕРЕКЛЮЧЕНИЕ ТАБОВ
 window.switchMarketTab = function(tabName) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.market-tab-content').forEach(content => content.classList.remove('active'));
@@ -54,7 +54,6 @@ window.switchMarketTab = function(tabName) {
     }
 };
 
-// 1. АВТО-ВЫПЛАТА ЗА ПРОДАННЫЕ КАРТОЧКИ (ОФФЛАЙН/ОНЛАЙН)
 function checkPendingPayouts() {
     const payoutRef = ref(db, `pending_payouts/${userData.uid}`);
     onValue(payoutRef, async (snapshot) => {
@@ -68,7 +67,7 @@ function checkPendingPayouts() {
 
             if (totalEarned > 0) {
                 await updateBalance(totalEarned);
-                remove(payoutRef); // Очищаем выплату после зачисления
+                remove(payoutRef);
                 alert(`🎉 Поздравляем! Ваши карточки были проданы на рынке. Зачислено: +${totalEarned.toLocaleString()} CY!`);
                 refreshBalanceDisplay();
             }
@@ -76,7 +75,6 @@ function checkPendingPayouts() {
     }, { onlyOnce: true });
 }
 
-// 2. ОТОБРАЖЕНИЕ ОБЩЕГО РЫНОЧНОГО СПИСКА (КУПИТЬ)
 function listenGlobalMarket() {
     const marketRef = ref(db, 'market_listings');
     const container = document.getElementById('market-buy-list');
@@ -132,12 +130,10 @@ function listenGlobalMarket() {
     });
 }
 
-// 3. ПОКУПКА КАРТОЧКИ
 window.buyCard = async function(listingId, sellerUid, price, cardData) {
     if (isProcessing) return;
     isProcessing = true;
 
-    // Безопасное чтение баланса из localStorage
     const currentBalance = parseInt(localStorage.getItem('fixone_balance')) || 0;
 
     if (currentBalance < price) {
@@ -147,16 +143,13 @@ window.buyCard = async function(listingId, sellerUid, price, cardData) {
     }
 
     if (confirm(`Вы уверены, что хотите купить ${cardData.name || 'игрока'} за ${price.toLocaleString()} CY?`)) {
-        // 1. Списываем деньги
         const success = await updateBalance(-price);
 
         if (success) {
-            // 2. Добавляем карточку покупателю
             let club = getMyClub();
             club.push(cardData);
             saveMyClub(club);
 
-            // 3. Начисляем деньги продавцу через Firebase
             const payoutRef = push(ref(db, `pending_payouts/${sellerUid}`));
             set(payoutRef, {
                 amount: price,
@@ -164,7 +157,6 @@ window.buyCard = async function(listingId, sellerUid, price, cardData) {
                 timestamp: Date.now()
             });
 
-            // 4. Удаляем карточку с рынка
             remove(ref(db, `market_listings/${listingId}`));
 
             alert("🎉 Успешная покупка! Игрок добавлен в ваш клуб.");
@@ -176,7 +168,6 @@ window.buyCard = async function(listingId, sellerUid, price, cardData) {
     isProcessing = false;
 };
 
-// 4. ОТОБРАЖЕНИЕ СВОЕГО КЛУБА ДЛЯ ПРОДАЖИ
 function renderSellClub() {
     const container = document.getElementById('club-sell-list');
     const club = getMyClub();
@@ -202,7 +193,6 @@ function renderSellClub() {
     });
 }
 
-// 5. МОДАЛКА УСТАНОВКИ ЦЕНЫ
 window.openPriceModal = function(index) {
     selectedCardIndex = index;
     const club = getMyClub();
@@ -234,7 +224,6 @@ document.getElementById('confirm-list-btn').onclick = function() {
 
     if (!player) return;
 
-    // 1. Отправляем в Firebase
     const newListingRef = push(ref(db, 'market_listings'));
     set(newListingRef, {
         sellerUid: userData.uid,
@@ -244,12 +233,16 @@ document.getElementById('confirm-list-btn').onclick = function() {
         timestamp: Date.now()
     });
 
-    // 2. Убираем из состава, если он там был
     let activeSquad = JSON.parse(localStorage.getItem('activeSquad')) || [null, null, null, null, null];
     activeSquad = activeSquad.map(slot => (slot && slot.file === player.file) ? null : slot);
-    localStorage.setItem('activeSquad', JSON.stringify(activeSquad));
+    
+    const squadStr = JSON.stringify(activeSquad);
+    localStorage.setItem('activeSquad', squadStr);
+    
+    if (userData && userData.uid) {
+        update(ref(db, `users/${userData.uid}`), { activeSquad: squadStr });
+    }
 
-    // 3. Удаляем из своего клуба
     club.splice(selectedCardIndex, 1);
     saveMyClub(club);
 
@@ -257,20 +250,15 @@ document.getElementById('confirm-list-btn').onclick = function() {
     switchMarketTab('my-listings');
 };
 
-// 6. СНЯТИЕ С ПРОДАЖИ (ОТМЕНА ЛОТА)
 window.cancelListing = function(listingId, cardData) {
     if (confirm("Вы хотите снять эту карточку с продажи и вернуть в клуб?")) {
-        // 1. Возвращаем карточку в клуб
         let club = getMyClub();
         club.push(cardData);
         saveMyClub(club);
-
-        // 2. Удаляем с рынка в Firebase
         remove(ref(db, `market_listings/${listingId}`));
     }
 };
 
-// ИНИЦИАЛИЗАЦИЯ
 document.addEventListener('DOMContentLoaded', () => {
     checkPendingPayouts();
     listenGlobalMarket();

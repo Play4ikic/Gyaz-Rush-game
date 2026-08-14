@@ -1,4 +1,27 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 import { updateBalance, refreshBalanceDisplay } from './economy.js';
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDq3-wPkua6nMUt3cetwwC_-4iVtx-7PiQ",
+    authDomain: "play4ik-473ef.firebaseapp.com",
+    projectId: "play4ik-473ef",
+    databaseURL: "https://play4ik-473ef-default-rtdb.firebaseio.com",
+    storageBucket: "play4ik-473ef.firebasestorage.app",
+    messagingSenderId: "115893557892",
+    appId: "1:115893557892:web:731ac77c3f00328c1200d1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+function getUserId() {
+    const userStr = localStorage.getItem('gyaz_user');
+    if (userStr) {
+        try { return JSON.parse(userStr).uid; } catch(e) {}
+    }
+    return null;
+}
 
 const PRICES = { 
     gold: 1000, 
@@ -72,8 +95,6 @@ const totyPlayers = [
 ];
 
 let currentDroppedPlayer = null;
-
-// Помощник паузы для таймингов анимации
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function getPlayerWeight(rating) {
@@ -87,29 +108,22 @@ function getPlayerWeight(rating) {
 
 function pickPlayerByChance(pool) {
     if (!pool || pool.length === 0) return null;
-
     const weightedPool = pool.map(player => ({
         player: player,
         weight: getPlayerWeight(player.rating)
     }));
-
     const totalWeight = weightedPool.reduce((sum, item) => sum + item.weight, 0);
     let randomNum = Math.random() * totalWeight;
 
     for (let i = 0; i < weightedPool.length; i++) {
-        if (randomNum < weightedPool[i].weight) {
-            return weightedPool[i].player;
-        }
+        if (randomNum < weightedPool[i].weight) return weightedPool[i].player;
         randomNum -= weightedPool[i].weight;
     }
-
     return pool[pool.length - 1];
 }
 
-// ОСНОВНАЯ ФУНКЦИЯ ОТКРЫТИЯ
 window.openPack = async function(type) {
     const price = PRICES[type];
-    
     let pool;
     if (type === 'gold') pool = goldPlayers;
     else if (type === 'tott') pool = tottPlayers;
@@ -123,7 +137,6 @@ window.openPack = async function(type) {
 
     if (success) {
         currentDroppedPlayer = pickPlayerByChance(pool);
-
         if (type === 'gold') {
             showInstantReveal();
         } else {
@@ -140,9 +153,7 @@ function showInstantReveal() {
     const playerImg = document.getElementById('final-card-img');
     const claimBtn = document.getElementById('claim-btn');
 
-    // Скрываем тизеры
     document.getElementById('teaser-container').classList.add('hidden');
-    
     playerImg.src = `${currentDroppedPlayer.folder}/${currentDroppedPlayer.file}`;
     stage.classList.remove('hidden');
     cardDropStage.classList.remove('hidden');
@@ -153,7 +164,6 @@ function showInstantReveal() {
     setTimeout(() => playerImg.classList.remove('flash-effect'), 1000);
 }
 
-// ЭПИЧНАЯ КИНЕМАТОГРАФИЧЕСКАЯ АНИМАЦИЯ
 async function startCinematicReveal(player) {
     const stage = document.getElementById('reveal-stage');
     const teaserContainer = document.getElementById('teaser-container');
@@ -169,7 +179,6 @@ async function startCinematicReveal(player) {
     const shockwave = document.getElementById('impact-shockwave');
     const claimBtn = document.getElementById('claim-btn');
 
-    // Сброс всех прошлых состояний
     teaserContainer.classList.remove('hidden');
     stepCountry.className = 'teaser-step hidden';
     stepPos.className = 'teaser-step hidden';
@@ -179,15 +188,12 @@ async function startCinematicReveal(player) {
     shockwave.classList.remove('active');
     cardImg.className = 'slammed-card';
 
-    // Заполнение данных
     posBadge.innerText = player.pos;
     clubImg.src = `images/${player.club}.png`;
     cardImg.src = `${player.folder}/${player.file}`;
 
-    // Открываем сцену
     stage.classList.remove('hidden');
 
-    // --- ШАГ 1: Показ Флага (Страна) ---
     await sleep(300);
     stepCountry.classList.remove('hidden');
     stepCountry.classList.add('animate-in');
@@ -196,7 +202,6 @@ async function startCinematicReveal(player) {
     await sleep(300);
     stepCountry.classList.add('hidden');
 
-    // --- ШАГ 2: Показ Позиции ---
     stepPos.classList.remove('hidden');
     stepPos.classList.add('animate-in');
     await sleep(1400);
@@ -204,7 +209,6 @@ async function startCinematicReveal(player) {
     await sleep(300);
     stepPos.classList.add('hidden');
 
-    // --- ШАГ 3: Показ Клуба ---
     stepClub.classList.remove('hidden');
     stepClub.classList.add('animate-in');
     await sleep(1400);
@@ -213,18 +217,15 @@ async function startCinematicReveal(player) {
     stepClub.classList.add('hidden');
     teaserContainer.classList.add('hidden');
 
-    // --- ШАГ 4: Эпичное падение карточки ---
     cardDropStage.classList.remove('hidden');
     cardImg.classList.add('drop-slam-anim');
 
-    // Эффект удара об землю (Shockwave & Screen Shake)
     setTimeout(() => {
         shockwave.classList.add('active');
         stage.classList.add('screen-shake');
         setTimeout(() => stage.classList.remove('screen-shake'), 400);
     }, 500);
 
-    // Показываем кнопку "Забрать в состав"
     await sleep(1000);
     claimBtn.classList.remove('hidden');
     claimBtn.classList.add('pop-in-btn');
@@ -242,7 +243,16 @@ function saveToInventory(player) {
     if (!player) return;
     let inventory = JSON.parse(localStorage.getItem('myPlayers')) || [];
     inventory.push(player);
-    localStorage.setItem('myPlayers', JSON.stringify(inventory));
+    
+    const jsonStr = JSON.stringify(inventory);
+    localStorage.setItem('myPlayers', jsonStr);
+
+    // Синхронизация с Firebase
+    const uid = getUserId();
+    if (uid) {
+        update(ref(db, `users/${uid}`), { myPlayers: jsonStr });
+    }
+
     closeReveal();
 }
 
