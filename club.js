@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+import { getDatabase, ref, update, onValue } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDq3-wPkua6nMUt3cetwwC_-4iVtx-7PiQ",
@@ -22,6 +22,32 @@ function getUserId() {
     return null;
 }
 
+// Функция для безопасного получения списка карточек из localStorage
+function getMyClubPlayers() {
+    try {
+        const raw = localStorage.getItem('myPlayers');
+        if (!raw) return [];
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        return Array.isArray(parsed) ? parsed : (typeof parsed === 'string' ? JSON.parse(parsed) : []);
+    } catch (e) {
+        console.error("Ошибка парсинга myPlayers:", e);
+        return [];
+    }
+}
+
+// Функция для безопасного получения состава из localStorage
+function getActiveSquad() {
+    try {
+        const raw = localStorage.getItem('activeSquad');
+        if (!raw) return [null, null, null, null, null];
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        const arr = Array.isArray(parsed) ? parsed : (typeof parsed === 'string' ? JSON.parse(parsed) : [null, null, null, null, null]);
+        return arr.length === 5 ? arr : [null, null, null, null, null];
+    } catch (e) {
+        return [null, null, null, null, null];
+    }
+}
+
 function saveSquadState(squad) {
     const jsonStr = JSON.stringify(squad);
     localStorage.setItem('activeSquad', jsonStr);
@@ -32,14 +58,39 @@ function saveSquadState(squad) {
     }
 }
 
-let playerInventory = JSON.parse(localStorage.getItem('myPlayers')) || [];
-let activeSquad = JSON.parse(localStorage.getItem('activeSquad')) || [null, null, null, null, null];
+// Живое прослушивание данных из Firebase
+function listenToFirebaseData() {
+    const uid = getUserId();
+    if (!uid) return;
 
-function toggleInventory() {
+    const userRef = ref(db, `users/${uid}`);
+    onValue(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            
+            if (data.myPlayers) {
+                const playersStr = typeof data.myPlayers === 'string' ? data.myPlayers : JSON.stringify(data.myPlayers);
+                localStorage.setItem('myPlayers', playersStr);
+            }
+            if (data.activeSquad) {
+                const squadStr = typeof data.activeSquad === 'string' ? data.activeSquad : JSON.stringify(data.activeSquad);
+                localStorage.setItem('activeSquad', squadStr);
+            }
+
+            // Перерисовываем интерфейс при получении свежих данных
+            renderClub();
+            renderSquad();
+        }
+    });
+}
+
+window.toggleInventory = function() {
     const panel = document.getElementById('inventory-panel');
     const pitch = document.getElementById('pitch-area');
     const btn = document.querySelector('.toggle-inventory-btn');
     
+    if (!panel || !pitch || !btn) return;
+
     panel.classList.toggle('hidden');
     pitch.classList.toggle('expanded');
     
@@ -50,10 +101,14 @@ function toggleInventory() {
         btn.innerText = "⬇ СКРЫТЬ КЛУБ";
         btn.style.bottom = "26vh";
     }
-}
+};
 
 window.addToSquad = function(inventoryIndex) {
+    const playerInventory = getMyClubPlayers();
+    const activeSquad = getActiveSquad();
     const player = playerInventory[inventoryIndex];
+
+    if (!player) return;
 
     const isAlreadyOnField = activeSquad.some(p => p && p.file === player.file);
     if (isAlreadyOnField) {
@@ -84,6 +139,13 @@ function renderClub() {
     if (!container) return;
     container.innerHTML = ""; 
 
+    const playerInventory = getMyClubPlayers();
+
+    if (playerInventory.length === 0) {
+        container.innerHTML = "<p style='color: #888; text-align: center; width: 100%; padding: 20px;'>В вашем клубе пока нет карточек.</p>";
+        return;
+    }
+
     playerInventory.forEach((player, index) => {
         const card = document.createElement('div');
         card.className = 'inventory-card-mini';
@@ -100,6 +162,8 @@ function renderClub() {
 }
 
 function renderSquad() {
+    const activeSquad = getActiveSquad();
+
     activeSquad.forEach((player, i) => {
         const slot = document.getElementById(`slot-${i}`);
         if (!slot) return;
@@ -117,6 +181,7 @@ function renderSquad() {
 }
 
 window.handleSlotClick = function(index) {
+    const activeSquad = getActiveSquad();
     if (activeSquad[index]) {
         activeSquad[index] = null;
         saveSquadState(activeSquad);
@@ -125,6 +190,7 @@ window.handleSlotClick = function(index) {
 };
 
 function updateAvg() {
+    const activeSquad = getActiveSquad();
     const onField = activeSquad.filter(p => p !== null);
     const badge = document.getElementById('avg-rating');
     if (!badge) return;
@@ -139,13 +205,14 @@ function updateAvg() {
 
 window.clearSquad = function() {
     if (confirm("Очистить весь состав?")) {
-        activeSquad = [null, null, null, null, null];
-        saveSquadState(activeSquad);
+        const emptySquad = [null, null, null, null, null];
+        saveSquadState(emptySquad);
         renderSquad();
     }
 };
 
-window.onload = () => { 
+document.addEventListener('DOMContentLoaded', () => {
     renderClub(); 
     renderSquad(); 
-};
+    listenToFirebaseData(); // Подключаем автоматическую загрузку карточек из Firebase
+});
