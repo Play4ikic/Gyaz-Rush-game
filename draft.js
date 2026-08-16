@@ -1,68 +1,73 @@
 // База карт
 const goldPlayers = [
-    { name: 'Ayla', rating: 30, file: 'Ayla-30.png', folder: 'Gold' },
-    { name: 'Raul', rating: 3, file: 'Raul-3.png', folder: 'Gold' },
-    { name: 'Selim', rating: 68, file: 'Selim-68.png', folder: 'Gold' },
-    { name: 'Chaxangir', rating: 68, file: 'Chaxangir-68.png', folder: 'Gold' },
-    { name: 'Bayturan', rating: 85, file: 'Bayturan-85.png', folder: 'Gold' },
-    { name: 'Eldjan', rating: 92, file: 'Elcan-92.png', folder: 'Gold' },
-    { name: 'Nazrin', rating: 82, file: 'Nazrin-82.png', folder: 'Gold' },
-    { name: 'Turqay', rating: 92, file: 'Turqay-92.png', folder: 'Gold' },
-    { name: 'Tuncay', rating: 90, file: 'Tuncay-90.png', folder: 'Gold' },
-    { name: 'Bugday', rating: 87, file: 'Bugday-87.png', folder: 'Gold' }
+    { name: 'Ayla', rating: 30, pos: 'GK', club: 'icon', file: 'Ayla-30.png', folder: 'Gold' },
+    { name: 'Raul', rating: 3, pos: 'ST', club: 'icon', file: 'Raul-3.png', folder: 'Gold' },
+    { name: 'Selim', rating: 68, pos: 'CB', club: 'icon', file: 'Selim-68.png', folder: 'Gold' },
+    { name: 'Chaxangir', rating: 68, pos: 'CB', club: 'icon', file: 'Chaxangir-68.png', folder: 'Gold' },
+    { name: 'Bayturan', rating: 85, pos: 'ST', club: 'icon', file: 'Bayturan-85.png', folder: 'Gold' },
+    { name: 'Elcan', rating: 92, pos: 'RW', club: 'toxic', file: 'Elcan-92.png', folder: 'Gold' },
+    { name: 'Nazrin', rating: 82, pos: 'CB', club: 'toxic', file: 'Nazrin-82.png', folder: 'Gold' },
+    { name: 'Turgay', rating: 92, pos: 'ST', club: 'cheer', file: 'Turqay-92.png', folder: 'Gold' },
+    { name: 'Tuncay', rating: 90, pos: 'CB', club: 'icon', file: 'Tuncay-90.png', folder: 'Gold' },
+    { name: 'Bugday', rating: 87, pos: 'GK', club: 'cheer', file: 'Bugday-87.png', folder: 'Gold' }
 ];
 
 const tottPlayers = [
-    { name: 'Bugday', rating: 82, file: 'Bugday-82.png', folder: 'Tott' },
-    { name: 'Elcan', rating: 89, file: 'Elcan-89.png', folder: 'Tott' },
+    { name: 'Bugday', rating: 82, pos: 'GK', club: 'cheer', file: 'Bugday-82.png', folder: 'Tott' },
+    { name: 'Elcan', rating: 89, pos: 'CAM', club: 'toxic', file: 'Elcan-89.png', folder: 'Tott' },
     { name: 'Nazrin', rating: 85, pos: 'CB', club: 'toxic', file: 'Nazrin-85.png', folder: 'Tott' },
-    { name: 'Tuncay', rating: 92, file: 'Tuncay-92.png', folder: 'Tott' },
-    { name: 'Turqay', rating: 89, file: 'Turqay-89.png', folder: 'Tott' }
-];
-
-const totyPlayers = [
-    { name: 'Eldjan', rating: 97, file: 'Elcan-97.png', folder: 'Toty' },
-    { name: 'Turqay', rating: 97, file: 'Turqay-97.png', folder: 'Toty' },
-    { name: 'Tuncay', rating: 97, file: 'Tuncay-97.png', folder: 'Toty' },
-    { name: 'Bugday', rating: 95, file: 'Bugday-95.png', folder: 'Toty' },
-    { name: 'Nazrin', rating: 91, file: 'Nazrin-91.png', folder: 'Toty' }
+    { name: 'Tuncay', rating: 92, pos: 'CB', club: 'icon', file: 'Tuncay-92.png', folder: 'Tott' },
+    { name: 'Turgay', rating: 89, pos: 'ST', club: 'cheer', file: 'Turqay-89.png', folder: 'Tott' }
 ];
 
 const championsPlayers = [
-    { name: 'Eldjan', rating: 96, file: 'Elcan-96.png', folder: 'Champions' },
-    { name: 'Turqay', rating: 96, file: 'Turqay-96.png', folder: 'Champions' },
-    { name: 'Tuncay', rating: 91, file: 'Tuncay-91.png', folder: 'Champions' },
-    { name: 'Bugday', rating: 90, file: 'Bugday-90.png', folder: 'Champions' },
-    { name: 'Nazrin', rating: 88, file: 'Nazrin-88.png', folder: 'Champions' }
+    { name: 'Elcan', rating: 96, pos: 'RW', club: 'toxic', file: 'Elcan-96.png', folder: 'Champions' },
+    { name: 'Turgay', rating: 96, pos: 'ST', club: 'cheer', file: 'Turqay-96.png', folder: 'Champions' },
+    { name: 'Tuncay', rating: 91, pos: 'DF', club: 'icon', file: 'Tuncay-91.png', folder: 'Champions' },
+    { name: 'Bugday', rating: 90, pos: 'GK', club: 'cheer', file: 'Bugday-90.png', folder: 'Champions' },
+    { name: 'Nazrin', rating: 88, pos: 'DF', club: 'toxic', file: 'Nazrin-88.png', folder: 'Champions' }
 ];
 
-// НОВАЯ КОЛЛЕКЦИЯ NATIONAL STARS
 const nationalStarsPlayers = [
-    { name: 'Bugday', rating: 89, file: 'Bugday-89.png', folder: 'NationalStars' },
-    { name: 'Elcan', rating: 90, file: 'Elcan-90.png', folder: 'NationalStars' },
-    { name: 'Nazrin', rating: 89, file: 'Nazrin-89.png', folder: 'NationalStars' },
-    { name: 'Tuncay', rating: 95, file: 'Tuncay-95.png', folder: 'NationalStars' },
-    { name: 'Turqay', rating: 92, file: 'Turgay-92.png', folder: 'NationalStars' }
+    { name: 'Bugday', rating: 89, pos: 'GK', club: 'cheer', file: 'Bugday-89.png', folder: 'NationalStars' },
+    { name: 'Elcan', rating: 90, pos: 'RW', club: 'toxic', file: 'Elcan-90.png', folder: 'NationalStars' },
+    { name: 'Nazrin', rating: 89, pos: 'CB', club: 'toxic', file: 'Nazrin-89.png', folder: 'NationalStars' },
+    { name: 'Tuncay', rating: 95, pos: 'CB', club: 'icon', file: 'Tuncay-95.png', folder: 'NationalStars' },
+    { name: 'Turgay', rating: 92, pos: 'ST', club: 'cheer', file: 'Turgay-92.png', folder: 'NationalStars' }
 ];
 
-// УПРОЩЕННЫЙ ПУЛ ИГРОКОВ TIME TRAVELS ( deducessed на основе имен файлов )
 const timeTravelsPlayers = [
-    { name: 'Bugday', rating: 95, file: 'Bugday-95.png', folder: 'Timetravlers' },
-    { name: 'Elcan', rating: 92, file: 'Elcan-92.png', folder: 'Timetravlers' },
-    { name: 'Nazrin', rating: 87, file: 'Nazrin-87.png', folder: 'Timetravlers' },
-    { name: 'Tuncay', rating: 92, file: 'Tuncay-92.png', folder: 'Timetravlers' },
-    { name: 'Turgay', rating: 92, file: 'Turgay-92.png', folder: 'Timetravlers' }
+    { name: 'Bugday', rating: 96, pos: 'GK', club: 'toxic', file: 'Bugday-95.png', folder: 'Timetravlers' },
+    { name: 'Elcan', rating: 92, pos: 'CAM', club: 'toxic', file: 'Elcan-92.png', folder: 'Timetravlers' },
+    { name: 'Nazrin', rating: 87, pos: 'CB', club: 'cheer', file: 'Nazrin-87.png', folder: 'Timetravlers' },
+    { name: 'Tuncay', rating: 92, pos: 'CB', club: 'cheer', file: 'Tuncay-92.png', folder: 'Timetravlers' },
+    { name: 'Turgay', rating: 92, pos: 'ST', club: 'cheer', file: 'Turgay-92.png', folder: 'Timetravlers' }
 ];
 
-// НОВЫЙ ПУЛ ИГРОКОВ CHAOS (на основе скриншота image_4.png)
-// В draft.js объекты проще
 const chaosPlayers = [
-    { name: 'Bugday', rating: 99, file: 'Bugday-99.png', folder: 'CHAOS' },
-    { name: 'Elcan', rating: 99, file: 'Elcan-99.png', folder: 'CHAOS' },
-    { name: 'Nazrin', rating: 99, file: 'Nazrin-99.png', folder: 'CHAOS' },
-    { name: 'Tuncay', rating: 99, file: 'Tuncay-99.png', folder: 'CHAOS' },
-    { name: 'Turgay', rating: 99, file: 'Turgay-99.png', folder: 'CHAOS' }
+    { name: 'Bugday', rating: 99, pos: 'GK', club: 'cheer', file: 'Bugday-99.png', folder: 'CHAOS' },
+    { name: 'Elcan', rating: 99, pos: 'RW', club: 'toxic', file: 'Elcan-99.png', folder: 'CHAOS' },
+    { name: 'Nazrin', rating: 99, pos: 'DF', club: 'toxic', file: 'Nazrin-99.png', folder: 'CHAOS' },
+    { name: 'Tuncay', rating: 99, pos: 'DF', club: 'cheer', file: 'Tuncay-99.png', folder: 'CHAOS' },
+    { name: 'Turgay', rating: 99, pos: 'ST', club: 'cheer', file: 'Turgay-99.png', folder: 'CHAOS' }
 ];
+
+const totyPlayers = [
+    { name: 'Elcan', rating: 97, pos: 'RW', club: 'toxic', file: 'Elcan-97.png', folder: 'Toty' },
+    { name: 'Turgay', rating: 97, pos: 'ST', club: 'cheer', file: 'Turqay-97.png', folder: 'Toty' },
+    { name: 'Tuncay', rating: 97, pos: 'DF', club: 'icon', file: 'Tuncay-97.png', folder: 'Toty' },
+    { name: 'Bugday', rating: 95, pos: 'GK', club: 'cheer', file: 'Bugday-95.png', folder: 'Toty' },
+    { name: 'Nazrin', rating: 91, pos: 'DF', club: 'toxic', file: 'Nazrin-91.png', folder: 'Toty' }
+];
+
+const lotgPlayers = [
+    { name: 'Bugday', rating: 100, pos: 'GK', club: 'cheer', file: 'Bugday-100.png', folder: 'LOTG' },
+    { name: 'Elcan', rating: 101, pos: 'CAM', club: 'toxic', file: 'Elcan-101.png', folder: 'LOTG' },
+    { name: 'Nazrin', rating: 101, pos: 'CB', club: 'toxic', file: 'Nazrin-101.png', folder: 'LOTG' },
+    { name: 'Tuncay', rating: 102, pos: 'CB', club: 'icon', file: 'Tuncay-102.png', folder: 'LOTG' },
+    { name: 'Turgay', rating: 101, pos: 'ST', club: 'cheer', file: 'Turgay-101.png', folder: 'LOTG' }
+];
+
 
 // Объединяем абсолютно все коллекции карт для генерации руки бота
 const ALL_GAME_CARDS = [
@@ -72,7 +77,8 @@ const ALL_GAME_CARDS = [
     ...championsPlayers, 
     ...nationalStarsPlayers,
     ...timeTravelsPlayers, 
-    ...chaosPlayers // Подключен новый пул игроков
+    ...chaosPlayers,
+    ...lotgPlayers
 ];
 
 let activeSquad = [];

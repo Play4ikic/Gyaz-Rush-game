@@ -30,7 +30,8 @@ const PRICES = {
     national_stars: 80000,
     time_travels: 100000, 
     chaos: 800000,
-    toty: 200000 
+    toty: 200000,
+    lotg: 1500000
 };
 
 const goldPlayers = [
@@ -94,10 +95,19 @@ const totyPlayers = [
     { name: 'Nazrin', rating: 91, pos: 'DF', club: 'toxic', file: 'Nazrin-91.png', folder: 'Toty' }
 ];
 
+const lotgPlayers = [
+    { name: 'Bugday', rating: 100, pos: 'GK', club: 'cheer', file: 'Bugday-100.png', folder: 'LOTG' },
+    { name: 'Elcan', rating: 101, pos: 'CAM', club: 'toxic', file: 'Elcan-101.png', folder: 'LOTG' },
+    { name: 'Nazrin', rating: 101, pos: 'CB', club: 'toxic', file: 'Nazrin-101.png', folder: 'LOTG' },
+    { name: 'Tuncay', rating: 102, pos: 'CB', club: 'icon', file: 'Tuncay-102.png', folder: 'LOTG' },
+    { name: 'Turgay', rating: 101, pos: 'ST', club: 'cheer', file: 'Turgay-101.png', folder: 'LOTG' }
+];
+
 let currentDroppedPlayer = null;
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function getPlayerWeight(rating) {
+    if (rating >= 100) return 1;
     if (rating >= 97) return 1;
     if (rating >= 95) return 3;
     if (rating >= 90) return 10;
@@ -131,6 +141,7 @@ window.openPack = async function(type) {
     else if (type === 'national_stars') pool = nationalStarsPlayers;
     else if (type === 'time_travels') pool = timeTravelsPlayers;
     else if (type === 'chaos') pool = chaosPlayers;
+    else if (type === 'lotg') pool = lotgPlayers;
     else pool = totyPlayers;
 
     const success = await updateBalance(-price);
