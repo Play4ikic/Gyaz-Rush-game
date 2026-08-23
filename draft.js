@@ -60,12 +60,12 @@ const totyPlayers = [
     { name: 'Nazrin', rating: 91, pos: 'DF', club: 'toxic', file: 'Nazrin-91.png', folder: 'Toty' }
 ];
 
-const lotgPlayers = [
-    { name: 'Bugday', rating: 100, pos: 'GK', club: 'cheer', file: 'Bugday-100.png', folder: 'LOTG' },
-    { name: 'Elcan', rating: 101, pos: 'CAM', club: 'toxic', file: 'Elcan-101.png', folder: 'LOTG' },
-    { name: 'Nazrin', rating: 101, pos: 'CB', club: 'toxic', file: 'Nazrin-101.png', folder: 'LOTG' },
-    { name: 'Tuncay', rating: 102, pos: 'CB', club: 'icon', file: 'Tuncay-102.png', folder: 'LOTG' },
-    { name: 'Turgay', rating: 101, pos: 'ST', club: 'cheer', file: 'Turgay-101.png', folder: 'LOTG' }
+const ballondorPlayers = [
+    { name: 'Bugday', rating: 105, pos: 'GK', club: 'toxic', file: 'Bugday-105.png', folder: 'GoldenStars' },
+    { name: 'Elcan', rating: 105, pos: 'CAM', club: 'toxic', file: 'Elcan-105.png', folder: 'GoldenStars' },
+    { name: 'Nazrin', rating: 102, pos: 'CB', club: 'toxic', file: 'Nazrin-102.png', folder: 'GoldenStars' },
+    { name: 'Tuncay', rating: 103, pos: 'CB', club: 'cheer', file: 'Tuncay-103.png', folder: 'GoldenStars' },
+    { name: 'Turgay', rating: 103, pos: 'ST', club: 'cheer', file: 'Turgay-103.png', folder: 'GoldenStars' }
 ];
 
 
@@ -78,7 +78,7 @@ const ALL_GAME_CARDS = [
     ...nationalStarsPlayers,
     ...timeTravelsPlayers, 
     ...chaosPlayers,
-    ...lotgPlayers
+    ...ballondor
 ];
 
 let activeSquad = [];

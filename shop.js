@@ -31,7 +31,7 @@ const PRICES = {
     time_travels: 100000, 
     chaos: 800000,
     toty: 200000,
-    lotg: 1500000
+    ballondor: 3000000
 };
 
 const goldPlayers = [
@@ -95,12 +95,12 @@ const totyPlayers = [
     { name: 'Nazrin', rating: 91, pos: 'DF', club: 'toxic', file: 'Nazrin-91.png', folder: 'Toty' }
 ];
 
-const lotgPlayers = [
-    { name: 'Bugday', rating: 100, pos: 'GK', club: 'cheer', file: 'Bugday-100.png', folder: 'LOTG' },
-    { name: 'Elcan', rating: 101, pos: 'CAM', club: 'toxic', file: 'Elcan-101.png', folder: 'LOTG' },
-    { name: 'Nazrin', rating: 101, pos: 'CB', club: 'toxic', file: 'Nazrin-101.png', folder: 'LOTG' },
-    { name: 'Tuncay', rating: 102, pos: 'CB', club: 'icon', file: 'Tuncay-102.png', folder: 'LOTG' },
-    { name: 'Turgay', rating: 101, pos: 'ST', club: 'cheer', file: 'Turgay-101.png', folder: 'LOTG' }
+const ballondorPlayers = [
+    { name: 'Bugday', rating: 105, pos: 'GK', club: 'toxic', file: 'Bugday-105.png', folder: 'GoldenStars' },
+    { name: 'Elcan', rating: 105, pos: 'CAM', club: 'toxic', file: 'Elcan-105.png', folder: 'GoldenStars' },
+    { name: 'Nazrin', rating: 102, pos: 'CB', club: 'toxic', file: 'Nazrin-102.png', folder: 'GoldenStars' },
+    { name: 'Tuncay', rating: 103, pos: 'CB', club: 'cheer', file: 'Tuncay-103.png', folder: 'GoldenStars' },
+    { name: 'Turgay', rating: 103, pos: 'ST', club: 'cheer', file: 'Turgay-103.png', folder: 'GoldenStars' }
 ];
 
 let currentDroppedPlayer = null;
@@ -141,7 +141,7 @@ window.openPack = async function(type) {
     else if (type === 'national_stars') pool = nationalStarsPlayers;
     else if (type === 'time_travels') pool = timeTravelsPlayers;
     else if (type === 'chaos') pool = chaosPlayers;
-    else if (type === 'lotg') pool = lotgPlayers;
+    else if (type === 'ballondor') pool = ballondorPlayers;
     else pool = totyPlayers;
 
     const success = await updateBalance(-price);
