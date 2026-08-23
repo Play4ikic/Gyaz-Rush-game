@@ -31,7 +31,8 @@ const PRICES = {
     time_travels: 100000, 
     chaos: 800000,
     toty: 200000,
-    ballondor: 3000000
+    ballondor: 3000000,
+    lotg: 3000000
 };
 
 const goldPlayers = [
@@ -141,7 +142,7 @@ window.openPack = async function(type) {
     else if (type === 'national_stars') pool = nationalStarsPlayers;
     else if (type === 'time_travels') pool = timeTravelsPlayers;
     else if (type === 'chaos') pool = chaosPlayers;
-    else if (type === 'ballondor') pool = ballondorPlayers;
+    else if (type === 'ballondor' || type === 'lotg') pool = ballondorPlayers;
     else pool = totyPlayers;
 
     const success = await updateBalance(-price);

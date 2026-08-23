@@ -1,3 +1,5 @@
+import { updateBalance } from './economy.js';
+
 // База карт
 const goldPlayers = [
     { name: 'Ayla', rating: 30, pos: 'GK', club: 'icon', file: 'Ayla-30.png', folder: 'Gold' },
@@ -68,7 +70,6 @@ const ballondorPlayers = [
     { name: 'Turgay', rating: 103, pos: 'ST', club: 'cheer', file: 'Turgay-103.png', folder: 'GoldenStars' }
 ];
 
-
 // Объединяем абсолютно все коллекции карт для генерации руки бота
 const ALL_GAME_CARDS = [
     ...goldPlayers, 
@@ -78,7 +79,7 @@ const ALL_GAME_CARDS = [
     ...nationalStarsPlayers,
     ...timeTravelsPlayers, 
     ...chaosPlayers,
-    ...ballondor
+    ...ballondorPlayers
 ];
 
 let activeSquad = [];
@@ -91,7 +92,7 @@ let usedPlayerIndexes = [];
 let botHand = [];
 
 // ГЛАВНАЯ ФУНКЦИЯ СТАРТА ИГРЫ
-window.startGameBot = function() {
+window.startGameBot = async function() {
     console.log("Лог: Запуск игры...");
     const saved = localStorage.getItem('activeSquad');
     activeSquad = saved ? JSON.parse(saved) : [];
@@ -99,6 +100,13 @@ window.startGameBot = function() {
     if (activeSquad.filter(p => p !== null).length < 5) {
         alert("Сначала расставь 5 игроков в Клубе!");
         window.location.href = "club.html";
+        return;
+    }
+
+    // Списание стоимости входа (3000 CY) через модуль экономики
+    const success = await updateBalance(-3000);
+    if (!success) {
+        alert("Не хватает CY для входа в бой (нужно 3,000 CY)!");
         return;
     }
 
@@ -198,7 +206,7 @@ function processBattle() {
     }, 5000);
 }
 
-function endGame() {
+async function endGame() {
     let win = playerScore > botScore;
     let reward = 0;
 
@@ -219,8 +227,7 @@ function endGame() {
     }
 
     if (reward > 0) {
-        let currentBalance = parseInt(localStorage.getItem('fixone_balance')) || 0;
-        localStorage.setItem('fixone_balance', (currentBalance + reward).toString());
+        await updateBalance(reward);
     }
 
     window.location.href = "index.html";
