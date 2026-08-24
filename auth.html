@@ -19,7 +19,6 @@
             font-family: 'Segoe UI', Roboto, sans-serif; 
             overflow: hidden; 
             color: white; 
-            /* Сетка на фоне */
             background-image: 
                 linear-gradient(rgba(225, 177, 44, 0.05) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(225, 177, 44, 0.05) 1px, transparent 1px);
@@ -35,7 +34,6 @@
             text-align: center; 
         }
 
-        /* ЛОГОТИП */
         .logo-text { 
             font-size: 60px; 
             font-weight: 900;
@@ -55,7 +53,6 @@
             color: rgba(255,255,255,0.5);
         }
 
-        /* КОНТЕЙНЕР КНОПОК */
         .login-box { 
             display: flex; 
             flex-direction: column; 
@@ -77,7 +74,6 @@
             position: relative;
         }
 
-        /* Кнопка Google */
         .online-btn { 
             background: linear-gradient(45deg, var(--blue), var(--purple)); 
             color: white; 
@@ -85,7 +81,6 @@
             box-shadow: 0 10px 20px rgba(0, 151, 230, 0.3);
         }
 
-        /* Кнопка Гость */
         .guest-btn {
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
@@ -99,9 +94,8 @@
 
         .battle-btn:active { transform: scale(0.98); }
 
-        /* ФОРМА НИКА */
         #nick-form {
-            display: none; /* Скрыта изначально */
+            display: none;
             flex-direction: column;
             gap: 15px;
             animation: fadeIn 0.5s ease;
@@ -162,6 +156,54 @@
         </div>
     </div>
 
+    <!-- Автономный скрипт обработки без использования внешней сети -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const guestBtn = document.getElementById('guest-btn');
+            const loginBtn = document.getElementById('login-btn');
+            const nickForm = document.getElementById('nick-form');
+            const nicknameInput = document.getElementById('nickname-input');
+            const finishBtn = document.getElementById('finish-btn');
+
+            // Автопереход, если игрок уже заходил
+            const existingUser = localStorage.getItem('gyaz_user');
+            if (existingUser) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Показ формы создания ника
+            guestBtn.addEventListener('click', () => {
+                guestBtn.style.display = 'none';
+                loginBtn.style.display = 'none';
+                nickForm.style.display = 'flex';
+                nicknameInput.focus();
+            });
+
+            // Нажатие на кнопку Google при открытии из папки
+            loginBtn.addEventListener('click', () => {
+                if (window.location.protocol === 'file:') {
+                    alert('Google Авторизация не работает при открытии HTML-файла напрямую из папки.\nИспользуйте кнопку "ИГРАТЬ КАК ГОСТЬ" или запустите проект через Live Server.');
+                }
+            });
+
+            // Создание локального аккаунта
+            finishBtn.addEventListener('click', () => {
+                const nickname = nicknameInput.value.trim() || ("Игрок_" + Math.floor(Math.random() * 8999 + 1000));
+                
+                const guestUser = {
+                    uid: "guest_" + Date.now(),
+                    displayName: nickname,
+                    isGuest: true
+                };
+
+                localStorage.setItem('gyaz_user', JSON.stringify(guestUser));
+                window.location.href = 'index.html';
+            });
+        });
+    </script>
+
+    <!-- Исходный модуль для работы сервера/Live Server -->
     <script type="module" src="auth.js"></script>
 
 </body>

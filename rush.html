@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Gyaz Rush - Режим игры</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        * { box-sizing: border-box; user-select: none; }
+        body {
+            background: #080a0f;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .rush-header {
+            font-size: 36px;
+            font-weight: 900;
+            color: #ffcc00;
+            text-shadow: 0 0 20px rgba(255, 204, 0, 0.5);
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        .squad-status {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 10px 20px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .mode-selection {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .mode-card {
+            background: rgba(20, 25, 35, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+            width: 260px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-card:hover:not(.disabled) {
+            border-color: #00ff88;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 255, 136, 0.2);
+        }
+
+        .mode-card.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .mode-title { font-size: 20px; font-weight: 900; margin-bottom: 10px; }
+        .mode-desc { font-size: 12px; color: #aaa; }
+
+        .diff-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .diff-card {
+            background: rgba(15, 18, 26, 0.95);
+            border: 2px solid #333;
+            border-radius: 14px;
+            padding: 20px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .diff-card:hover { transform: scale(1.05); }
+
+        .diff-novice { border-color: #00ff88; }
+        .diff-pro { border-color: #00d2ff; }
+        .diff-world { border-color: #e1b12c; }
+        .diff-legend { border-color: #ff7700; }
+        .diff-ultimate { border-color: #ff0055; box-shadow: 0 0 15px rgba(255, 0, 85, 0.4); }
+
+        .diff-name { font-weight: 900; font-size: 16px; margin-bottom: 8px; }
+        .diff-reward { font-size: 13px; color: #00ff88; font-weight: bold; margin-top: 10px; }
+        
+        .back-btn {
+            margin-top: 30px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid #fff;
+            color: #fff;
+            padding: 10px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="rush-header">RUSH SIMULATOR ⚡</div>
+
+    <div class="squad-status" id="squad-info">
+        Состав: Проверка...
+    </div>
+
+    <div class="mode-selection">
+        <div class="mode-card" onclick="showBotDifficulties()">
+            <div class="mode-title" style="color: #00ff88;">🤖 ПРОТИВ БОТА</div>
+            <div class="mode-desc">Пройди 5 уровней сложности ИИ и забери до 200,000 CY</div>
+        </div>
+
+        <div class="mode-card disabled">
+            <div class="mode-title" style="color: #00d2ff;">🌐 ОНЛАЙН (СКОРО)</div>
+            <div class="mode-desc">Матчи 1v1 с реальными игроками в реальном времени</div>
+        </div>
+    </div>
+
+    <div id="difficulty-section" style="display: none; width: 100%; max-width: 1100px;">
+        <h2 style="text-align: center; margin-bottom: 20px; color: #ffcc00;">ВЫБЕРИ УРОВЕНЬ СЛОЖНОСТИ</h2>
+        
+        <div class="diff-container">
+            <div class="diff-card diff-novice" onclick="startRushMatch('novice')">
+                <div class="diff-name" style="color: #00ff88;">НОВИЧОК</div>
+                <div class="mode-desc">Легкий ИИ, состав ~75 OVR</div>
+                <div class="diff-reward">До 20,000 CY</div>
+            </div>
+
+            <div class="diff-card diff-pro" onclick="startRushMatch('pro')">
+                <div class="diff-name" style="color: #00d2ff;">ПРОФЕССИОНАЛ</div>
+                <div class="mode-desc">Быстрые пасы, состав ~85 OVR</div>
+                <div class="diff-reward">До 50,000 CY</div>
+            </div>
+
+            <div class="diff-card diff-world" onclick="startRushMatch('world_class')">
+                <div class="diff-name" style="color: #e1b12c;">МИРОВОЙ КЛАСС</div>
+                <div class="mode-desc">Агрессивный отбор, состав ~92 OVR</div>
+                <div class="diff-reward">До 90,000 CY</div>
+            </div>
+
+            <div class="diff-card diff-legend" onclick="startRushMatch('legend')">
+                <div class="diff-name" style="color: #ff7700;">ЛЕГЕНДА</div>
+                <div class="mode-desc">Точные удары, состав ~98 OVR</div>
+                <div class="diff-reward">До 140,000 CY</div>
+            </div>
+
+            <div class="diff-card diff-ultimate" onclick="startRushMatch('ultimate')">
+                <div class="diff-name" style="color: #ff0055;">ULTIMATE</div>
+                <div class="mode-desc">Максимальный ИИ, состав 105 OVR</div>
+                <div class="diff-reward">До 200,000 CY</div>
+            </div>
+        </div>
+    </div>
+
+    <button class="back-btn" onclick="window.location.href='index.html'">← В ХАБ</button>
+
+    <script>
+        function getValidPlayerCount() {
+            try {
+                let raw = localStorage.getItem('activeSquad');
+                if (!raw) return 0;
+                while (typeof raw === 'string') {
+                    try { raw = JSON.parse(raw); } catch(e) { break; }
+                }
+                if (raw && typeof raw === 'object' && !Array.isArray(raw)) raw = Object.values(raw);
+                if (Array.isArray(raw)) {
+                    return raw.filter(p => p !== null && typeof p === 'object').length;
+                }
+            } catch(e) {}
+            return 0;
+        }
+
+        function updateSquadUI() {
+            const count = getValidPlayerCount();
+            const info = document.getElementById('squad-info');
+            if (count === 5) {
+                info.innerHTML = `Состав заполнен: <span style="color:#00ff88;">5 / 5 игроков</span>`;
+            } else {
+                info.innerHTML = `Неполный состав: <span style="color:#ff0055;">${count} / 5 игроков</span> (Заполните все слоты в Клубе)`;
+            }
+        }
+
+        function showBotDifficulties() {
+            const count = getValidPlayerCount();
+            if (count < 5) {
+                alert(`Для игры в RUSH у вас должно быть ровно 5 игроков в составе! Сейчас выбрано: ${count}/5.`);
+                window.location.href = "club.html";
+                return;
+            }
+            document.getElementById('difficulty-section').style.display = 'block';
+        }
+
+        function startRushMatch(difficulty) {
+            const count = getValidPlayerCount();
+            if (count < 5) {
+                alert(`Матч недоступен! Заполните состав в Клубе (сейчас ${count}/5).`);
+                window.location.href = "club.html";
+                return;
+            }
+            localStorage.setItem('rush_difficulty', difficulty);
+            window.location.href = 'match.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', updateSquadUI);
+    </script>
+</body>
+</html>
