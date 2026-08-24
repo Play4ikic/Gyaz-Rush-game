@@ -3,13 +3,12 @@ import { updateBalance } from './economy.js';
 const canvas = document.getElementById('pitchCanvas');
 const ctx = canvas.getContext('2d');
 
-// НАСТРОЙКИ СЛОЖНОСТИ И БОТА
 const DIFFICULTY_SETTINGS = {
-    novice: { name: 'Новичок', aiSpeed: 2.0, aiAccuracy: 0.4, maxReward: 20000, cardTier: 'gold' },
-    pro: { name: 'Профессионал', aiSpeed: 2.6, aiAccuracy: 0.65, maxReward: 50000, cardTier: 'champions' },
-    world_class: { name: 'Мировой Класс', aiSpeed: 3.2, aiAccuracy: 0.82, maxReward: 90000, cardTier: 'toty' },
-    legend: { name: 'Легенда', aiSpeed: 3.8, aiAccuracy: 0.92, maxReward: 140000, cardTier: 'chaos' },
-    ultimate: { name: 'ULTIMATE', aiSpeed: 4.4, aiAccuracy: 1.0, maxReward: 200000, cardTier: 'ballondor' }
+    novice: { name: 'Новичок', aiSpeed: 2.2, aiAccuracy: 0.5, maxReward: 20000, cardTier: 'gold' },
+    pro: { name: 'Профессионал', aiSpeed: 2.8, aiAccuracy: 0.7, maxReward: 50000, cardTier: 'champions' },
+    world_class: { name: 'Мировой Класс', aiSpeed: 3.4, aiAccuracy: 0.85, maxReward: 90000, cardTier: 'toty' },
+    legend: { name: 'Легенда', aiSpeed: 3.9, aiAccuracy: 0.94, maxReward: 140000, cardTier: 'chaos' },
+    ultimate: { name: 'ULTIMATE', aiSpeed: 4.5, aiAccuracy: 1.0, maxReward: 200000, cardTier: 'ballondor' }
 };
 
 const BOT_CARD_POOLS = {
@@ -95,6 +94,8 @@ const keys = {};
 
 let isChargingShot = false;
 let shotPower = 0;
+let botPassCooldown = 0;
+let botGkHoldTimer = null;
 
 class Player {
     constructor(x, y, data, isHome, role, number, basePos) {
@@ -105,7 +106,7 @@ class Player {
         this.vx = 0;
         this.vy = 0;
         this.facingAngle = isHome ? 0 : Math.PI;
-        this.radius = 28; // Увеличена величина карточек (Крупнее)
+        this.radius = 28;
         this.data = data;
         this.isHome = isHome;
         this.role = role;
@@ -129,7 +130,6 @@ class Player {
         const now = Date.now();
         ctx.save();
 
-        // Тень под крупной карточкой
         ctx.beginPath();
         ctx.ellipse(this.x, this.y + 18, 22, 8, 0, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(0,0,0,0.35)';
@@ -203,21 +203,18 @@ class Player {
         this.vx *= 0.8;
         this.vy *= 0.8;
 
-        // Ограничение движения ВРАТАРЯ в штрафной, если он держит мяч
-        if (this.role === 'GK' && ball.owner === this) {
+        // ЖЁСТКОЕ ОГРАНИЧЕНИЕ ВРАТАРЕЙ В ШТРАФНОЙ ПЛОЩАДИ (ДАЖЕ БЕЗ МЯЧА)
+        if (this.role === 'GK') {
             if (this.isHome) {
-                // Штрафная площадь левых ворот (Home)
                 this.x = Math.max(35 + this.radius, Math.min(195 - this.radius, this.x));
                 this.y = Math.max(160 + this.radius, Math.min(490 - this.radius, this.y));
             } else {
-                // Штрафная площадь правых ворот (Away)
                 this.x = Math.max(905 + this.radius, Math.min(1065 - this.radius, this.x));
                 this.y = Math.max(160 + this.radius, Math.min(490 - this.radius, this.y));
             }
         } else {
-            // Обычные границы поля
-            this.x = Math.max(35, Math.min(1065, this.x));
-            this.y = Math.max(35, Math.min(615, this.y));
+            this.x = Math.max(35 + this.radius, Math.min(1065 - this.radius, this.x));
+            this.y = Math.max(35 + this.radius, Math.min(615 - this.radius, this.y));
         }
     }
 }
@@ -276,14 +273,12 @@ function resolvePlayerCollisions() {
     }
 }
 
-// ПЕРЕКЛЮЧЕНИЕ НА ВСЕХ ИГРОКОВ (ВКЛЮЧАЯ ВРАТАРЯ)
 function switchUserPlayer() {
     let currentIndex = homeTeam.indexOf(activeUserPlayer);
     let nextIndex = (currentIndex + 1) % homeTeam.length;
     activeUserPlayer = homeTeam[nextIndex];
 }
 
-// УЛУЧШЕННЫЕ ПОДКАТЫ С ПРЯМЫМ ЗАХВАТОМ МЯЧА И ЗАЩИТОЙ ВРАТАРЯ
 function executeTackle(player) {
     const now = Date.now();
     if (now < player.tackleCooldown || now < player.stunnedUntil) return;
@@ -295,26 +290,25 @@ function executeTackle(player) {
     }
 
     let angle = player.facingAngle;
-    player.vx = Math.cos(angle) * 18; // Мощный рывок подката
+    player.vx = Math.cos(angle) * 18;
     player.vy = Math.sin(angle) * 18;
 
     const opponents = player.isHome ? awayTeam : homeTeam;
     opponents.forEach(opp => {
-        // У вратаря с мячом нельзя отнять мяч и оглушить подкатом
         if (opp.role === 'GK' && ball.owner === opp) return;
 
         let dist = Math.hypot(opp.x - player.x, opp.y - player.y);
-        if (dist < 52) { // Увеличенный радиус поражения подката
+        if (dist < 52) {
             opp.stunnedUntil = now + 1600;
             if (ball.owner === opp) {
-                ball.owner = player; // МЯЧ СРАЗУ И НАДЕЖНО ПЕРЕХОДИТ К ПОДКТИВШЕМУСЯ!
+                ball.owner = player;
+                if (player.isHome) activeUserPlayer = player;
             }
         }
     });
 }
 
 function updateGK(gk) {
-    // Если домашний вратарь под прямым управлением игрока — ИИ им не управляет
     if (gk.isHome && activeUserPlayer === gk) return;
 
     let targetY = Math.max(200, Math.min(450, ball.y));
@@ -325,9 +319,23 @@ function updateGK(gk) {
         ball.owner = gk;
         ball.vx = 0; ball.vy = 0;
 
-        // Если домашний вратарь поймал мяч, автоматически переключаем на него управление
         if (gk.isHome) {
             activeUserPlayer = gk;
+        } else {
+            // ИИ ВРАТАРЯ БОТА: выдерживает паузу и отдаёт пас открытому защитнику
+            if (!botGkHoldTimer) {
+                botGkHoldTimer = setTimeout(() => {
+                    if (ball.owner === gk) {
+                        let teammates = awayTeam.filter(p => p !== gk);
+                        let target = teammates[Math.floor(Math.random() * teammates.length)];
+                        let angle = Math.atan2(target.y - gk.y, target.x - gk.x);
+                        ball.owner = null;
+                        ball.vx = Math.cos(angle) * 16;
+                        ball.vy = Math.sin(angle) * 16;
+                    }
+                    botGkHoldTimer = null;
+                }, 800);
+            }
         }
     }
 }
@@ -335,15 +343,19 @@ function updateGK(gk) {
 function updateAI() {
     const now = Date.now();
 
+    // 1. ИНТЕЛЛЕКТ НЕАКТИВНЫХ ИГРОКОВ ПОЛЬЗОВАТЕЛЯ
     homeTeam.forEach(p => {
         if (p === activeUserPlayer || p.role === 'GK') return;
         
         let targetX = p.baseX + (ball.x - 550) * 0.35;
         let targetY = p.baseY + (ball.y - 325) * 0.25;
 
+        // Открывания при атаке / отход при обороне
         if (ball.owner && ball.owner.isHome) {
-            if (p.role === 'FW') targetX += 90;
-            if (p.role === 'MF') targetX += 45;
+            if (p.role === 'FW') targetX += 120;
+            if (p.role === 'MF') targetX += 60;
+        } else if (ball.owner && !ball.owner.isHome) {
+            targetX -= 40; // Смещение в оборону
         }
 
         let dx = targetX - p.x;
@@ -351,8 +363,8 @@ function updateAI() {
         let dist = Math.hypot(dx, dy);
 
         if (dist > 15) {
-            p.vx = (dx / dist) * (p.speed * 0.75);
-            p.vy = (dy / dist) * (p.speed * 0.75);
+            p.vx = (dx / dist) * (p.speed * 0.8);
+            p.vy = (dy / dist) * (p.speed * 0.8);
         }
         p.update();
     });
@@ -360,6 +372,7 @@ function updateAI() {
     updateGK(homeTeam[0]);
     updateGK(awayTeam[0]);
 
+    // 2. ПРОДВИНУТЫЙ ИНТЕЛЛЕКТ БОТОВ (ПАС-ПАС-УДАР)
     let botField = awayTeam.filter(p => p.role !== 'GK' && now > p.stunnedUntil);
     
     let presser = null;
@@ -371,17 +384,39 @@ function updateAI() {
 
     botField.forEach(bot => {
         if (ball.owner === bot) {
-            let angle = Math.atan2(325 - bot.y, 50 - bot.x);
+            let distToGoal = Math.hypot(35 - bot.x, 325 - bot.y);
+
+            // А) Решение: УДАР ПО ВОРОТАМ
+            if (bot.x < 360 && Math.random() < 0.05 * currentDiff.aiAccuracy) {
+                ball.owner = null;
+                let goalY = 280 + Math.random() * 90;
+                let angle = Math.atan2(goalY - bot.y, 30 - bot.x);
+                ball.vx = Math.cos(angle) * 22;
+                ball.vy = Math.sin(angle) * 22;
+                return;
+            }
+
+            // Б) Решение: ПАС ПАРТНЁРУ (Комбинационный футбол)
+            if (now > botPassCooldown && Math.random() < 0.03 * currentDiff.aiAccuracy) {
+                let openTeammates = awayTeam.filter(t => t !== bot && t.x < bot.x && now > t.stunnedUntil);
+                if (openTeammates.length > 0) {
+                    let target = openTeammates[Math.floor(Math.random() * openTeammates.length)];
+                    let angle = Math.atan2(target.y - bot.y, target.x - bot.x);
+                    ball.owner = null;
+                    ball.vx = Math.cos(angle) * 17;
+                    ball.vy = Math.sin(angle) * 17;
+                    botPassCooldown = now + 1000;
+                    return;
+                }
+            }
+
+            // В) Дриблинг к воротам соперника
+            let angle = Math.atan2(325 - bot.y, 35 - bot.x);
             bot.vx = Math.cos(angle) * bot.speed;
             bot.vy = Math.sin(angle) * bot.speed;
 
-            if (bot.x < 300 && Math.random() < 0.03 * currentDiff.aiAccuracy) {
-                ball.owner = null;
-                ball.vx = -22;
-                ball.vy = (325 - bot.y) * 0.1;
-            }
         } else if (bot === presser) {
-            // Если мяч у вратаря игрока — бот не атакует его вплотную
+            // Не атаковать вратаря с мячом впритык
             if (ball.owner && ball.owner.role === 'GK') {
                 bot.vx = 0; bot.vy = 0;
             } else {
@@ -389,21 +424,22 @@ function updateAI() {
                 bot.vx = Math.cos(angle) * bot.speed;
                 bot.vy = Math.sin(angle) * bot.speed;
 
-                if (minDist < 45 && Math.random() < 0.04 * currentDiff.aiAccuracy) {
+                if (minDist < 45 && Math.random() < 0.05 * currentDiff.aiAccuracy) {
                     executeTackle(bot);
                 }
             }
         } else {
-            let targetX = bot.baseX + (ball.x - 550) * 0.2;
-            let targetY = bot.baseY + (ball.y - 325) * 0.2;
+            // Поддержка атаки / позиционирование бота
+            let targetX = bot.baseX + (ball.x - 550) * 0.3;
+            let targetY = bot.baseY + (ball.y - 325) * 0.3;
 
             let dx = targetX - bot.x;
             let dy = targetY - bot.y;
             let dist = Math.hypot(dx, dy);
 
             if (dist > 15) {
-                bot.vx = (dx / dist) * (bot.speed * 0.6);
-                bot.vy = (dy / dist) * (bot.speed * 0.6);
+                bot.vx = (dx / dist) * (bot.speed * 0.7);
+                bot.vy = (dy / dist) * (bot.speed * 0.7);
             }
         }
         bot.update();
@@ -481,11 +517,15 @@ function gameLoop() {
             ball.vx *= ball.friction;
             ball.vy *= ball.friction;
 
+            // АВТОМАТИЧЕСКИЙ ЗАХВАТ МЯЧА И ПЕРЕКЛЮЧЕНИЕ УПРАВЛЕНИЯ
             [...homeTeam, ...awayTeam].forEach(p => {
                 if (Date.now() < p.stunnedUntil) return;
                 let d = Math.hypot(p.x - ball.x, p.y - ball.y);
                 if (d < p.radius + 12) {
                     ball.owner = p;
+                    if (p.isHome) {
+                        activeUserPlayer = p; // Управление сразу переходит адресату паса/перехватчику!
+                    }
                 }
             });
 
