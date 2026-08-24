@@ -66,7 +66,7 @@ function getVerifiedSquad() {
     } catch(e) {}
     
     let filtered = squad.filter(p => p !== null && typeof p === 'object');
-    const defaultNames = ['Neymar Jr', 'Messi', 'Griezmann', 'Mbappe', 'Courtois'];
+    const defaultNames = ['Elcan', 'Turgay', 'Nazrin', 'Bugday', 'Tuncay'];
     while (filtered.length < 5) {
         filtered.push({ name: defaultNames[filtered.length], rating: 88, number: filtered.length + 1 });
     }
@@ -90,7 +90,8 @@ const ball = {
     owner: null 
 };
 
-let lastTouchPlayer = null; // Фиксация последнего касания для автора гола
+let lastTouchPlayer = null;
+let skillCooldown = 0;
 
 const joystickDir = { x: 0, y: 0 };
 const keys = {};
@@ -120,7 +121,8 @@ class Player {
         this.number = number;
 
         const rating = data && data.rating ? Number(data.rating) : 80;
-        this.speed = ((rating / 70) + (isHome ? 1.2 : currentDiff.aiSpeed)) * 0.82;
+        this.baseSpeed = ((rating / 70) + (isHome ? 1.2 : currentDiff.aiSpeed)) * 0.82;
+        this.speedBoost = 1.0;
 
         this.stunnedUntil = 0;
         this.tackleCooldown = 0;
@@ -131,6 +133,10 @@ class Player {
             this.img.src = `${data.folder}/${data.file}`;
             this.img.onload = () => { this.hasImg = true; };
         }
+    }
+
+    get speed() {
+        return this.baseSpeed * this.speedBoost;
     }
 
     draw(isActive) {
@@ -146,6 +152,13 @@ class Player {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius + 6, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(255, 0, 0, 0.45)';
+            ctx.fill();
+        }
+
+        if (this.speedBoost > 1.2) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius + 8, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 204, 0, 0.4)';
             ctx.fill();
         }
 
@@ -226,10 +239,10 @@ class Player {
 
         if (this.role === 'GK') {
             if (this.isHome) {
-                this.x = Math.max(35 + this.radius, Math.min(195 - this.radius, this.x));
+                this.x = Math.max(35 + this.radius, Math.min(220 - this.radius, this.x));
                 this.y = Math.max(160 + this.radius, Math.min(490 - this.radius, this.y));
             } else {
-                this.x = Math.max(905 + this.radius, Math.min(1065 - this.radius, this.x));
+                this.x = Math.max(880 + this.radius, Math.min(1065 - this.radius, this.x));
                 this.y = Math.max(160 + this.radius, Math.min(490 - this.radius, this.y));
             }
         } else {
@@ -243,26 +256,38 @@ let homeTeam = [];
 let awayTeam = [];
 let activeUserPlayer = null;
 
-// СОЗДАНИЕ ДИНАМИЧЕСКИХ ОКН АНИМАЦИИ И ПЕРЕРЫВА
 function createUIOverlays() {
+    const homeLabel = document.getElementById('home-team-name');
+    if (homeLabel) homeLabel.innerText = "ВЫ";
+
+    if (!document.getElementById('skill-notification')) {
+        const skillBanner = `<div id="skill-notification" style="display:none; position:fixed; top:18%; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); border:2px solid #00ff88; color:#00ff88; padding:10px 24px; border-radius:20px; font-weight:bold; font-size:18px; z-index:100; text-shadow:0 0 10px #00ff88;"></div>`;
+        document.body.insertAdjacentHTML('beforeend', skillBanner);
+    }
+
     if (!document.getElementById('goal-overlay')) {
         const goalHtml = `
         <div id="goal-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:999; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(10px);">
-            <h1 style="font-size: 60px; color: #ffcc00; text-shadow: 0 0 25px #ffcc00, 0 0 50px #ff0055; margin-bottom: 20px; font-weight:900; letter-spacing:4px; animation: goalTextAnim 0.8s infinite alternate;">ГООООЛ!</h1>
+            <h1 id="goal-team-banner" style="font-size: 40px; color: #00ff88; text-shadow: 0 0 20px #00ff88; margin-bottom: 10px; font-weight:900;"></h1>
+            <h2 style="font-size: 55px; color: #ffcc00; text-shadow: 0 0 25px #ffcc00, 0 0 50px #ff0055; margin-bottom: 20px; font-weight:900; letter-spacing:4px; animation: goalTextAnim 0.8s infinite alternate;">ГООООЛ!</h2>
             <div id="goal-card-container" style="transform: scale(1.15); box-shadow: 0 0 40px rgba(255,204,0,0.8); border-radius:15px; overflow:hidden;"></div>
-            <h2 id="goal-scorer-name" style="margin-top:20px; font-size: 28px; color:#fff; text-shadow: 0 2px 10px #000; font-weight:bold;"></h2>
+            <h3 id="goal-scorer-name" style="margin-top:20px; font-size: 26px; color:#fff; text-shadow: 0 2px 10px #000; font-weight:bold;"></h3>
         </div>`;
         document.body.insertAdjacentHTML('beforeend', goalHtml);
     }
 
-    if (!document.getElementById('halftime-overlay')) {
-        const htHtml = `
-        <div id="halftime-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(8,10,15,0.92); z-index:999; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(8px);">
-            <h1 style="font-size: 36px; color: #00d2ff; font-weight:900; margin-bottom:12px; letter-spacing:1px;">ПЕРЕРЫВ МАТЧА</h1>
-            <p style="font-size: 18px; color: #aaa; margin-bottom: 25px;">Второй тайм начнется через: <span id="ht-timer" style="color:#00ff88; font-weight:bold;">60</span> сек</p>
-            <button id="btn-resume-half" style="padding: 14px 36px; background: linear-gradient(135deg, #00ff88, #00b359); border:none; border-radius:30px; color:#000; font-weight:900; font-size:16px; cursor:pointer; box-shadow: 0 5px 20px rgba(0,255,136,0.4); transition: transform 0.2s;">ПРОДОЛЖИТЬ МАТЧ</button>
-        </div>`;
-        document.body.insertAdjacentHTML('beforeend', htHtml);
+    // ИНТЕРФЕЙС КНОПОК FIFA MOBILE
+    let controlsBox = document.querySelector('.controls-buttons') || document.getElementById('controls-right');
+    if (controlsBox) {
+        controlsBox.innerHTML = `
+            <div class="fifa-controls-cluster">
+                <button id="btn-through" class="fifa-btn fifa-through">THROUGH<br><span>(6)</span></button>
+                <button id="btn-shot" class="fifa-btn fifa-shoot">SHOOT<br><span>(8)</span></button>
+                <button id="btn-pass" class="fifa-btn fifa-pass">PASS<br><span>(4)</span></button>
+                <button id="btn-tackle" class="fifa-btn fifa-tackle">TACKLE<br><span>(2)</span></button>
+                <button id="btn-skill" class="fifa-btn fifa-skill">SKILL &amp; SPRINT<br><span>(5)</span></button>
+            </div>
+        `;
     }
 
     const style = document.createElement('style');
@@ -271,8 +296,134 @@ function createUIOverlays() {
             0% { transform: scale(0.95); text-shadow: 0 0 15px #ffcc00; }
             100% { transform: scale(1.08); text-shadow: 0 0 35px #ff0055, 0 0 50px #ffcc00; }
         }
+
+        .fifa-controls-cluster {
+            position: relative;
+            width: 260px;
+            height: 240px;
+        }
+
+        .fifa-btn {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(30,40,35,0.95) 0%, rgba(10,15,12,0.95) 100%);
+            color: #ffffff;
+            font-family: 'Arial Black', sans-serif;
+            font-weight: 900;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.3);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .fifa-btn span {
+            font-size: 10px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+        .fifa-btn:active {
+            transform: scale(0.92);
+        }
+
+        /* Позиционирование как в FIFA Mobile */
+        .fifa-through {
+            width: 65px; height: 65px;
+            top: 25px; left: 60px;
+            border: 3px solid #ffaa00;
+            box-shadow: 0 0 12px rgba(255,170,0,0.4);
+            font-size: 9px;
+        }
+        .fifa-shoot {
+            width: 75px; height: 75px;
+            top: 0px; right: 10px;
+            border: 3px solid #ff4400;
+            box-shadow: 0 0 15px rgba(255,68,0,0.5);
+            font-size: 11px;
+        }
+        .fifa-pass {
+            width: 70px; height: 70px;
+            bottom: 10px; left: 15px;
+            border: 3px solid #00aaff;
+            box-shadow: 0 0 12px rgba(0,170,255,0.4);
+            font-size: 11px;
+        }
+        .fifa-tackle {
+            width: 65px; height: 65px;
+            bottom: 0px; right: 85px;
+            border: 3px solid #ff0055;
+            box-shadow: 0 0 12px rgba(255,0,85,0.4);
+            font-size: 10px;
+        }
+        .fifa-skill {
+            width: 85px; height: 85px;
+            bottom: 5px; right: 0px;
+            border: 4px solid #00ff88;
+            box-shadow: 0 0 20px rgba(0,255,136,0.6);
+            font-size: 10px;
+            color: #00ff88;
+        }
     `;
     document.head.appendChild(style);
+}
+
+function showSkillBanner(text) {
+    const el = document.getElementById('skill-notification');
+    if (!el) return;
+    el.innerText = text;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 2000);
+}
+
+function triggerSpecialSkill() {
+    const now = Date.now();
+    if (!activeUserPlayer || now < skillCooldown) return;
+
+    const name = (activeUserPlayer.data && activeUserPlayer.data.name) ? activeUserPlayer.data.name.toLowerCase() : '';
+
+    if (name.includes('elcan') || name.includes('эльджан')) {
+        activeUserPlayer.stunnedUntil = 0;
+        activeUserPlayer.tackleCooldown = now + 3000;
+        activeUserPlayer.speedBoost = 2.2;
+        setTimeout(() => { activeUserPlayer.speedBoost = 1.0; }, 2500);
+        showSkillBanner("⚡ ПРИЗРАЧНЫЙ ДРИБЛИНГ ЭЛЬДЖАНА!");
+        skillCooldown = now + 8000;
+    } else if (name.includes('turqay') || name.includes('turgay') || name.includes('тургай')) {
+        if (ball.owner === activeUserPlayer) {
+            ball.owner = null;
+            let angle = Math.atan2(325 - activeUserPlayer.y, 1070 - activeUserPlayer.x);
+            ball.vx = Math.cos(angle) * 32;
+            ball.vy = Math.sin(angle) * 32;
+            showSkillBanner("💥 ПУШЕЧНЫЙ УДАР ТУРГАЯ!");
+            skillCooldown = now + 10000;
+        } else {
+            showSkillBanner("УДАР ДОСТУПЕН ТОЛЬКО С МЯЧОМ!");
+        }
+    } else if (name.includes('nazrin') || name.includes('назрин')) {
+        activeUserPlayer.speedBoost = 3.0;
+        setTimeout(() => { activeUserPlayer.speedBoost = 1.0; }, 3000);
+        showSkillBanner("⚡ МОЛНИЕНОСНЫЙ РЫВОК НАЗРИН!");
+        skillCooldown = now + 8000;
+    } else if (name.includes('bugday') || name.includes('богдан') || name.includes('бугдай')) {
+        let dist = Math.hypot(activeUserPlayer.x - ball.x, activeUserPlayer.y - ball.y);
+        if (dist < 280) {
+            ball.owner = activeUserPlayer;
+            lastTouchPlayer = activeUserPlayer;
+            ball.vx = 0; ball.vy = 0;
+            showSkillBanner("🛡️ ЖЕЛЕЗНЫЙ ПЕРЕХВАТ БУГДАЯ!");
+            skillCooldown = now + 10000;
+        } else {
+            showSkillBanner("МЯЧ СЛИШКОМ ДАЛЕКО ДЛЯ ПЕРЕХВАТА!");
+        }
+    } else {
+        activeUserPlayer.speedBoost = 1.8;
+        setTimeout(() => { activeUserPlayer.speedBoost = 1.0; }, 2500);
+        showSkillBanner("🚀 ТУРБО-УСКОРЕНИЕ!");
+        skillCooldown = now + 6000;
+    }
 }
 
 function initTeams() {
@@ -331,7 +482,6 @@ function switchUserPlayer() {
     activeUserPlayer = homeTeam[nextIndex];
 }
 
-// АВТОМАТИЧЕСКОЕ ПЕРЕКЛЮЧЕНИЕ НА БЛИЖАЙШЕГО ИГРОКА ПРИ ПОЛЕТЕ МЯЧА
 function autoSwitchToClosestPlayer() {
     if (ball.owner) return;
 
@@ -358,11 +508,6 @@ function executeTackle(player) {
     if (now < player.tackleCooldown || now < player.stunnedUntil) return;
 
     player.tackleCooldown = now + 1200;
-    if (player.isHome) {
-        document.getElementById('btn-tackle').classList.add('cooldown');
-        setTimeout(() => document.getElementById('btn-tackle').classList.remove('cooldown'), 1200);
-    }
-
     let angle = player.facingAngle;
     player.vx = Math.cos(angle) * 13;
     player.vy = Math.sin(angle) * 13;
@@ -383,14 +528,32 @@ function executeTackle(player) {
     });
 }
 
+function executeThroughPass() {
+    if (!ball.owner || ball.owner !== activeUserPlayer) return;
+    ball.owner = null;
+    let passAngle = activeUserPlayer.facingAngle;
+    if (Math.abs(joystickDir.x) > 0.1 || Math.abs(joystickDir.y) > 0.1) {
+        passAngle = Math.atan2(joystickDir.y, joystickDir.x);
+    }
+    ball.vx = Math.cos(passAngle) * 20;
+    ball.vy = Math.sin(passAngle) * 20;
+}
+
 function updateGK(gk) {
     if (gk.isHome && activeUserPlayer === gk) return;
 
-    let targetY = Math.max(200, Math.min(450, ball.y));
-    gk.y += (targetY - gk.y) * 0.1;
+    let distToBall = Math.hypot(gk.x - ball.x, gk.y - ball.y);
 
-    let dist = Math.hypot(gk.x - ball.x, gk.y - ball.y);
-    if (dist < 55 && !ball.owner) {
+    if (!ball.owner && distToBall < 200) {
+        let angle = Math.atan2(ball.y - gk.y, ball.x - gk.x);
+        gk.vx = Math.cos(angle) * (gk.speed * 1.1);
+        gk.vy = Math.sin(angle) * (gk.speed * 1.1);
+    } else {
+        let targetY = Math.max(200, Math.min(450, ball.y));
+        gk.y += (targetY - gk.y) * 0.12;
+    }
+
+    if (distToBall < 55 && !ball.owner) {
         ball.owner = gk;
         lastTouchPlayer = gk;
         ball.vx = 0; ball.vy = 0;
@@ -402,20 +565,13 @@ function updateGK(gk) {
     if (ball.owner === gk) {
         let heldDuration = Date.now() - gkHoldStartTime;
 
-        if (!gk.isHome && heldDuration > 1200 && heldDuration < 4800) {
+        if (!gk.isHome && heldDuration > 400) {
             let teammates = awayTeam.filter(p => p !== gk);
             let target = teammates[Math.floor(Math.random() * teammates.length)];
             let angle = Math.atan2(target.y - gk.y, target.x - gk.x);
             ball.owner = null;
-            ball.vx = Math.cos(angle) * 15;
-            ball.vy = Math.sin(angle) * 15;
-        }
-
-        if (heldDuration >= 5000) {
-            ball.owner = null;
-            let clearDirection = gk.isHome ? 1 : -1;
-            ball.vx = clearDirection * (18 + Math.random() * 4);
-            ball.vy = (Math.random() - 0.5) * 12;
+            ball.vx = Math.cos(angle) * (15 + Math.random() * 4);
+            ball.vy = Math.sin(angle) * (15 + Math.random() * 4);
         }
     }
 }
@@ -430,8 +586,9 @@ function updateAI() {
         let targetY = p.baseY + (ball.y - 325) * 0.2;
 
         if (ball.owner && ball.owner.isHome) {
-            if (p.role === 'FW') targetX += 90;
-            if (p.role === 'MF') targetX += 45;
+            if (p.role === 'FW') { targetX += 170; targetY += (ball.y < 325 ? 50 : -50); }
+            if (p.role === 'MF') targetX += 110;
+            if (p.role === 'DF') targetX += 45;
         } else if (ball.owner && !ball.owner.isHome) {
             targetX -= 40;
         }
@@ -441,8 +598,8 @@ function updateAI() {
         let dist = Math.hypot(dx, dy);
 
         if (dist > 15) {
-            p.vx = (dx / dist) * (p.speed * 0.75);
-            p.vy = (dy / dist) * (p.speed * 0.75);
+            p.vx = (dx / dist) * (p.speed * 0.8);
+            p.vy = (dy / dist) * (p.speed * 0.8);
         }
         p.update();
     });
@@ -613,7 +770,7 @@ function gameLoop() {
             ball.vx *= ball.friction;
             ball.vy *= ball.friction;
 
-            autoSwitchToClosestPlayer(); // Переключение на ближайшего при свободной траектории
+            autoSwitchToClosestPlayer();
 
             [...homeTeam, ...awayTeam].forEach(p => {
                 if (Date.now() < p.stunnedUntil) return;
@@ -696,7 +853,6 @@ function render() {
     ctx.stroke();
 }
 
-// ОБРАБОТКА И АНИМАЦИЯ ГОЛА
 function handleGoal(team) {
     if (gameState === 'GOAL_ANIMATION') return;
     gameState = 'GOAL_ANIMATION';
@@ -706,8 +862,17 @@ function handleGoal(team) {
     document.getElementById('away-score').innerText = awayScore;
 
     const overlay = document.getElementById('goal-overlay');
+    const teamBanner = document.getElementById('goal-team-banner');
     const cardBox = document.getElementById('goal-card-container');
     const scorerName = document.getElementById('goal-scorer-name');
+
+    if (team === 'home') {
+        teamBanner.innerText = "ВЫ ЗАБИЛИ ГОЛ!";
+        teamBanner.style.color = "#00ff88";
+    } else {
+        teamBanner.innerText = "СОПЕРНИК ЗАБИЛ ГОЛ!";
+        teamBanner.style.color = "#ff3366";
+    }
 
     let scorer = lastTouchPlayer;
     if (!scorer || (team === 'home' && !scorer.isHome) || (team === 'away' && scorer.isHome)) {
@@ -741,7 +906,6 @@ function resetPositions() {
     activeUserPlayer = homeTeam[3];
 }
 
-// ПЕРЕРЫВ МЕЖДУ ТАЙМАМИ (1 МИНУТА)
 function startHalfTimeBreak() {
     gameState = 'HALF_TIME';
     let htSeconds = 60;
@@ -806,32 +970,62 @@ async function endMatch() {
     window.location.href = 'rush.html';
 }
 
-document.getElementById('btn-switch').addEventListener('click', switchUserPlayer);
-document.getElementById('btn-tackle').addEventListener('click', () => activeUserPlayer && executeTackle(activeUserPlayer));
+createUIOverlays();
 
+// НАЗНАЧЕНИЕ КНОПОК И НАЖАТИЙ НА NUMPAD (8, 4, 6, 2, 5)
 const passBtn = document.getElementById('btn-pass');
+const shotBtn = document.getElementById('btn-shot');
+const throughBtn = document.getElementById('btn-through');
+const tackleBtn = document.getElementById('btn-tackle');
+const skillBtn = document.getElementById('btn-skill');
+
 passBtn.addEventListener('mousedown', startPassCharge);
 passBtn.addEventListener('touchstart', startPassCharge);
-
-const shotBtn = document.getElementById('btn-shot');
 shotBtn.addEventListener('mousedown', startShotCharge);
 shotBtn.addEventListener('touchstart', startShotCharge);
+
+throughBtn.addEventListener('click', executeThroughPass);
+tackleBtn.addEventListener('click', () => {
+    if (activeUserPlayer) executeTackle(activeUserPlayer);
+    else switchUserPlayer();
+});
+skillBtn.addEventListener('click', triggerSpecialSkill);
 
 window.addEventListener('mouseup', () => { releaseShot(); releasePass(); });
 window.addEventListener('touchend', () => { releaseShot(); releasePass(); });
 
+// КЛАВИАТУРА NUMPAD И ОБЫЧНАЯ КЛАВИАТУРА
 window.addEventListener('keydown', e => {
     keys[e.code] = true;
+
+    // СУПЕРСПОСОБНОСТЬ НА 5 ИЛИ E
+    if (e.code === 'Numpad5' || e.code === 'Digit5' || e.key === '5' || e.code === 'KeyE') {
+        triggerSpecialSkill();
+    }
+    // УДАР НА 8 ИЛИ J
+    if ((e.code === 'Numpad8' || e.code === 'Digit8' || e.key === '8' || e.code === 'KeyJ') && !isChargingShot) {
+        startShotCharge();
+    }
+    // ПАС НА 4 ИЛИ K
+    if ((e.code === 'Numpad4' || e.code === 'Digit4' || e.key === '4' || e.code === 'KeyK') && !isChargingPass) {
+        startPassCharge();
+    }
+    // ПАС НА ХОД НА 6
+    if (e.code === 'Numpad6' || e.code === 'Digit6' || e.key === '6') {
+        executeThroughPass();
+    }
+    // ОТБОР ИЛИ СМЕНА ИГРОКА НА 2 ИЛИ L
+    if (e.code === 'Numpad2' || e.code === 'Digit2' || e.key === '2' || e.code === 'KeyL') {
+        if (activeUserPlayer) executeTackle(activeUserPlayer);
+    }
+
     if (e.code === 'KeyQ') switchUserPlayer();
-    if (e.code === 'KeyK' && !isChargingPass) startPassCharge();
-    if (e.code === 'KeyL' && activeUserPlayer) executeTackle(activeUserPlayer);
-    if (e.code === 'KeyJ' && !isChargingShot) startShotCharge();
 });
 
 window.addEventListener('keyup', e => {
     keys[e.code] = false;
-    if (e.code === 'KeyK') releasePass();
-    if (e.code === 'KeyJ') releaseShot();
+    if (e.code === 'Numpad8' || e.code === 'Digit8' || e.key === '8' || e.code === 'KeyJ') releaseShot();
+    if (e.code === 'Numpad4' || e.code === 'Digit4' || e.key === '4' || e.code === 'KeyK') releasePass();
 });
 
 const joyZone = document.getElementById('joystick-zone');
@@ -863,8 +1057,7 @@ function updateJoystick(e) {
     joystickDir.y = dy / maxR;
 }
 
-document.getElementById('bot-team-name').innerText = currentDiff.name.toUpperCase();
-createUIOverlays();
+document.getElementById('bot-team-name').innerText = "СОПЕРНИК";
 initTeams();
 startTimer();
 requestAnimationFrame(gameLoop);
