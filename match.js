@@ -5,11 +5,11 @@ const ctx = canvas.getContext('2d');
 
 // НАСТРОЙКИ СЛОЖНОСТИ И БОТА
 const DIFFICULTY_SETTINGS = {
-    novice: { name: 'Новичок', aiSpeed: 2.2, aiAccuracy: 0.4, maxReward: 20000, cardTier: 'gold' },
-    pro: { name: 'Профессионал', aiSpeed: 2.8, aiAccuracy: 0.65, maxReward: 50000, cardTier: 'champions' },
-    world_class: { name: 'Мировой Класс', aiSpeed: 3.4, aiAccuracy: 0.82, maxReward: 90000, cardTier: 'toty' },
-    legend: { name: 'Легенда', aiSpeed: 4.0, aiAccuracy: 0.92, maxReward: 140000, cardTier: 'chaos' },
-    ultimate: { name: 'ULTIMATE', aiSpeed: 4.6, aiAccuracy: 1.0, maxReward: 200000, cardTier: 'ballondor' }
+    novice: { name: 'Новичок', aiSpeed: 2.0, aiAccuracy: 0.4, maxReward: 20000, cardTier: 'gold' },
+    pro: { name: 'Профессионал', aiSpeed: 2.6, aiAccuracy: 0.65, maxReward: 50000, cardTier: 'champions' },
+    world_class: { name: 'Мировой Класс', aiSpeed: 3.2, aiAccuracy: 0.82, maxReward: 90000, cardTier: 'toty' },
+    legend: { name: 'Легенда', aiSpeed: 3.8, aiAccuracy: 0.92, maxReward: 140000, cardTier: 'chaos' },
+    ultimate: { name: 'ULTIMATE', aiSpeed: 4.4, aiAccuracy: 1.0, maxReward: 200000, cardTier: 'ballondor' }
 };
 
 const BOT_CARD_POOLS = {
@@ -53,7 +53,6 @@ const BOT_CARD_POOLS = {
 const currentDiffKey = localStorage.getItem('rush_difficulty') || 'novice';
 const currentDiff = DIFFICULTY_SETTINGS[currentDiffKey];
 
-// ИНИЦИАЛИЗАЦИЯ ИГРОКОВ ПОЛЬЗОВАТЕЛЯ
 function getVerifiedSquad() {
     let squad = [];
     try {
@@ -78,7 +77,6 @@ function getVerifiedSquad() {
 const userPlayersData = getVerifiedSquad();
 const botPlayersData = BOT_CARD_POOLS[currentDiff.cardTier];
 
-// ИГРОВОЕ СОСТОЯНИЕ
 const HALF_DURATION = 240;
 let matchSeconds = 0;
 let currentHalf = 1;
@@ -87,10 +85,9 @@ let homeScore = 0;
 let awayScore = 0;
 let gameState = 'PLAYING';
 
-// МЯЧ И ВЛАДЕНИЕ
 const ball = { 
     x: 550, y: 325, vx: 0, vy: 0, radius: 7, friction: 0.96, 
-    owner: null // Игрок, у которого сейчас мяч
+    owner: null 
 };
 
 const joystickDir = { x: 0, y: 0 };
@@ -108,14 +105,14 @@ class Player {
         this.vx = 0;
         this.vy = 0;
         this.facingAngle = isHome ? 0 : Math.PI;
-        this.radius = 18;
+        this.radius = 20;
         this.data = data;
         this.isHome = isHome;
         this.role = role;
         this.number = number;
 
         const rating = data && data.rating ? Number(data.rating) : 80;
-        this.speed = (rating / 30) + (isHome ? 2.2 : currentDiff.aiSpeed);
+        this.speed = (rating / 35) + (isHome ? 2.2 : currentDiff.aiSpeed);
 
         this.stunnedUntil = 0;
         this.tackleCooldown = 0;
@@ -132,13 +129,11 @@ class Player {
         const now = Date.now();
         ctx.save();
 
-        // Тень
         ctx.beginPath();
         ctx.ellipse(this.x, this.y + 14, 16, 6, 0, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(0,0,0,0.35)';
         ctx.fill();
 
-        // Оглушение при подкате
         if (now < this.stunnedUntil) {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius + 6, 0, Math.PI * 2);
@@ -146,7 +141,6 @@ class Player {
             ctx.fill();
         }
 
-        // Карточка/Аватар
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.clip();
@@ -164,14 +158,12 @@ class Player {
         }
         ctx.restore();
 
-        // Обводка
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius + 1, 0, Math.PI * 2);
         ctx.strokeStyle = this.isHome ? '#ffffff' : '#ffcc00';
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Маркер активного игрока
         if (isActive) {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius + 6, 0, Math.PI * 2);
@@ -179,7 +171,6 @@ class Player {
             ctx.lineWidth = 3;
             ctx.stroke();
 
-            // Вектор направления
             ctx.beginPath();
             ctx.moveTo(this.x + Math.cos(this.facingAngle) * 20, this.y + Math.sin(this.facingAngle) * 20);
             ctx.lineTo(this.x + Math.cos(this.facingAngle) * 35, this.y + Math.sin(this.facingAngle) * 35);
@@ -188,7 +179,6 @@ class Player {
             ctx.stroke();
         }
 
-        // Никнейм над игроком
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 10px sans-serif';
         ctx.textAlign = 'center';
@@ -212,7 +202,6 @@ class Player {
         this.vx *= 0.8;
         this.vy *= 0.8;
 
-        // Жесткие границы поля (БЕЗ АУТОВ)
         this.x = Math.max(35, Math.min(1065, this.x));
         this.y = Math.max(35, Math.min(615, this.y));
     }
@@ -232,7 +221,7 @@ function initTeams() {
     ];
 
     homeTeam = homePos.map((p, i) => new Player(p.x, p.y, userPlayersData[i], true, p.role, p.num, p));
-    activeUserPlayer = homeTeam[3]; // Начинаем управление с полузащитника
+    activeUserPlayer = homeTeam[3];
 
     const awayPos = [
         { role: 'GK', x: 1030, y: 325, num: 1 },
@@ -245,7 +234,34 @@ function initTeams() {
     awayTeam = awayPos.map((p, i) => new Player(p.x, p.y, botPlayersData[i], false, p.role, p.num, p));
 }
 
-// ПЕРЕКЛЮЧЕНИЕ ИГРОКОВ (FIFA L1 / KEY Q)
+// РЕШЕНИЕ ПРОБЛЕМЫ ЗАСТРЕВАНИЯ (ФИЗИКА ОТТАЛКИВАНИЯ ИГРОКОВ)
+function resolvePlayerCollisions() {
+    const all = [...homeTeam, ...awayTeam];
+    for (let i = 0; i < all.length; i++) {
+        for (let j = i + 1; j < all.length; j++) {
+            let p1 = all[i];
+            let p2 = all[j];
+
+            let dx = p2.x - p1.x;
+            let dy = p2.y - p1.y;
+            let dist = Math.hypot(dx, dy);
+            let minDist = p1.radius + p2.radius + 2;
+
+            if (dist < minDist) {
+                if (dist === 0) { dx = 1; dy = 0; dist = 1; }
+                let overlap = minDist - dist;
+                let nx = dx / dist;
+                let ny = dy / dist;
+
+                p1.x -= nx * (overlap / 2);
+                p1.y -= ny * (overlap / 2);
+                p2.x += nx * (overlap / 2);
+                p2.y += ny * (overlap / 2);
+            }
+        }
+    }
+}
+
 function switchUserPlayer() {
     let fieldPlayers = homeTeam.filter(p => p.role !== 'GK');
     let currentIndex = fieldPlayers.indexOf(activeUserPlayer);
@@ -253,7 +269,7 @@ function switchUserPlayer() {
     activeUserPlayer = fieldPlayers[nextIndex];
 }
 
-// ВЛАДЕНИЕ МЯЧОМ И ПОДКАДЫ
+// ПОДКАТ С ЗАЩИТОЙ ВРАТАРЯ
 function executeTackle(player) {
     const now = Date.now();
     if (now < player.tackleCooldown || now < player.stunnedUntil) return;
@@ -268,14 +284,16 @@ function executeTackle(player) {
     player.vx = Math.cos(angle) * 14;
     player.vy = Math.sin(angle) * 14;
 
-    // Проверяем отбор у соперников
     const opponents = player.isHome ? awayTeam : homeTeam;
     opponents.forEach(opp => {
+        // НЕЛЬЗЯ ДЕЛАТЬ ПОДКАТ ИЛИ ОГЛУШАТЬ ВРАТАРЯ!
+        if (opp.role === 'GK') return;
+
         let dist = Math.hypot(opp.x - player.x, opp.y - player.y);
-        if (dist < 38) {
+        if (dist < 40) {
             opp.stunnedUntil = now + 1600;
             if (ball.owner === opp) {
-                ball.owner = null; // Отбираем мяч!
+                ball.owner = null;
                 ball.vx = Math.cos(angle) * 12;
                 ball.vy = Math.sin(angle) * 12;
             }
@@ -283,18 +301,15 @@ function executeTackle(player) {
     });
 }
 
-// СИЛЬНЫЙ ВРАТАРЬ
 function updateGK(gk) {
     let targetY = Math.max(240, Math.min(410, ball.y));
-    gk.y += (targetY - gk.y) * 0.18; // Быстрая реакция
+    gk.y += (targetY - gk.y) * 0.18;
 
-    // Сейв или перехват мяча
     let dist = Math.hypot(gk.x - ball.x, gk.y - ball.y);
     if (dist < 45) {
         ball.owner = gk;
         ball.vx = 0; ball.vy = 0;
         
-        // Вратарь выбивает мяч через короткую паузу
         setTimeout(() => {
             if (ball.owner === gk) {
                 ball.owner = null;
@@ -306,73 +321,94 @@ function updateGK(gk) {
     }
 }
 
-// ИСКУССТВЕННЫЙ ИНТЕЛЛЕКТ БОТОВ И СОКОМАНДНИКОВ
+// УМНЫЙ ИИ (СОКОМАНДНИКИ И БОТ)
 function updateAI() {
     const now = Date.now();
 
-    // 1. Неуправляемые игроки игрока (FIFA ИИ)
+    // 1. ДВИЖЕНИЕ СОКОМАНДНИКОВ (ОТКРЫВАНИЕ И ТАКТИКА)
     homeTeam.forEach(p => {
         if (p === activeUserPlayer || p.role === 'GK') return;
         
-        // Держат позицию / открываются
-        let targetX = p.baseX + (ball.x - 550) * 0.25;
+        let targetX = p.baseX + (ball.x - 550) * 0.35;
         let targetY = p.baseY + (ball.y - 325) * 0.25;
-        
+
+        // Если игрок атакует, нападающие забегают в свободные зоны
+        if (ball.owner && ball.owner.isHome) {
+            if (p.role === 'FW') targetX += 80;
+            if (p.role === 'MF') targetX += 40;
+        }
+
         let dx = targetX - p.x;
         let dy = targetY - p.y;
-        if (Math.hypot(dx, dy) > 20) {
-            p.vx = (dx / Math.hypot(dx, dy)) * (p.speed * 0.7);
-            p.vy = (dy / Math.hypot(dx, dy)) * (p.speed * 0.7);
+        let dist = Math.hypot(dx, dy);
+
+        if (dist > 15) {
+            p.vx = (dx / dist) * (p.speed * 0.75);
+            p.vy = (dy / dist) * (p.speed * 0.75);
         }
         p.update();
     });
 
-    // 2. Вратари
+    // 2. ВРАТАРИ
     updateGK(homeTeam[0]);
     updateGK(awayTeam[0]);
 
-    // 3. Активный Бот (Вся команда бота атакует и защищается)
-    awayTeam.forEach(bot => {
-        if (bot.role === 'GK' || now < bot.stunnedUntil) return;
+    // 3. УМНЫЙ БОТ (ТОЛЬКО 1 ИГРОК В ПРЕССИНГЕ, ОСТАЛЬНЫЕ КРОЮТ ЗОНЫ)
+    let botField = awayTeam.filter(p => p.role !== 'GK' && now > p.stunnedUntil);
+    
+    // Находим одного БЛИЖАЙШЕГО игрока бота к мячу
+    let presser = null;
+    let minDist = Infinity;
+    botField.forEach(b => {
+        let d = Math.hypot(b.x - ball.x, b.y - ball.y);
+        if (d < minDist) { minDist = d; presser = b; }
+    });
 
-        let distToBall = Math.hypot(ball.x - bot.x, ball.y - bot.y);
-
+    botField.forEach(bot => {
         if (ball.owner === bot) {
-            // Бот ведет мяч к воротам игрока и бьет
-            let targetX = 30;
-            let targetY = 325;
-            let angle = Math.atan2(targetY - bot.y, targetX - bot.x);
+            // Владение мячом: Бот продвигается вперед
+            let angle = Math.atan2(325 - bot.y, 50 - bot.x);
             bot.vx = Math.cos(angle) * bot.speed;
             bot.vy = Math.sin(angle) * bot.speed;
 
-            // Бот бьет по воротам, если близко
-            if (bot.x < 320 && Math.random() < 0.03 * currentDiff.aiAccuracy) {
+            if (bot.x < 300 && Math.random() < 0.03 * currentDiff.aiAccuracy) {
                 ball.owner = null;
                 ball.vx = -22;
                 ball.vy = (325 - bot.y) * 0.1;
             }
-        } else {
-            // Прессинг: Бот пытается отбрать мяч
+        } else if (bot === presser) {
+            // ТОЛЬКО ОДИН ИГРОК ИДЕТ В АКТИВНЫЙ ПРЕССИНГ
             let angle = Math.atan2(ball.y - bot.y, ball.x - bot.x);
             bot.vx = Math.cos(angle) * bot.speed;
             bot.vy = Math.sin(angle) * bot.speed;
 
-            if (distToBall < 35 && Math.random() < 0.04 * currentDiff.aiAccuracy) {
+            if (minDist < 35 && Math.random() < 0.04 * currentDiff.aiAccuracy) {
                 executeTackle(bot);
+            }
+        } else {
+            // ОСТАЛЬНЫЕ СОХРАНЯЮТ ПОЗИЦИЮ И КРОЮТ ЗОНЫ (НЕ БЕГУТ ТОЛПОЙ)
+            let targetX = bot.baseX + (ball.x - 550) * 0.2;
+            let targetY = bot.baseY + (ball.y - 325) * 0.2;
+
+            let dx = targetX - bot.x;
+            let dy = targetY - bot.y;
+            let dist = Math.hypot(dx, dy);
+
+            if (dist > 15) {
+                bot.vx = (dx / dist) * (bot.speed * 0.6);
+                bot.vy = (dy / dist) * (bot.speed * 0.6);
             }
         }
         bot.update();
     });
 }
 
-// ПАС ТОЛЬКО НА СВОИХ
 function executePass() {
     if (!ball.owner || ball.owner !== activeUserPlayer) return;
 
     let teammates = homeTeam.filter(p => p !== activeUserPlayer && p.role !== 'GK');
     if (teammates.length === 0) return;
 
-    // Находим ближайшего партнера по направлению
     let target = teammates[0];
     let minDist = Infinity;
     teammates.forEach(p => {
@@ -386,7 +422,6 @@ function executePass() {
     ball.vy = Math.sin(angle) * 17;
 }
 
-// УДАР ПО ВОРОТАМ (Только когда мяч у игрока)
 function startShotCharge() {
     if (!ball.owner || ball.owner !== activeUserPlayer) return;
     isChargingShot = true;
@@ -409,7 +444,6 @@ function releaseShot() {
     }
 }
 
-// ОСНОВНОЙ ИГРОВОЙ ЦИКЛ
 function gameLoop() {
     if (gameState === 'PLAYING') {
         let moveX = joystickDir.x;
@@ -427,22 +461,19 @@ function gameLoop() {
         }
 
         updateAI();
+        resolvePlayerCollisions(); // Вызов отталкивания для исключения наслоений
 
-        // ФИЗИКА И ВЛАДЕНИЕ МЯЧОМ (ПРИЦЕП)
         if (ball.owner) {
-            // Мяч идет прямо за владельцем
             let distOffset = 20;
             ball.x = ball.owner.x + Math.cos(ball.owner.facingAngle) * distOffset;
             ball.y = ball.owner.y + Math.sin(ball.owner.facingAngle) * distOffset;
             ball.vx = 0; ball.vy = 0;
         } else {
-            // Движение свободного мяча
             ball.x += ball.vx;
             ball.y += ball.vy;
             ball.vx *= ball.friction;
             ball.vy *= ball.friction;
 
-            // Захват свободнаго мяча игроками
             [...homeTeam, ...awayTeam].forEach(p => {
                 if (Date.now() < p.stunnedUntil) return;
                 let d = Math.hypot(p.x - ball.x, p.y - ball.y);
@@ -451,14 +482,11 @@ function gameLoop() {
                 }
             });
 
-            // БЕЗ АУТОВ И УГЛОВЫХ: Мяч отскакивает от бортов
             if (ball.y < 35 || ball.y > 615) ball.vy *= -1;
             if (ball.x < 35 || ball.x > 1065) {
-                // Если не попал в ворота — отскакивает
                 if (ball.y < 250 || ball.y > 400) {
                     ball.vx *= -1;
                 } else {
-                    // ГОЛ
                     if (ball.x < 35) handleGoal('away');
                     else handleGoal('home');
                 }
@@ -475,18 +503,15 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// ОТРИСОВКА ПОЛЯ И ЭЛЕМЕНТОВ
 function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Газон
     const stripeWidth = 65;
     for (let x = 0; x < canvas.width; x += stripeWidth) {
         ctx.fillStyle = (Math.floor(x / stripeWidth) % 2 === 0) ? '#1d4d2d' : '#174025';
         ctx.fillRect(x, 0, stripeWidth, canvas.height);
     }
 
-    // Разметка
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.lineWidth = 3;
     ctx.strokeRect(30, 30, 1040, 590);
@@ -499,22 +524,18 @@ function render() {
     ctx.arc(550, 325, 80, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Штрафные
     ctx.strokeRect(30, 160, 165, 330);
     ctx.strokeRect(905, 160, 165, 330);
 
-    // Ворота
     ctx.fillStyle = 'rgba(255,255,255,0.25)';
     ctx.fillRect(10, 250, 20, 150);
     ctx.strokeRect(10, 250, 20, 150);
     ctx.fillRect(1070, 250, 20, 150);
     ctx.strokeRect(1070, 250, 20, 150);
 
-    // Отрисовка команд
     homeTeam.forEach(p => p.draw(p === activeUserPlayer));
     awayTeam.forEach(p => p.draw(false));
 
-    // Мяч
     ctx.beginPath();
     ctx.ellipse(ball.x, ball.y + 5, ball.radius, 3, 0, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
@@ -529,7 +550,6 @@ function render() {
     ctx.stroke();
 }
 
-// ОБРАБОТЧИКИ УПРАВЛЕНИЯ
 document.getElementById('btn-switch').addEventListener('click', switchUserPlayer);
 document.getElementById('btn-pass').addEventListener('click', executePass);
 document.getElementById('btn-tackle').addEventListener('click', () => activeUserPlayer && executeTackle(activeUserPlayer));
@@ -552,7 +572,6 @@ window.addEventListener('keyup', e => {
     if (e.code === 'KeyJ') releaseShot();
 });
 
-// ДЖОЙСТИК
 const joyZone = document.getElementById('joystick-zone');
 const joyStick = document.getElementById('joystick-stick');
 let joyActive = false;
@@ -630,7 +649,6 @@ async function endMatch() {
     window.location.href = 'rush.html';
 }
 
-// Запуск
 document.getElementById('bot-team-name').innerText = currentDiff.name.toUpperCase();
 initTeams();
 startTimer();
