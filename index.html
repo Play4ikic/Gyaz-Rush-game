@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
     <meta charset="UTF-8">
     <title>FixOne FC - Hub</title>
     <link rel="icon" href="favicon.png" type="image/png">
@@ -657,6 +659,16 @@
 
         setInterval(tick, 1000);
         tick();
+    </script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker зарегистрирован!', reg))
+            .catch(err => console.log('Ошибка Service Worker:', err));
+        });
+      }
     </script>
 </body>
 </html>
