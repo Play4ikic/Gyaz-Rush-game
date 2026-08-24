@@ -3,13 +3,13 @@ import { updateBalance } from './economy.js';
 const canvas = document.getElementById('pitchCanvas');
 const ctx = canvas.getContext('2d');
 
-// СНИЖЕНА СКОРОСТЬ ДЛЯ БОЛЕЕ РЕАЛИСТИЧНОГО ТЕМПА (В СТИЛЕ FC MOBILE)
+// СНИЖЕНА СКОРОСТЬ ДЛЯ БОЛЕЕ КОНТРОЛИРУЕМОГО ТЕМПА
 const DIFFICULTY_SETTINGS = {
-    novice: { name: 'Новичок', aiSpeed: 1.4, aiAccuracy: 0.5, maxReward: 20000, cardTier: 'gold' },
-    pro: { name: 'Профессионал', aiSpeed: 1.8, aiAccuracy: 0.7, maxReward: 50000, cardTier: 'champions' },
-    world_class: { name: 'Мировой Класс', aiSpeed: 2.2, aiAccuracy: 0.85, maxReward: 90000, cardTier: 'toty' },
-    legend: { name: 'Легенда', aiSpeed: 2.6, aiAccuracy: 0.94, maxReward: 140000, cardTier: 'chaos' },
-    ultimate: { name: 'ULTIMATE', aiSpeed: 3.0, aiAccuracy: 1.0, maxReward: 200000, cardTier: 'ballondor' }
+    novice: { name: 'Новичок', aiSpeed: 1.1, aiAccuracy: 0.5, maxReward: 20000, cardTier: 'gold' },
+    pro: { name: 'Профессионал', aiSpeed: 1.4, aiAccuracy: 0.7, maxReward: 50000, cardTier: 'champions' },
+    world_class: { name: 'Мировой Класс', aiSpeed: 1.7, aiAccuracy: 0.85, maxReward: 90000, cardTier: 'toty' },
+    legend: { name: 'Легенда', aiSpeed: 2.0, aiAccuracy: 0.94, maxReward: 140000, cardTier: 'chaos' },
+    ultimate: { name: 'ULTIMATE', aiSpeed: 2.3, aiAccuracy: 1.0, maxReward: 200000, cardTier: 'ballondor' }
 };
 
 const BOT_CARD_POOLS = {
@@ -32,7 +32,7 @@ const BOT_CARD_POOLS = {
         { name: 'Nazrin', rating: 91, pos: 'DF', folder: 'Toty', file: 'Nazrin-91.png' },
         { name: 'Tuncay', rating: 97, pos: 'DF', folder: 'Toty', file: 'Tuncay-97.png' },
         { name: 'Elcan', rating: 97, pos: 'RW', folder: 'Toty', file: 'Elcan-97.png' },
-        { name: 'Turgay', rating: 97, pos: 'ST', folder: 'Toty', file: 'Turqay-97.png' }
+        { name: 'Turgay', rating: 97, pos: 'ST', folder: 'Toty', file: 'Turgay-97.png' }
     ],
     chaos: [
         { name: 'Bugday', rating: 99, pos: 'GK', folder: 'CHAOS', file: 'Bugday-99.png' },
@@ -93,10 +93,16 @@ const ball = {
 const joystickDir = { x: 0, y: 0 };
 const keys = {};
 
+// Переменные ударов и пасов
 let isChargingShot = false;
 let shotPower = 0;
+
+let isChargingPass = false;
+let passPower = 0;
+let passPressStartTime = 0;
+
 let botPassCooldown = 0;
-let gkHoldStartTime = 0; // Таймер правила 5 секунд для вратарей
+let gkHoldStartTime = 0;
 
 class Player {
     constructor(x, y, data, isHome, role, number, basePos) {
@@ -107,15 +113,17 @@ class Player {
         this.vx = 0;
         this.vy = 0;
         this.facingAngle = isHome ? 0 : Math.PI;
-        this.radius = 28;
+        
+        // УВЕЛИЧЕН РАДИУС КАРТОЧЕК ДЛЯ ЛУЧШЕЙ ВИДИМОСТИ
+        this.radius = 34; 
         this.data = data;
         this.isHome = isHome;
         this.role = role;
         this.number = number;
 
-        // Корректировка базовая скорости (сделано более плавным и умеренным)
+        // ПЛАВНАЯ СКОРОСТЬ
         const rating = data && data.rating ? Number(data.rating) : 80;
-        this.speed = (rating / 60) + (isHome ? 1.5 : currentDiff.aiSpeed);
+        this.speed = ((rating / 70) + (isHome ? 1.2 : currentDiff.aiSpeed)) * 0.82;
 
         this.stunnedUntil = 0;
         this.tackleCooldown = 0;
@@ -132,18 +140,27 @@ class Player {
         const now = Date.now();
         ctx.save();
 
+        // Тень
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y + 18, 22, 8, 0, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.ellipse(this.x, this.y + 22, 26, 9, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
         ctx.fill();
 
+        // Оглушение
         if (now < this.stunnedUntil) {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius + 6, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.45)';
             ctx.fill();
         }
 
+        // Внешнее цветное свечение для разделения команд
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius + 4, 0, Math.PI * 2);
+        ctx.fillStyle = this.isHome ? 'rgba(0, 210, 255, 0.35)' : 'rgba(255, 51, 102, 0.35)';
+        ctx.fill();
+
+        // Сама карточка
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.clip();
@@ -154,40 +171,54 @@ class Player {
             ctx.fillStyle = this.isHome ? '#0077ff' : '#e74c3c';
             ctx.fill();
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 15px sans-serif';
+            ctx.font = 'bold 16px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(this.number, this.x, this.y);
         }
         ctx.restore();
 
+        // ЧЕТКАЯ ЦВЕТОВАЯ РАМКА КОМАНДЫ (Синий/Голубой = ВАШИ, Красный/Золотой = СОПЕРНИК)
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius + 1, 0, Math.PI * 2);
-        ctx.strokeStyle = this.isHome ? '#ffffff' : '#ffcc00';
-        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = this.isHome ? '#00d2ff' : '#ff3366';
+        ctx.lineWidth = 3.5;
         ctx.stroke();
 
+        // Маркер над головой игроков
+        ctx.beginPath();
+        let markerY = this.y - this.radius - 16;
+        ctx.moveTo(this.x - 7, markerY - 8);
+        ctx.lineTo(this.x + 7, markerY - 8);
+        ctx.lineTo(this.x, markerY);
+        ctx.closePath();
+        ctx.fillStyle = this.isHome ? '#00ff88' : '#ff3366';
+        ctx.fill();
+
+        // Кольцо активного подконтрольного игрока
         if (isActive) {
             ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius + 7, 0, Math.PI * 2);
+            ctx.arc(this.x, this.y, this.radius + 8, 0, Math.PI * 2);
             ctx.strokeStyle = '#00ff88';
-            ctx.lineWidth = 3.5;
+            ctx.lineWidth = 4;
             ctx.stroke();
 
+            // Вектор направления
             ctx.beginPath();
-            ctx.moveTo(this.x + Math.cos(this.facingAngle) * 30, this.y + Math.sin(this.facingAngle) * 30);
-            ctx.lineTo(this.x + Math.cos(this.facingAngle) * 48, this.y + Math.sin(this.facingAngle) * 48);
+            ctx.moveTo(this.x + Math.cos(this.facingAngle) * (this.radius + 2), this.y + Math.sin(this.facingAngle) * (this.radius + 2));
+            ctx.lineTo(this.x + Math.cos(this.facingAngle) * (this.radius + 20), this.y + Math.sin(this.facingAngle) * (this.radius + 20));
             ctx.strokeStyle = '#00ff88';
-            ctx.lineWidth = 3.5;
+            ctx.lineWidth = 4;
             ctx.stroke();
         }
 
+        // Подпись имени
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 11px sans-serif';
         ctx.textAlign = 'center';
         ctx.shadowColor = '#000';
         ctx.shadowBlur = 4;
-        ctx.fillText(`${this.data.name} (${this.data.rating})`, this.x, this.y - this.radius - 8);
+        ctx.fillText(`${this.data.name} (${this.data.rating})`, this.x, this.y - this.radius - 22);
         ctx.shadowBlur = 0;
     }
 
@@ -205,7 +236,6 @@ class Player {
         this.vx *= 0.8;
         this.vy *= 0.8;
 
-        // Вратарь жестко привязан к своей штрафной
         if (this.role === 'GK') {
             if (this.isHome) {
                 this.x = Math.max(35 + this.radius, Math.min(195 - this.radius, this.x));
@@ -292,15 +322,15 @@ function executeTackle(player) {
     }
 
     let angle = player.facingAngle;
-    player.vx = Math.cos(angle) * 14;
-    player.vy = Math.sin(angle) * 14;
+    player.vx = Math.cos(angle) * 13;
+    player.vy = Math.sin(angle) * 13;
 
     const opponents = player.isHome ? awayTeam : homeTeam;
     opponents.forEach(opp => {
         if (opp.role === 'GK' && ball.owner === opp) return;
 
         let dist = Math.hypot(opp.x - player.x, opp.y - player.y);
-        if (dist < 52) {
+        if (dist < 56) {
             opp.stunnedUntil = now + 1600;
             if (ball.owner === opp) {
                 ball.owner = player;
@@ -314,10 +344,10 @@ function updateGK(gk) {
     if (gk.isHome && activeUserPlayer === gk) return;
 
     let targetY = Math.max(200, Math.min(450, ball.y));
-    gk.y += (targetY - gk.y) * 0.12;
+    gk.y += (targetY - gk.y) * 0.1;
 
     let dist = Math.hypot(gk.x - ball.x, gk.y - ball.y);
-    if (dist < 50 && !ball.owner) {
+    if (dist < 55 && !ball.owner) {
         ball.owner = gk;
         ball.vx = 0; ball.vy = 0;
         gkHoldStartTime = Date.now();
@@ -327,21 +357,19 @@ function updateGK(gk) {
         }
     }
 
-    // ИНТЕЛЛЕКТ ВРАТАРЯ И ПРАВИЛО 5 СЕКУНД
     if (ball.owner === gk) {
         let heldDuration = Date.now() - gkHoldStartTime;
 
-        // Бот-вратарь отдает пас спустя 1.2 секунды
         if (!gk.isHome && heldDuration > 1200 && heldDuration < 4800) {
             let teammates = awayTeam.filter(p => p !== gk);
             let target = teammates[Math.floor(Math.random() * teammates.length)];
             let angle = Math.atan2(target.y - gk.y, target.x - gk.x);
             ball.owner = null;
-            ball.vx = Math.cos(angle) * 14;
-            ball.vy = Math.sin(angle) * 14;
+            ball.vx = Math.cos(angle) * 15;
+            ball.vy = Math.sin(angle) * 15;
         }
 
-        // Если 5 секунд истекли — принудительный сильный ВЫНОС МЯЧА
+        // Правило 5 секунд: Вынос мяча
         if (heldDuration >= 5000) {
             ball.owner = null;
             let clearDirection = gk.isHome ? 1 : -1;
@@ -361,8 +389,8 @@ function updateAI() {
         let targetY = p.baseY + (ball.y - 325) * 0.2;
 
         if (ball.owner && ball.owner.isHome) {
-            if (p.role === 'FW') targetX += 100;
-            if (p.role === 'MF') targetX += 50;
+            if (p.role === 'FW') targetX += 90;
+            if (p.role === 'MF') targetX += 45;
         } else if (ball.owner && !ball.owner.isHome) {
             targetX -= 40;
         }
@@ -392,31 +420,28 @@ function updateAI() {
 
     botField.forEach(bot => {
         if (ball.owner === bot) {
-            // Удар по воротам
             if (bot.x < 360 && Math.random() < 0.05 * currentDiff.aiAccuracy) {
                 ball.owner = null;
                 let goalY = 280 + Math.random() * 90;
                 let angle = Math.atan2(goalY - bot.y, 30 - bot.x);
-                ball.vx = Math.cos(angle) * 18;
-                ball.vy = Math.sin(angle) * 18;
+                ball.vx = Math.cos(angle) * 17;
+                ball.vy = Math.sin(angle) * 17;
                 return;
             }
 
-            // Пас
             if (now > botPassCooldown && Math.random() < 0.04 * currentDiff.aiAccuracy) {
                 let openTeammates = awayTeam.filter(t => t !== bot && t.x < bot.x && now > t.stunnedUntil);
                 if (openTeammates.length > 0) {
                     let target = openTeammates[Math.floor(Math.random() * openTeammates.length)];
                     let angle = Math.atan2(target.y - bot.y, target.x - bot.x);
                     ball.owner = null;
-                    ball.vx = Math.cos(angle) * 15;
-                    ball.vy = Math.sin(angle) * 15;
+                    ball.vx = Math.cos(angle) * 14;
+                    ball.vy = Math.sin(angle) * 14;
                     botPassCooldown = now + 1000;
                     return;
                 }
             }
 
-            // Движение к воротам
             let angle = Math.atan2(325 - bot.y, 35 - bot.x);
             bot.vx = Math.cos(angle) * bot.speed;
             bot.vy = Math.sin(angle) * bot.speed;
@@ -429,7 +454,7 @@ function updateAI() {
                 bot.vx = Math.cos(angle) * bot.speed;
                 bot.vy = Math.sin(angle) * bot.speed;
 
-                if (minDist < 45 && Math.random() < 0.05 * currentDiff.aiAccuracy) {
+                if (minDist < 48 && Math.random() < 0.05 * currentDiff.aiAccuracy) {
                     executeTackle(bot);
                 }
             }
@@ -450,23 +475,53 @@ function updateAI() {
     });
 }
 
-function executePass() {
+// УПРАВЛЕНИЕ ПАСАМИ: КАСАНИЕ ИЛИ ЗАРЯД СИЛЫ
+function startPassCharge() {
     if (!ball.owner || ball.owner !== activeUserPlayer) return;
+    isChargingPass = true;
+    passPower = 0;
+    passPressStartTime = Date.now();
+    document.getElementById('power-bar-container').style.display = 'block';
+}
 
-    let teammates = homeTeam.filter(p => p !== activeUserPlayer);
-    if (teammates.length === 0) return;
+function releasePass() {
+    if (!isChargingPass) return;
+    isChargingPass = false;
+    document.getElementById('power-bar-container').style.display = 'none';
 
-    let target = teammates[0];
-    let minDist = Infinity;
-    teammates.forEach(p => {
-        let d = Math.hypot(p.x - activeUserPlayer.x, p.y - activeUserPlayer.y);
-        if (d < minDist) { minDist = d; target = p; }
-    });
+    if (ball.owner !== activeUserPlayer) return;
 
-    let angle = Math.atan2(target.y - activeUserPlayer.y, target.x - activeUserPlayer.x);
-    ball.owner = null;
-    ball.vx = Math.cos(angle) * 15;
-    ball.vy = Math.sin(angle) * 15;
+    const holdDuration = Date.now() - passPressStartTime;
+
+    // Быстрый клик (в касание) — пас БЛИЖАЙШЕМУ игроку вашей команды
+    if (holdDuration < 220 && passPower < 15) {
+        let teammates = homeTeam.filter(p => p !== activeUserPlayer);
+        if (teammates.length > 0) {
+            let target = teammates[0];
+            let minDist = Infinity;
+            teammates.forEach(p => {
+                let d = Math.hypot(p.x - activeUserPlayer.x, p.y - activeUserPlayer.y);
+                if (d < minDist) { minDist = d; target = p; }
+            });
+
+            let angle = Math.atan2(target.y - activeUserPlayer.y, target.x - activeUserPlayer.x);
+            ball.owner = null;
+            ball.vx = Math.cos(angle) * 14;
+            ball.vy = Math.sin(angle) * 14;
+        }
+    } else {
+        // Удержание — мощный пас с силой (позволяет вратарю/защитнику отдавать далеко вперед)
+        ball.owner = null;
+        let powerSpeed = (passPower / 100) * 14 + 10; // Сила паса от 10 до 24
+        
+        let passAngle = activeUserPlayer.facingAngle;
+        if (Math.abs(joystickDir.x) > 0.1 || Math.abs(joystickDir.y) > 0.1) {
+            passAngle = Math.atan2(joystickDir.y, joystickDir.x);
+        }
+
+        ball.vx = Math.cos(passAngle) * powerSpeed;
+        ball.vy = Math.sin(passAngle) * powerSpeed;
+    }
 }
 
 function startShotCharge() {
@@ -543,9 +598,13 @@ function gameLoop() {
             }
         }
 
+        // Шкала зарядки удара или паса
         if (isChargingShot) {
-            shotPower = Math.min(100, shotPower + 3);
+            shotPower = Math.min(100, shotPower + 3.5);
             document.getElementById('power-bar-fill').style.width = shotPower + '%';
+        } else if (isChargingPass) {
+            passPower = Math.min(100, passPower + 4);
+            document.getElementById('power-bar-fill').style.width = passPower + '%';
         }
     }
 
@@ -600,25 +659,32 @@ function render() {
     ctx.stroke();
 }
 
+// НАЗНАЧЕНИЕ СОБЫТИЙ ДЛЯ КНОПОК ПАСА И УДАРА
 document.getElementById('btn-switch').addEventListener('click', switchUserPlayer);
-document.getElementById('btn-pass').addEventListener('click', executePass);
 document.getElementById('btn-tackle').addEventListener('click', () => activeUserPlayer && executeTackle(activeUserPlayer));
+
+const passBtn = document.getElementById('btn-pass');
+passBtn.addEventListener('mousedown', startPassCharge);
+passBtn.addEventListener('touchstart', startPassCharge);
 
 const shotBtn = document.getElementById('btn-shot');
 shotBtn.addEventListener('mousedown', startShotCharge);
 shotBtn.addEventListener('touchstart', startShotCharge);
-window.addEventListener('mouseup', releaseShot);
-window.addEventListener('touchend', releaseShot);
+
+window.addEventListener('mouseup', () => { releaseShot(); releasePass(); });
+window.addEventListener('touchend', () => { releaseShot(); releasePass(); });
 
 window.addEventListener('keydown', e => {
     keys[e.code] = true;
     if (e.code === 'KeyQ') switchUserPlayer();
-    if (e.code === 'KeyK') executePass();
+    if (e.code === 'KeyK' && !isChargingPass) startPassCharge();
     if (e.code === 'KeyL' && activeUserPlayer) executeTackle(activeUserPlayer);
     if (e.code === 'KeyJ' && !isChargingShot) startShotCharge();
 });
+
 window.addEventListener('keyup', e => {
     keys[e.code] = false;
+    if (e.code === 'KeyK') releasePass();
     if (e.code === 'KeyJ') releaseShot();
 });
 
