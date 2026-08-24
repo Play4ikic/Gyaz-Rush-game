@@ -3,18 +3,57 @@ import { updateBalance } from './economy.js';
 const canvas = document.getElementById('pitchCanvas');
 const ctx = canvas.getContext('2d');
 
+// НАСТРОЙКИ СЛОЖНОСТИ И БОТА
 const DIFFICULTY_SETTINGS = {
-    novice: { name: 'Новичок', aiSpeed: 0.6, aiAccuracy: 0.4, maxReward: 20000, botRating: 75 },
-    pro: { name: 'Профессионал', aiSpeed: 0.8, aiAccuracy: 0.6, maxReward: 50000, botRating: 85 },
-    world_class: { name: 'Мировой Класс', aiSpeed: 1.0, aiAccuracy: 0.8, maxReward: 90000, botRating: 92 },
-    legend: { name: 'Легенда', aiSpeed: 1.2, aiAccuracy: 0.9, maxReward: 140000, botRating: 98 },
-    ultimate: { name: 'ULTIMATE', aiSpeed: 1.4, aiAccuracy: 1.0, maxReward: 200000, botRating: 105 }
+    novice: { name: 'Новичок', aiSpeed: 2.2, aiAccuracy: 0.4, maxReward: 20000, cardTier: 'gold' },
+    pro: { name: 'Профессионал', aiSpeed: 2.8, aiAccuracy: 0.65, maxReward: 50000, cardTier: 'champions' },
+    world_class: { name: 'Мировой Класс', aiSpeed: 3.4, aiAccuracy: 0.82, maxReward: 90000, cardTier: 'toty' },
+    legend: { name: 'Легенда', aiSpeed: 4.0, aiAccuracy: 0.92, maxReward: 140000, cardTier: 'chaos' },
+    ultimate: { name: 'ULTIMATE', aiSpeed: 4.6, aiAccuracy: 1.0, maxReward: 200000, cardTier: 'ballondor' }
+};
+
+const BOT_CARD_POOLS = {
+    gold: [
+        { name: 'Bugday', rating: 87, pos: 'GK', folder: 'Gold', file: 'Bugday-87.png' },
+        { name: 'Selim', rating: 68, pos: 'CB', folder: 'Gold', file: 'Selim-68.png' },
+        { name: 'Nazrin', rating: 82, pos: 'CB', folder: 'Gold', file: 'Nazrin-82.png' },
+        { name: 'Elcan', rating: 92, pos: 'RW', folder: 'Gold', file: 'Elcan-92.png' },
+        { name: 'Turgay', rating: 92, pos: 'ST', folder: 'Gold', file: 'Turqay-92.png' }
+    ],
+    champions: [
+        { name: 'Bugday', rating: 90, pos: 'GK', folder: 'Champions', file: 'Bugday-90.png' },
+        { name: 'Nazrin', rating: 88, pos: 'DF', folder: 'Champions', file: 'Nazrin-88.png' },
+        { name: 'Tuncay', rating: 91, pos: 'DF', folder: 'Champions', file: 'Tuncay-91.png' },
+        { name: 'Elcan', rating: 96, pos: 'RW', folder: 'Champions', file: 'Elcan-96.png' },
+        { name: 'Turgay', rating: 96, pos: 'ST', folder: 'Champions', file: 'Turqay-96.png' }
+    ],
+    toty: [
+        { name: 'Bugday', rating: 95, pos: 'GK', folder: 'Toty', file: 'Bugday-95.png' },
+        { name: 'Nazrin', rating: 91, pos: 'DF', folder: 'Toty', file: 'Nazrin-91.png' },
+        { name: 'Tuncay', rating: 97, pos: 'DF', folder: 'Toty', file: 'Tuncay-97.png' },
+        { name: 'Elcan', rating: 97, pos: 'RW', folder: 'Toty', file: 'Elcan-97.png' },
+        { name: 'Turgay', rating: 97, pos: 'ST', folder: 'Toty', file: 'Turqay-97.png' }
+    ],
+    chaos: [
+        { name: 'Bugday', rating: 99, pos: 'GK', folder: 'CHAOS', file: 'Bugday-99.png' },
+        { name: 'Nazrin', rating: 99, pos: 'DF', folder: 'CHAOS', file: 'Nazrin-99.png' },
+        { name: 'Tuncay', rating: 99, pos: 'DF', folder: 'CHAOS', file: 'Tuncay-99.png' },
+        { name: 'Elcan', rating: 99, pos: 'RW', folder: 'CHAOS', file: 'Elcan-99.png' },
+        { name: 'Turgay', rating: 99, pos: 'ST', folder: 'CHAOS', file: 'Turgay-99.png' }
+    ],
+    ballondor: [
+        { name: 'Bugday', rating: 105, pos: 'GK', folder: 'GoldenStars', file: 'Bugday-105.png' },
+        { name: 'Nazrin', rating: 102, pos: 'CB', folder: 'GoldenStars', file: 'Nazrin-102.png' },
+        { name: 'Tuncay', rating: 103, pos: 'CB', folder: 'GoldenStars', file: 'Tuncay-103.png' },
+        { name: 'Elcan', rating: 105, pos: 'CAM', folder: 'GoldenStars', file: 'Elcan-105.png' },
+        { name: 'Turgay', rating: 103, pos: 'ST', folder: 'GoldenStars', file: 'Turgay-103.png' }
+    ]
 };
 
 const currentDiffKey = localStorage.getItem('rush_difficulty') || 'novice';
 const currentDiff = DIFFICULTY_SETTINGS[currentDiffKey];
 
-// --- ВАЛИДАЦИЯ И БЕЗОПАСНОЕ ПОЛУЧЕНИЕ СОСТАВА ---
+// ИНИЦИАЛИЗАЦИЯ ИГРОКОВ ПОЛЬЗОВАТЕЛЯ
 function getVerifiedSquad() {
     let squad = [];
     try {
@@ -29,22 +68,17 @@ function getVerifiedSquad() {
     } catch(e) {}
     
     let filtered = squad.filter(p => p !== null && typeof p === 'object');
-    
-    // Если игроков меньше 5, автозаполняем дефолтными для бессбойного старта
     const defaultNames = ['Neymar Jr', 'Messi', 'Griezmann', 'Mbappe', 'Courtois'];
     while (filtered.length < 5) {
-        filtered.push({
-            name: defaultNames[filtered.length] || `Player ${filtered.length + 1}`,
-            rating: 88,
-            number: filtered.length + 1
-        });
+        filtered.push({ name: defaultNames[filtered.length], rating: 88, number: filtered.length + 1 });
     }
     return filtered.slice(0, 5);
 }
 
-const validPlayers = getVerifiedSquad();
+const userPlayersData = getVerifiedSquad();
+const botPlayersData = BOT_CARD_POOLS[currentDiff.cardTier];
 
-// --- СОСТОЯНИЕ МАТЧА ---
+// ИГРОВОЕ СОСТОЯНИЕ
 const HALF_DURATION = 240;
 let matchSeconds = 0;
 let currentHalf = 1;
@@ -53,7 +87,12 @@ let homeScore = 0;
 let awayScore = 0;
 let gameState = 'PLAYING';
 
-const ball = { x: 550, y: 325, vx: 0, vy: 0, radius: 7, friction: 0.975 };
+// МЯЧ И ВЛАДЕНИЕ
+const ball = { 
+    x: 550, y: 325, vx: 0, vy: 0, radius: 7, friction: 0.96, 
+    owner: null // Игрок, у которого сейчас мяч
+};
+
 const joystickDir = { x: 0, y: 0 };
 const keys = {};
 
@@ -61,11 +100,14 @@ let isChargingShot = false;
 let shotPower = 0;
 
 class Player {
-    constructor(x, y, data, isHome, role, number) {
+    constructor(x, y, data, isHome, role, number, basePos) {
         this.x = x;
         this.y = y;
+        this.baseX = basePos.x;
+        this.baseY = basePos.y;
         this.vx = 0;
         this.vy = 0;
+        this.facingAngle = isHome ? 0 : Math.PI;
         this.radius = 18;
         this.data = data;
         this.isHome = isHome;
@@ -73,7 +115,7 @@ class Player {
         this.number = number;
 
         const rating = data && data.rating ? Number(data.rating) : 80;
-        this.speed = (rating / 20) * (isHome ? 1.0 : currentDiff.aiSpeed);
+        this.speed = (rating / 30) + (isHome ? 2.2 : currentDiff.aiSpeed);
 
         this.stunnedUntil = 0;
         this.tackleCooldown = 0;
@@ -81,10 +123,8 @@ class Player {
 
         if (data && data.file) {
             this.img = new Image();
-            const folder = data.folder || (rating >= 97 ? 'Toty' : 'Champions');
-            this.img.src = `${folder}/${data.file}`;
+            this.img.src = `${data.folder}/${data.file}`;
             this.img.onload = () => { this.hasImg = true; };
-            this.img.onerror = () => { this.hasImg = false; };
         }
     }
 
@@ -92,13 +132,13 @@ class Player {
         const now = Date.now();
         ctx.save();
 
-        // Тень под игроком
+        // Тень
         ctx.beginPath();
         ctx.ellipse(this.x, this.y + 14, 16, 6, 0, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(0,0,0,0.35)';
         ctx.fill();
 
-        // Эффект оглушения
+        // Оглушение при подкате
         if (now < this.stunnedUntil) {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius + 6, 0, Math.PI * 2);
@@ -106,7 +146,7 @@ class Player {
             ctx.fill();
         }
 
-        // Круг игрока
+        // Карточка/Аватар
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.clip();
@@ -131,7 +171,7 @@ class Player {
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Маркер активного игрока с векторной стрелкой направления (как на референсе)
+        // Маркер активного игрока
         if (isActive) {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius + 6, 0, Math.PI * 2);
@@ -139,31 +179,22 @@ class Player {
             ctx.lineWidth = 3;
             ctx.stroke();
 
-            // Стрелка направления движения
-            let speedMag = Math.hypot(this.vx, this.vy);
-            let dirX = speedMag > 0.1 ? this.vx / speedMag : (this.isHome ? 1 : -1);
-            let dirY = speedMag > 0.1 ? this.vy / speedMag : 0;
-
+            // Вектор направления
             ctx.beginPath();
-            ctx.moveTo(this.x + dirX * 22, this.y + dirY * 22);
-            ctx.lineTo(this.x + dirX * 38, this.y + dirY * 38);
-            ctx.strokeStyle = 'rgba(0, 255, 136, 0.8)';
+            ctx.moveTo(this.x + Math.cos(this.facingAngle) * 20, this.y + Math.sin(this.facingAngle) * 20);
+            ctx.lineTo(this.x + Math.cos(this.facingAngle) * 35, this.y + Math.sin(this.facingAngle) * 35);
+            ctx.strokeStyle = '#00ff88';
             ctx.lineWidth = 3;
             ctx.stroke();
-
-            ctx.beginPath();
-            ctx.arc(this.x + dirX * 38, this.y + dirY * 38, 4, 0, Math.PI * 2);
-            ctx.fillStyle = '#00ff88';
-            ctx.fill();
         }
 
-        // Имя и рейтинг над игроком
+        // Никнейм над игроком
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 10px sans-serif';
         ctx.textAlign = 'center';
         ctx.shadowColor = '#000';
         ctx.shadowBlur = 4;
-        ctx.fillText(`${this.data.name || 'Bot'} (${this.data.rating || 80})`, this.x, this.y - this.radius - 6);
+        ctx.fillText(`${this.data.name} (${this.data.rating})`, this.x, this.y - this.radius - 6);
         ctx.shadowBlur = 0;
     }
 
@@ -173,9 +204,15 @@ class Player {
 
         this.x += this.vx;
         this.y += this.vy;
-        this.vx *= 0.82;
-        this.vy *= 0.82;
+        
+        if (Math.hypot(this.vx, this.vy) > 0.2) {
+            this.facingAngle = Math.atan2(this.vy, this.vx);
+        }
 
+        this.vx *= 0.8;
+        this.vy *= 0.8;
+
+        // Жесткие границы поля (БЕЗ АУТОВ)
         this.x = Math.max(35, Math.min(1065, this.x));
         this.y = Math.max(35, Math.min(615, this.y));
     }
@@ -187,122 +224,192 @@ let activeUserPlayer = null;
 
 function initTeams() {
     const homePos = [
-        { role: 'GK', x: 80, y: 325, num: 1 },
+        { role: 'GK', x: 70, y: 325, num: 1 },
         { role: 'DF', x: 260, y: 180, num: 2 },
         { role: 'DF', x: 260, y: 470, num: 3 },
         { role: 'MF', x: 450, y: 325, num: 8 },
         { role: 'FW', x: 530, y: 325, num: 10 }
     ];
 
-    homeTeam = homePos.map((p, i) => new Player(p.x, p.y, validPlayers[i], true, p.role, p.num));
-    activeUserPlayer = homeTeam[3];
+    homeTeam = homePos.map((p, i) => new Player(p.x, p.y, userPlayersData[i], true, p.role, p.num, p));
+    activeUserPlayer = homeTeam[3]; // Начинаем управление с полузащитника
 
     const awayPos = [
-        { role: 'GK', x: 1020, y: 325, num: 1 },
+        { role: 'GK', x: 1030, y: 325, num: 1 },
         { role: 'DF', x: 840, y: 180, num: 4 },
         { role: 'DF', x: 840, y: 470, num: 5 },
         { role: 'MF', x: 650, y: 325, num: 6 },
         { role: 'FW', x: 570, y: 325, num: 9 }
     ];
 
-    awayTeam = awayPos.map((p) => new Player(p.x, p.y, { name: 'Bot', rating: currentDiff.botRating }, false, p.role, p.num));
+    awayTeam = awayPos.map((p, i) => new Player(p.x, p.y, botPlayersData[i], false, p.role, p.num, p));
 }
 
+// ПЕРЕКЛЮЧЕНИЕ ИГРОКОВ (FIFA L1 / KEY Q)
+function switchUserPlayer() {
+    let fieldPlayers = homeTeam.filter(p => p.role !== 'GK');
+    let currentIndex = fieldPlayers.indexOf(activeUserPlayer);
+    let nextIndex = (currentIndex + 1) % fieldPlayers.length;
+    activeUserPlayer = fieldPlayers[nextIndex];
+}
+
+// ВЛАДЕНИЕ МЯЧОМ И ПОДКАДЫ
 function executeTackle(player) {
     const now = Date.now();
     if (now < player.tackleCooldown || now < player.stunnedUntil) return;
 
-    player.tackleCooldown = now + 1800;
-
-    const tackleBtn = document.getElementById('btn-tackle');
+    player.tackleCooldown = now + 1500;
     if (player.isHome) {
-        tackleBtn.classList.add('cooldown');
-        setTimeout(() => tackleBtn.classList.remove('cooldown'), 1800);
+        document.getElementById('btn-tackle').classList.add('cooldown');
+        setTimeout(() => document.getElementById('btn-tackle').classList.remove('cooldown'), 1500);
     }
 
-    let angle = Math.atan2(ball.y - player.y, ball.x - player.x);
-    player.vx = Math.cos(angle) * 13;
-    player.vy = Math.sin(angle) * 13;
+    let angle = player.facingAngle;
+    player.vx = Math.cos(angle) * 14;
+    player.vy = Math.sin(angle) * 14;
 
+    // Проверяем отбор у соперников
     const opponents = player.isHome ? awayTeam : homeTeam;
     opponents.forEach(opp => {
         let dist = Math.hypot(opp.x - player.x, opp.y - player.y);
-        if (dist < 42) {
-            opp.stunnedUntil = now + 1800;
-            ball.vx = Math.cos(angle) * 15;
-            ball.vy = Math.sin(angle) * 15;
+        if (dist < 38) {
+            opp.stunnedUntil = now + 1600;
+            if (ball.owner === opp) {
+                ball.owner = null; // Отбираем мяч!
+                ball.vx = Math.cos(angle) * 12;
+                ball.vy = Math.sin(angle) * 12;
+            }
         }
     });
 }
 
+// СИЛЬНЫЙ ВРАТАРЬ
+function updateGK(gk) {
+    let targetY = Math.max(240, Math.min(410, ball.y));
+    gk.y += (targetY - gk.y) * 0.18; // Быстрая реакция
+
+    // Сейв или перехват мяча
+    let dist = Math.hypot(gk.x - ball.x, gk.y - ball.y);
+    if (dist < 45) {
+        ball.owner = gk;
+        ball.vx = 0; ball.vy = 0;
+        
+        // Вратарь выбивает мяч через короткую паузу
+        setTimeout(() => {
+            if (ball.owner === gk) {
+                ball.owner = null;
+                let clearAngle = gk.isHome ? 0 : Math.PI;
+                ball.vx = Math.cos(clearAngle) * 20;
+                ball.vy = (Math.random() - 0.5) * 10;
+            }
+        }, 600);
+    }
+}
+
+// ИСКУССТВЕННЫЙ ИНТЕЛЛЕКТ БОТОВ И СОКОМАНДНИКОВ
 function updateAI() {
     const now = Date.now();
+
+    // 1. Неуправляемые игроки игрока (FIFA ИИ)
+    homeTeam.forEach(p => {
+        if (p === activeUserPlayer || p.role === 'GK') return;
+        
+        // Держат позицию / открываются
+        let targetX = p.baseX + (ball.x - 550) * 0.25;
+        let targetY = p.baseY + (ball.y - 325) * 0.25;
+        
+        let dx = targetX - p.x;
+        let dy = targetY - p.y;
+        if (Math.hypot(dx, dy) > 20) {
+            p.vx = (dx / Math.hypot(dx, dy)) * (p.speed * 0.7);
+            p.vy = (dy / Math.hypot(dx, dy)) * (p.speed * 0.7);
+        }
+        p.update();
+    });
+
+    // 2. Вратари
+    updateGK(homeTeam[0]);
+    updateGK(awayTeam[0]);
+
+    // 3. Активный Бот (Вся команда бота атакует и защищается)
     awayTeam.forEach(bot => {
-        if (now < bot.stunnedUntil) return;
+        if (bot.role === 'GK' || now < bot.stunnedUntil) return;
 
-        if (bot.role === 'GK') {
-            bot.y += (ball.y - bot.y) * 0.08 * currentDiff.aiAccuracy;
-            bot.y = Math.max(250, Math.min(400, bot.y));
+        let distToBall = Math.hypot(ball.x - bot.x, ball.y - bot.y);
+
+        if (ball.owner === bot) {
+            // Бот ведет мяч к воротам игрока и бьет
+            let targetX = 30;
+            let targetY = 325;
+            let angle = Math.atan2(targetY - bot.y, targetX - bot.x);
+            bot.vx = Math.cos(angle) * bot.speed;
+            bot.vy = Math.sin(angle) * bot.speed;
+
+            // Бот бьет по воротам, если близко
+            if (bot.x < 320 && Math.random() < 0.03 * currentDiff.aiAccuracy) {
+                ball.owner = null;
+                ball.vx = -22;
+                ball.vy = (325 - bot.y) * 0.1;
+            }
         } else {
-            let dx = ball.x - bot.x;
-            let dy = ball.y - bot.y;
-            let dist = Math.hypot(dx, dy);
+            // Прессинг: Бот пытается отбрать мяч
+            let angle = Math.atan2(ball.y - bot.y, ball.x - bot.x);
+            bot.vx = Math.cos(angle) * bot.speed;
+            bot.vy = Math.sin(angle) * bot.speed;
 
-            if (dist < 340) {
-                bot.vx = (dx / dist) * bot.speed;
-                bot.vy = (dy / dist) * bot.speed;
-            }
-
-            if (dist < 40 && Math.random() < 0.02 * currentDiff.aiAccuracy) {
+            if (distToBall < 35 && Math.random() < 0.04 * currentDiff.aiAccuracy) {
                 executeTackle(bot);
-            }
-
-            if (dist < 220 && bot.x < 380 && Math.random() < 0.035 * currentDiff.aiAccuracy) {
-                let err = (1 - currentDiff.aiAccuracy) * (Math.random() - 0.5) * 8;
-                ball.vx = -17;
-                ball.vy = err;
             }
         }
         bot.update();
     });
 }
 
-function checkOutsAndCorners() {
-    if (gameState !== 'PLAYING') return;
+// ПАС ТОЛЬКО НА СВОИХ
+function executePass() {
+    if (!ball.owner || ball.owner !== activeUserPlayer) return;
 
-    if (ball.y < 30 || ball.y > 620) {
-        ball.y = ball.y < 30 ? 35 : 615;
-        triggerRestart();
-        return;
-    }
+    let teammates = homeTeam.filter(p => p !== activeUserPlayer && p.role !== 'GK');
+    if (teammates.length === 0) return;
 
-    if (ball.x < 30 || ball.x > 1070) {
-        if (ball.y > 250 && ball.y < 400) {
-            if (ball.x < 30) handleGoal('away');
-            else handleGoal('home');
-            return;
-        }
+    // Находим ближайшего партнера по направлению
+    let target = teammates[0];
+    let minDist = Infinity;
+    teammates.forEach(p => {
+        let d = Math.hypot(p.x - activeUserPlayer.x, p.y - activeUserPlayer.y);
+        if (d < minDist) { minDist = d; target = p; }
+    });
 
-        if (ball.x > 1070) {
-            ball.x = 1060;
-            ball.y = ball.y < 325 ? 35 : 615;
-            triggerRestart();
-        } else {
-            ball.x = 100;
-            ball.y = 325;
-            triggerRestart();
-        }
+    let angle = Math.atan2(target.y - activeUserPlayer.y, target.x - activeUserPlayer.x);
+    ball.owner = null;
+    ball.vx = Math.cos(angle) * 17;
+    ball.vy = Math.sin(angle) * 17;
+}
+
+// УДАР ПО ВОРОТАМ (Только когда мяч у игрока)
+function startShotCharge() {
+    if (!ball.owner || ball.owner !== activeUserPlayer) return;
+    isChargingShot = true;
+    shotPower = 0;
+    document.getElementById('power-bar-container').style.display = 'block';
+}
+
+function releaseShot() {
+    if (!isChargingShot) return;
+    isChargingShot = false;
+    document.getElementById('power-bar-container').style.display = 'none';
+
+    if (ball.owner === activeUserPlayer) {
+        ball.owner = null;
+        let pwr = (shotPower / 100) * 20 + 8;
+        let angle = Math.atan2(325 - activeUserPlayer.y, 1070 - activeUserPlayer.x);
+        
+        ball.vx = Math.cos(angle) * pwr;
+        ball.vy = Math.sin(angle) * pwr;
     }
 }
 
-function triggerRestart() {
-    gameState = 'OUT_RESTART';
-    ball.vx = 0; ball.vy = 0;
-    setTimeout(() => {
-        if (gameState === 'OUT_RESTART') gameState = 'PLAYING';
-    }, 1000);
-}
-
+// ОСНОВНОЙ ИГРОВОЙ ЦИКЛ
 function gameLoop() {
     if (gameState === 'PLAYING') {
         let moveX = joystickDir.x;
@@ -316,39 +423,50 @@ function gameLoop() {
         if (activeUserPlayer && Date.now() > activeUserPlayer.stunnedUntil) {
             activeUserPlayer.vx = moveX * activeUserPlayer.speed;
             activeUserPlayer.vy = moveY * activeUserPlayer.speed;
+            activeUserPlayer.update();
         }
-
-        // Автопереключение на ближайшего к мячу полевого игрока
-        let minDist = Infinity;
-        homeTeam.forEach(p => {
-            p.update();
-            if (p.role !== 'GK') {
-                let d = Math.hypot(p.x - ball.x, p.y - ball.y);
-                if (d < minDist) { minDist = d; activeUserPlayer = p; }
-            }
-        });
 
         updateAI();
 
-        ball.x += ball.vx;
-        ball.y += ball.vy;
-        ball.vx *= ball.friction;
-        ball.vy *= ball.friction;
+        // ФИЗИКА И ВЛАДЕНИЕ МЯЧОМ (ПРИЦЕП)
+        if (ball.owner) {
+            // Мяч идет прямо за владельцем
+            let distOffset = 20;
+            ball.x = ball.owner.x + Math.cos(ball.owner.facingAngle) * distOffset;
+            ball.y = ball.owner.y + Math.sin(ball.owner.facingAngle) * distOffset;
+            ball.vx = 0; ball.vy = 0;
+        } else {
+            // Движение свободного мяча
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+            ball.vx *= ball.friction;
+            ball.vy *= ball.friction;
 
-        // Физика столкновения с мячом
-        [...homeTeam, ...awayTeam].forEach(p => {
-            let d = Math.hypot(p.x - ball.x, p.y - ball.y);
-            if (d < p.radius + ball.radius) {
-                let angle = Math.atan2(ball.y - p.y, ball.x - p.x);
-                ball.vx += Math.cos(angle) * 0.8;
-                ball.vy += Math.sin(angle) * 0.8;
+            // Захват свободнаго мяча игроками
+            [...homeTeam, ...awayTeam].forEach(p => {
+                if (Date.now() < p.stunnedUntil) return;
+                let d = Math.hypot(p.x - ball.x, p.y - ball.y);
+                if (d < p.radius + 10) {
+                    ball.owner = p;
+                }
+            });
+
+            // БЕЗ АУТОВ И УГЛОВЫХ: Мяч отскакивает от бортов
+            if (ball.y < 35 || ball.y > 615) ball.vy *= -1;
+            if (ball.x < 35 || ball.x > 1065) {
+                // Если не попал в ворота — отскакивает
+                if (ball.y < 250 || ball.y > 400) {
+                    ball.vx *= -1;
+                } else {
+                    // ГОЛ
+                    if (ball.x < 35) handleGoal('away');
+                    else handleGoal('home');
+                }
             }
-        });
-
-        checkOutsAndCorners();
+        }
 
         if (isChargingShot) {
-            shotPower = Math.min(100, shotPower + 2.5);
+            shotPower = Math.min(100, shotPower + 3);
             document.getElementById('power-bar-fill').style.width = shotPower + '%';
         }
     }
@@ -357,25 +475,22 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// --- ОТРИСОВКА ПОЛЯ И ВСЕХ ЭЛЕМЕНТОВ (В СТИЛЕ TACTICAL MATCH VIEW) ---
+// ОТРИСОВКА ПОЛЯ И ЭЛЕМЕНТОВ
 function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 1. Полосы газона
+    // Газон
     const stripeWidth = 65;
     for (let x = 0; x < canvas.width; x += stripeWidth) {
         ctx.fillStyle = (Math.floor(x / stripeWidth) % 2 === 0) ? '#1d4d2d' : '#174025';
         ctx.fillRect(x, 0, stripeWidth, canvas.height);
     }
 
-    // 2. Белая разметочная линия
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+    // Разметка
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.lineWidth = 3;
-
-    // Внешняя граница
     ctx.strokeRect(30, 30, 1040, 590);
 
-    // Центральная линия и круг
     ctx.beginPath();
     ctx.moveTo(550, 30); ctx.lineTo(550, 620);
     ctx.stroke();
@@ -384,32 +499,22 @@ function render() {
     ctx.arc(550, 325, 80, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.beginPath();
-    ctx.arc(550, 325, 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#fff';
-    ctx.fill();
-
-    // Левая штрафная площадь
+    // Штрафные
     ctx.strokeRect(30, 160, 165, 330);
-    ctx.strokeRect(30, 240, 55, 170);
-
-    // Правая штрафная площадь
     ctx.strokeRect(905, 160, 165, 330);
-    ctx.strokeRect(1015, 240, 55, 170);
 
     // Ворота
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
     ctx.fillRect(10, 250, 20, 150);
     ctx.strokeRect(10, 250, 20, 150);
-
     ctx.fillRect(1070, 250, 20, 150);
     ctx.strokeRect(1070, 250, 20, 150);
 
-    // 3. Игроки
+    // Отрисовка команд
     homeTeam.forEach(p => p.draw(p === activeUserPlayer));
     awayTeam.forEach(p => p.draw(false));
 
-    // 4. Мяч с тенью
+    // Мяч
     ctx.beginPath();
     ctx.ellipse(ball.x, ball.y + 5, ball.radius, 3, 0, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
@@ -424,41 +529,10 @@ function render() {
     ctx.stroke();
 }
 
-function executePass() {
-    if (!activeUserPlayer || Date.now() < activeUserPlayer.stunnedUntil) return;
-    let teammate = homeTeam.find(p => p !== activeUserPlayer && p.role !== 'GK');
-    if (teammate) {
-        let angle = Math.atan2(teammate.y - ball.y, teammate.x - ball.x);
-        ball.vx = Math.cos(angle) * 14;
-        ball.vy = Math.sin(angle) * 14;
-    }
-}
-
-function startShotCharge() {
-    if (!activeUserPlayer || Date.now() < activeUserPlayer.stunnedUntil) return;
-    isChargingShot = true;
-    shotPower = 0;
-    document.getElementById('power-bar-container').style.display = 'block';
-}
-
-function releaseShot() {
-    if (!isChargingShot) return;
-    isChargingShot = false;
-    document.getElementById('power-bar-container').style.display = 'none';
-
-    let accuracyOffset = (shotPower / 100) * (Math.random() - 0.5) * 8;
-    let pwr = (shotPower / 100) * 24 + 6;
-
-    let angle = Math.atan2(325 - ball.y, 1070 - ball.x);
-    ball.vx = Math.cos(angle) * pwr;
-    ball.vy = Math.sin(angle) * pwr + accuracyOffset;
-}
-
-document.getElementById('btn-pass').addEventListener('touchstart', executePass);
+// ОБРАБОТЧИКИ УПРАВЛЕНИЯ
+document.getElementById('btn-switch').addEventListener('click', switchUserPlayer);
 document.getElementById('btn-pass').addEventListener('click', executePass);
-
 document.getElementById('btn-tackle').addEventListener('click', () => activeUserPlayer && executeTackle(activeUserPlayer));
-document.getElementById('btn-tackle').addEventListener('touchstart', () => activeUserPlayer && executeTackle(activeUserPlayer));
 
 const shotBtn = document.getElementById('btn-shot');
 shotBtn.addEventListener('mousedown', startShotCharge);
@@ -468,6 +542,7 @@ window.addEventListener('touchend', releaseShot);
 
 window.addEventListener('keydown', e => {
     keys[e.code] = true;
+    if (e.code === 'KeyQ') switchUserPlayer();
     if (e.code === 'KeyK') executePass();
     if (e.code === 'KeyL' && activeUserPlayer) executeTackle(activeUserPlayer);
     if (e.code === 'KeyJ' && !isChargingShot) startShotCharge();
@@ -492,11 +567,8 @@ window.addEventListener('pointerup', () => {
 
 function updateJoystick(e) {
     const rect = joyZone.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-
-    let dx = e.clientX - centerX;
-    let dy = e.clientY - centerY;
+    let dx = e.clientX - (rect.left + rect.width / 2);
+    let dy = e.clientY - (rect.top + rect.height / 2);
     let dist = Math.hypot(dx, dy);
     let maxR = 40;
 
@@ -514,6 +586,7 @@ function handleGoal(team) {
     if (team === 'home') homeScore++; else awayScore++;
     document.getElementById('home-score').innerText = homeScore;
     document.getElementById('away-score').innerText = awayScore;
+    ball.owner = null;
     ball.x = 550; ball.y = 325; ball.vx = 0; ball.vy = 0;
 }
 
@@ -530,8 +603,7 @@ function startTimer() {
             if (currentHalf === 1) {
                 currentHalf = 2; matchSeconds = 0;
                 document.getElementById('match-half').innerText = '2-Й ТАЙМ';
-                alert("ПЕРЕРЫВ! Начало 2-го тайма.");
-                ball.x = 550; ball.y = 325;
+                ball.owner = null; ball.x = 550; ball.y = 325;
             } else {
                 endMatch();
             }
@@ -558,6 +630,8 @@ async function endMatch() {
     window.location.href = 'rush.html';
 }
 
+// Запуск
+document.getElementById('bot-team-name').innerText = currentDiff.name.toUpperCase();
 initTeams();
 startTimer();
 requestAnimationFrame(gameLoop);

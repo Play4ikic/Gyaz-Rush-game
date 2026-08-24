@@ -12,14 +12,14 @@
             min-height: 100vh; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif;
         }
 
-        /* ТАБЛО В СТИЛЕ FIFA / BROADCAST */
+        /* ТАБЛО МАТЧА */
         .hud-header {
-            position: absolute; top: 15px; display: flex; align-items: center; gap: 15px;
+            position: absolute; top: 12px; display: flex; align-items: center; gap: 15px;
             background: rgba(10, 14, 23, 0.92); padding: 8px 20px; border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.15); z-index: 10;
             box-shadow: 0 10px 25px rgba(0,0,0,0.6);
         }
-        .team-title { font-weight: 800; font-size: 14px; letter-spacing: 1px; color: #fff; }
+        .team-title { font-weight: 800; font-size: 14px; letter-spacing: 1px; }
         .score-box { 
             background: #000; padding: 4px 12px; border-radius: 6px; 
             font-size: 22px; font-weight: 900; color: #ffcc00; border: 1px solid #333; 
@@ -53,15 +53,16 @@
         }
 
         .action-buttons {
-            position: absolute; bottom: 25px; right: 30px; display: flex; gap: 12px; z-index: 10;
+            position: absolute; bottom: 25px; right: 20px; display: flex; gap: 10px; z-index: 10;
         }
         .btn-act {
-            width: 62px; height: 62px; border-radius: 50%; border: 2px solid #fff;
-            color: #fff; font-weight: 900; font-size: 11px; display: flex; flex-direction: column;
+            width: 60px; height: 60px; border-radius: 50%; border: 2px solid #fff;
+            color: #fff; font-weight: 900; font-size: 10px; display: flex; flex-direction: column;
             align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5); touch-action: manipulation;
         }
         .btn-act:active { transform: scale(0.9); }
+        .btn-switch { background: #9b59b6; }
         .btn-pass { background: #00d2ff; }
         .btn-shot { background: #ff0055; }
         .btn-tackle { background: #ffaa00; }
@@ -74,7 +75,7 @@
     <div class="hud-header">
         <span class="team-title" style="color:#00a8ff;">FIXONE FC</span>
         <div class="score-box"><span id="home-score">0</span> : <span id="away-score">0</span></div>
-        <span class="team-title" style="color:#ff4d4d;">RIVAL</span>
+        <span class="team-title" style="color:#ff4d4d;" id="bot-team-name">RIVAL</span>
         <div class="timer" id="match-timer">04:00</div>
         <div class="half-badge" id="match-half">1-Й ТАЙМ</div>
     </div>
@@ -90,6 +91,7 @@
     </div>
 
     <div class="action-buttons">
+        <div class="btn-act btn-switch" id="btn-switch">СМЕНА <span class="btn-sub">(Q)</span></div>
         <div class="btn-act btn-pass" id="btn-pass">ПАС <span class="btn-sub">(K)</span></div>
         <div class="btn-act btn-tackle" id="btn-tackle">ПОДКАТ <span class="btn-sub">(L)</span></div>
         <div class="btn-act btn-shot" id="btn-shot">УДАР <span class="btn-sub">(J)</span></div>
