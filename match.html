@@ -2,74 +2,141 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gyaz Rush - Match</title>
+    <title>Gyaz Rush - Матч</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-        body { background: #0b0e14; font-family: sans-serif; overflow: hidden; color: #fff; }
-        
-        #game-container { position: relative; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
-        
-        #scoreboard {
-            position: absolute; top: 15px; background: rgba(15, 23, 42, 0.9); border: 2px solid #1e293b;
-            padding: 8px 20px; border-radius: 12px; display: flex; align-items: center; gap: 15px; font-weight: bold; z-index: 10;
+        * { user-select: none; -webkit-user-select: none; box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #080a0f; color: #fff;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif;
         }
-        .score-box { background: #000; padding: 4px 12px; border-radius: 6px; color: #ffcc00; font-size: 20px; }
-        
-        canvas { background: #174025; border: 4px solid #fff; border-radius: 12px; box-shadow: 0 0 30px rgba(0,0,0,0.8); }
 
-        /* Джойстик */
-        #joystick-zone { position: absolute; bottom: 40px; left: 40px; width: 130px; height: 130px; background: rgba(255,255,255,0.08); border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); touch-action: none; }
-        #joystick-stick { position: absolute; top: 35px; left: 35px; width: 60px; height: 60px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 15px #00ff88; pointer-events: none; }
-
-        /* Полоса силы */
-        #power-bar-container { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 200px; height: 14px; background: #222; border-radius: 7px; border: 2px solid #fff; overflow: hidden; display: none; }
-        #power-bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #00ff88, #ffcc00, #ff0055); }
-
-        /* Блок управления в стиле FIFA Mobile (NumPad схема) */
-        #controls-right { position: absolute; bottom: 30px; right: 40px; width: 220px; height: 220px; }
-        .fifa-cluster { position: relative; width: 100%; height: 100%; }
-        
-        .fifa-btn {
-            position: absolute; border-radius: 50%; background: radial-gradient(circle, #2a323d 0%, #11161d 100%);
-            color: #fff; font-weight: 900; text-align: center; cursor: pointer; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: transform 0.05s;
+        /* ТАБЛО МАТЧА */
+        .hud-header {
+            position: absolute; top: 12px; display: flex; align-items: center; gap: 15px;
+            background: rgba(10, 14, 23, 0.92); padding: 8px 20px; border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.15); z-index: 10;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            backdrop-filter: blur(6px);
         }
-        .fifa-btn:active { transform: scale(0.9); }
-        .fifa-btn span { font-size: 10px; opacity: 0.7; }
+        .team-title { font-weight: 800; font-size: 14px; letter-spacing: 1px; }
+        .score-box { 
+            background: #000; padding: 4px 12px; border-radius: 6px; 
+            font-size: 22px; font-weight: 900; color: #ffcc00; border: 1px solid #333; 
+        }
+        .timer { font-size: 15px; font-weight: bold; color: #00ff88; min-width: 45px; text-align: center; }
+        .half-badge { font-size: 11px; background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px; color: #aaa; }
 
-        .btn-8 { width: 65px; height: 65px; top: 0; left: 77.5px; border: 3px solid #ff4400; color: #ff4400; }
-        .btn-4 { width: 65px; height: 65px; top: 77.5px; left: 0; border: 3px solid #00aaff; color: #00aaff; }
-        .btn-6 { width: 65px; height: 65px; top: 77.5px; right: 0; border: 3px solid #ffaa00; color: #ffaa00; }
-        .btn-2 { width: 65px; height: 65px; bottom: 0; left: 77.5px; border: 3px solid #ff0055; color: #ff0055; }
-        .btn-5 { width: 75px; height: 75px; top: 72.5px; left: 72.5px; border: 4px solid #00ff88; color: #00ff88; box-shadow: 0 0 15px rgba(0,255,136,0.4); z-index: 2; }
+        canvas {
+            border: 3px solid rgba(255,255,255,0.3); border-radius: 10px;
+            box-shadow: 0 0 35px rgba(0,0,0,0.9); background: #1a472a;
+            max-width: 98vw; max-height: 82vh;
+        }
+
+        .power-bar-container {
+            position: absolute; top: 70px; width: 200px; height: 10px;
+            background: rgba(0,0,0,0.7); border: 1px solid #fff; border-radius: 5px; overflow: hidden; display: none;
+            z-index: 10;
+        }
+        .power-bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #00ff88, #ffcc00, #ff0055); }
+
+        #joystick-zone {
+            position: absolute; bottom: 25px; left: 30px; width: 130px; height: 130px;
+            background: rgba(255, 255, 255, 0.08); border: 2px solid rgba(255,255,255,0.25);
+            border-radius: 50%; touch-action: none; display: flex; align-items: center; justify-content: center;
+            z-index: 10; backdrop-filter: blur(4px);
+        }
+        #joystick-stick {
+            width: 45px; height: 45px; background: rgba(0, 255, 136, 0.7);
+            border: 2px solid #fff; border-radius: 50%; position: absolute; pointer-events: none;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        /* КНОПКИ УПРАВЛЕНИЯ B СТИЛЕ EA SPORTS FC MOBILE */
+        .action-buttons {
+            position: absolute; bottom: 25px; right: 25px; display: flex; gap: 14px;
+            align-items: center; z-index: 100;
+        }
+
+        .btn-act {
+            width: 68px; height: 68px; border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            background: radial-gradient(circle at 30% 30%, rgba(35, 45, 60, 0.85), rgba(15, 20, 30, 0.95));
+            color: #ffffff; font-family: 'Arial Black', sans-serif;
+            font-size: 11px; font-weight: 900; text-transform: uppercase;
+            letter-spacing: 0.5px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(8px); cursor: pointer;
+            transition: transform 0.1s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            user-select: none; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            touch-action: manipulation;
+        }
+
+        .btn-act:active {
+            transform: scale(0.92);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+        }
+
+        /* Индивидуальное неоновое свечение для каждой кнопки */
+        #btn-switch {
+            border-color: #00ccff;
+            box-shadow: 0 0 12px rgba(0, 204, 255, 0.4);
+        }
+        #btn-pass {
+            border-color: #00ff88;
+            box-shadow: 0 0 12px rgba(0, 255, 136, 0.4);
+        }
+        #btn-tackle {
+            border-color: #ffaa00;
+            box-shadow: 0 0 12px rgba(255, 170, 0, 0.4);
+        }
+        #btn-shot {
+            border-color: #ff3366;
+            box-shadow: 0 0 12px rgba(255, 51, 102, 0.4);
+        }
+
+        /* Перезарядка подката */
+        .btn-act.cooldown {
+            opacity: 0.4;
+            filter: grayscale(80%);
+            pointer-events: none;
+        }
+
+        .btn-sub {
+            font-size: 9px; opacity: 0.75; margin-top: 1px;
+            font-family: sans-serif; font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <div id="scoreboard">
-            <span id="home-team-name" style="color:#00d2ff">ВЫ</span>
-            <div class="score-box"><span id="home-score">0</span> : <span id="away-score">0</span></div>
-            <span id="bot-team-name" style="color:#ff3366">RIVAL</span>
-            <span id="match-timer" style="color:#00ff88; margin-left:10px;">04:00</span>
-            <span id="match-half" style="font-size:12px; color:#aaa;">1-Й ТАЙМ</span>
-        </div>
 
-        <canvas id="pitchCanvas" width="1100" height="650"></canvas>
-
-        <div id="joystick-zone"><div id="joystick-stick"></div></div>
-        <div id="power-bar-container"><div id="power-bar-fill"></div></div>
-
-        <div id="controls-right">
-            <div class="fifa-cluster">
-                <button id="btn-shoot" class="fifa-btn btn-8">SHOOT<br><span>(8)</span></button>
-                <button id="btn-pass" class="fifa-btn btn-4">PASS<br><span>(4)</span></button>
-                <button id="btn-skill" class="fifa-btn btn-5">SKILL<br><span>(5)</span></button>
-                <button id="btn-through" class="fifa-btn btn-6">THROUGH<br><span>(6)</span></button>
-                <button id="btn-tackle" class="fifa-btn btn-2">TACKLE<br><span>(2)</span></button>
-            </div>
-        </div>
+    <div class="hud-header">
+        <span class="team-title" style="color:#00a8ff;">FIXONE FC</span>
+        <div class="score-box"><span id="home-score">0</span> : <span id="away-score">0</span></div>
+        <span class="team-title" style="color:#ff4d4d;" id="bot-team-name">RIVAL</span>
+        <div class="timer" id="match-timer">04:00</div>
+        <div class="half-badge" id="match-half">1-Й ТАЙМ</div>
     </div>
-    <script src="match.js"></script>
+
+    <div class="power-bar-container" id="power-bar-container">
+        <div class="power-bar-fill" id="power-bar-fill"></div>
+    </div>
+
+    <canvas id="pitchCanvas" width="1100" height="650"></canvas>
+
+    <div id="joystick-zone">
+        <div id="joystick-stick"></div>
+    </div>
+
+    <div class="action-buttons">
+        <div class="btn-act" id="btn-switch">СМЕНА <span class="btn-sub">(Q)</span></div>
+        <div class="btn-act" id="btn-pass">ПАС <span class="btn-sub">(K)</span></div>
+        <div class="btn-act" id="btn-tackle">ПОДКАТ <span class="btn-sub">(L)</span></div>
+        <div class="btn-act" id="btn-shot">УДАР <span class="btn-sub">(J)</span></div>
+    </div>
+
+    <script type="module" src="match.js"></script>
 </body>
 </html>
