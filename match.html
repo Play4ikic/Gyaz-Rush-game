@@ -2,141 +2,326 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Gyaz Rush - Матч</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Gyaz Rush - Match</title>
+    <!-- Премиальный киберспортивный шрифт -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    
     <style>
-        * { user-select: none; -webkit-user-select: none; box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
         body {
-            background: #080a0f; color: #fff;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif;
+            background: radial-gradient(circle at center, #0f172a 0%, #050811 100%);
+            color: #ffffff;
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
         }
 
-        /* ТАБЛО МАТЧА */
-        .hud-header {
-            position: absolute; top: 12px; display: flex; align-items: center; gap: 15px;
-            background: rgba(10, 14, 23, 0.92); padding: 8px 20px; border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.15); z-index: 10;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-            backdrop-filter: blur(6px);
-        }
-        .team-title { font-weight: 800; font-size: 14px; letter-spacing: 1px; }
-        .score-box { 
-            background: #000; padding: 4px 12px; border-radius: 6px; 
-            font-size: 22px; font-weight: 900; color: #ffcc00; border: 1px solid #333; 
-        }
-        .timer { font-size: 15px; font-weight: bold; color: #00ff88; min-width: 45px; text-align: center; }
-        .half-badge { font-size: 11px; background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px; color: #aaa; }
-
-        canvas {
-            border: 3px solid rgba(255,255,255,0.3); border-radius: 10px;
-            box-shadow: 0 0 35px rgba(0,0,0,0.9); background: #1a472a;
-            max-width: 98vw; max-height: 82vh;
-        }
-
-        .power-bar-container {
-            position: absolute; top: 70px; width: 200px; height: 10px;
-            background: rgba(0,0,0,0.7); border: 1px solid #fff; border-radius: 5px; overflow: hidden; display: none;
+        /* Премиальное киберспортивное табло (HUD) */
+        .scoreboard {
+            position: absolute;
+            top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10, 16, 28, 0.88);
+            border: 1.5px solid rgba(0, 210, 255, 0.3);
+            border-radius: 14px;
+            padding: 6px 20px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255,255,255,0.1);
             z-index: 10;
         }
-        .power-bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #00ff88, #ffcc00, #ff0055); }
 
-        #joystick-zone {
-            position: absolute; bottom: 25px; left: 30px; width: 130px; height: 130px;
-            background: rgba(255, 255, 255, 0.08); border: 2px solid rgba(255,255,255,0.25);
-            border-radius: 50%; touch-action: none; display: flex; align-items: center; justify-content: center;
-            z-index: 10; backdrop-filter: blur(4px);
-        }
-        #joystick-stick {
-            width: 45px; height: 45px; background: rgba(0, 255, 136, 0.7);
-            border: 2px solid #fff; border-radius: 50%; position: absolute; pointer-events: none;
-            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        .team-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 800;
+            font-size: 16px;
+            letter-spacing: 1.5px;
         }
 
-        /* КНОПКИ УПРАВЛЕНИЯ B СТИЛЕ EA SPORTS FC MOBILE */
-        .action-buttons {
-            position: absolute; bottom: 25px; right: 25px; display: flex; gap: 14px;
-            align-items: center; z-index: 100;
+        #home-team-name { color: #00d2ff; text-shadow: 0 0 10px rgba(0,210,255,0.5); }
+        #away-team-name { color: #ff3366; text-shadow: 0 0 10px rgba(255,51,102,0.5); }
+
+        .score-box {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid rgba(255, 204, 0, 0.4);
+            padding: 4px 18px;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+            margin: 0 12px;
+            color: #ffcc00;
+            letter-spacing: 2px;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.8), 0 0 12px rgba(255, 204, 0, 0.2);
         }
 
-        .btn-act {
-            width: 68px; height: 68px; border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            background: radial-gradient(circle at 30% 30%, rgba(35, 45, 60, 0.85), rgba(15, 20, 30, 0.95));
-            color: #ffffff; font-family: 'Arial Black', sans-serif;
-            font-size: 11px; font-weight: 900; text-transform: uppercase;
-            letter-spacing: 0.5px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(8px); cursor: pointer;
-            transition: transform 0.1s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-            user-select: none; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-            touch-action: manipulation;
+        .match-timer {
+            font-family: 'Orbitron', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 136, 0.4);
+            text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
         }
 
-        .btn-act:active {
-            transform: scale(0.92);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+        /* Игровое поле */
+        .game-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 45px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 210, 255, 0.15);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.15);
         }
 
-        /* Индивидуальное неоновое свечение для каждой кнопки */
-        #btn-switch {
-            border-color: #00ccff;
-            box-shadow: 0 0 12px rgba(0, 204, 255, 0.4);
-        }
-        #btn-pass {
-            border-color: #00ff88;
-            box-shadow: 0 0 12px rgba(0, 255, 136, 0.4);
-        }
-        #btn-tackle {
-            border-color: #ffaa00;
-            box-shadow: 0 0 12px rgba(255, 170, 0, 0.4);
-        }
-        #btn-shot {
-            border-color: #ff3366;
-            box-shadow: 0 0 12px rgba(255, 51, 102, 0.4);
+        #pitchCanvas {
+            display: block;
+            background-color: #174025;
         }
 
-        /* Перезарядка подката */
-        .btn-act.cooldown {
-            opacity: 0.4;
-            filter: grayscale(80%);
-            pointer-events: none;
+        /* Шкала силы удара */
+        #power-bar-container {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 260px;
+            height: 14px;
+            background: rgba(5, 10, 20, 0.85);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.9);
+            z-index: 12;
         }
 
-        .btn-sub {
-            font-size: 9px; opacity: 0.75; margin-top: 1px;
-            font-family: sans-serif; font-weight: bold;
+        #power-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88 0%, #ffcc00 65%, #ff0055 100%);
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        /* Крестообразный блок управления (FIFA / EA FC style) */
+        .fifa-controls-cluster {
+            position: absolute;
+            bottom: 20px;
+            right: 25px;
+            width: 210px;
+            height: 210px;
+            z-index: 15;
+        }
+
+        .fifa-btn {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #1e293b 0%, #090d16 100%);
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 800;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.7), inset 0 2px 4px rgba(255,255,255,0.25);
+            transition: transform 0.08s ease, box-shadow 0.08s ease;
+        }
+        .fifa-btn span {
+            font-size: 10px;
+            opacity: 0.75;
+            margin-top: 1px;
+            font-family: 'Rajdhani', sans-serif;
+        }
+        .fifa-btn:active {
+            transform: scale(0.91) !important;
+        }
+
+        /* Центр: Особый приём (5) */
+        .fifa-skill {
+            width: 76px; height: 76px;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            border: 3px solid #00ff88;
+            box-shadow: 0 0 18px rgba(0, 255, 136, 0.5);
+            font-size: 10px;
+            color: #00ff88;
+        }
+        /* Вверху: Удар (8) */
+        .fifa-shoot {
+            width: 62px; height: 62px;
+            top: 0px; left: 50%;
+            transform: translateX(-50%);
+            border: 2.5px solid #ff4400;
+            box-shadow: 0 0 12px rgba(255, 68, 0, 0.4);
+            font-size: 10px;
+            color: #ffaa88;
+        }
+        /* Слева: Пас (4) */
+        .fifa-pass {
+            width: 62px; height: 62px;
+            top: 50%; left: 0px;
+            transform: translateY(-50%);
+            border: 2.5px solid #00aaff;
+            box-shadow: 0 0 12px rgba(0, 170, 255, 0.4);
+            font-size: 10px;
+            color: #88ddff;
+        }
+        /* Снизу: Подкат (2) */
+        .fifa-tackle {
+            width: 62px; height: 62px;
+            bottom: 0px; left: 50%;
+            transform: translateX(-50%);
+            border: 2.5px solid #ff0055;
+            box-shadow: 0 0 12px rgba(255, 0, 85, 0.4);
+            font-size: 10px;
+            color: #ff88aa;
+        }
+        /* Справа: Смена игрока (6) */
+        .fifa-switch {
+            width: 62px; height: 62px;
+            top: 50%; right: 0px;
+            transform: translateY(-50%);
+            border: 2.5px solid #ffcc00;
+            box-shadow: 0 0 12px rgba(255, 204, 0, 0.4);
+            font-size: 9px;
+            color: #ffee88;
+        }
+
+        /* Уведомление о спец-навыке */
+        #skill-notification {
+            display: none;
+            position: fixed;
+            top: 85px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(8, 12, 22, 0.92);
+            border: 2px solid #00ff88;
+            color: #00ff88;
+            padding: 8px 26px;
+            border-radius: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 800;
+            font-size: 16px;
+            z-index: 100;
+            text-shadow: 0 0 12px #00ff88;
+            box-shadow: 0 0 25px rgba(0, 255, 136, 0.4);
+        }
+
+        /* Экраны голов */
+        #goal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(3, 7, 18, 0.88);
+            z-index: 999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(12px);
+        }
+
+        #goal-team-banner {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            color: #00ff88;
+            text-shadow: 0 0 20px #00ff88;
+            margin-bottom: 8px;
+            font-weight: 900;
+        }
+
+        #goal-card-container {
+            transform: scale(1.12);
+            box-shadow: 0 0 45px rgba(255, 204, 0, 0.8);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        #goal-scorer-name {
+            margin-top: 18px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            color: #ffffff;
+            text-shadow: 0 2px 10px #000;
+            font-weight: 800;
+        }
+
+        @keyframes goalTextAnim {
+            0% { transform: scale(0.95); text-shadow: 0 0 15px #ffcc00; }
+            100% { transform: scale(1.08); text-shadow: 0 0 35px #ff0055, 0 0 50px #ffcc00; }
         }
     </style>
 </head>
 <body>
 
-    <div class="hud-header">
-        <span class="team-title" style="color:#00a8ff;">FIXONE FC</span>
-        <div class="score-box"><span id="home-score">0</span> : <span id="away-score">0</span></div>
-        <span class="team-title" style="color:#ff4d4d;" id="bot-team-name">RIVAL</span>
-        <div class="timer" id="match-timer">04:00</div>
-        <div class="half-badge" id="match-half">1-Й ТАЙМ</div>
+    <!-- Табло матча -->
+    <div class="scoreboard">
+        <div class="team-info">
+            <span id="home-team-name">ВЫ</span>
+            <div class="score-box">
+                <span id="home-score">0</span> : <span id="away-score">0</span>
+            </div>
+            <span id="away-team-name">СОПЕРНИК</span>
+        </div>
+        <div id="match-timer" class="match-timer" style="margin-left: 18px;">00:00</div>
     </div>
 
-    <div class="power-bar-container" id="power-bar-container">
-        <div class="power-bar-fill" id="power-bar-fill"></div>
+    <!-- Игровое поле -->
+    <div class="game-container">
+        <canvas id="pitchCanvas" width="1100" height="650"></canvas>
+
+        <!-- Шкала силы -->
+        <div id="power-bar-container">
+            <div id="power-bar-fill"></div>
+        </div>
+
+        <!-- Кнопки управления (Крестовина) -->
+        <div class="fifa-controls-cluster">
+            <button id="btn-shot" class="fifa-btn fifa-shoot">УДАР<br><span>(8)</span></button>
+            <button id="btn-pass" class="fifa-btn fifa-pass">ПАС<br><span>(4)</span></button>
+            <button id="btn-skill" class="fifa-btn fifa-skill">НАВЫК<br><span>(5)</span></button>
+            <button id="btn-switch" class="fifa-btn fifa-switch">СМЕНА<br><span>(6)</span></button>
+            <button id="btn-tackle" class="fifa-btn fifa-tackle">ПОДКАT<br><span>(2)</span></button>
+        </div>
     </div>
 
-    <canvas id="pitchCanvas" width="1100" height="650"></canvas>
+    <!-- Системные оверлеи -->
+    <div id="skill-notification"></div>
 
-    <div id="joystick-zone">
-        <div id="joystick-stick"></div>
+    <div id="goal-overlay">
+        <h1 id="goal-team-banner">ГОЛ!</h1>
+        <h2 style="font-family:'Orbitron', sans-serif; font-size: 52px; color: #ffcc00; text-shadow: 0 0 25px #ffcc00, 0 0 50px #ff0055; margin-bottom: 20px; font-weight:900; letter-spacing:4px; animation: goalTextAnim 0.8s infinite alternate;">ГООООЛ!</h2>
+        <div id="goal-card-container"></div>
+        <h3 id="goal-scorer-name"></h3>
     </div>
 
-    <div class="action-buttons">
-        <div class="btn-act" id="btn-switch">СМЕНА <span class="btn-sub">(Q)</span></div>
-        <div class="btn-act" id="btn-pass">ПАС <span class="btn-sub">(K)</span></div>
-        <div class="btn-act" id="btn-tackle">ПОДКАТ <span class="btn-sub">(L)</span></div>
-        <div class="btn-act" id="btn-shot">УДАР <span class="btn-sub">(J)</span></div>
-    </div>
-
-    <script type="module" src="match.js"></script>
+    <script src="./match.js"></script>
 </body>
 </html>
