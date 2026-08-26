@@ -8,7 +8,6 @@ function updateBalance(amount) {
 const canvas = document.getElementById('pitchCanvas');
 const ctx = canvas.getContext('2d');
 
-// --- ГЛОБАЛЬНОЕ ОТСЛЕЖИВАНИЕ МЫШИ И ОБРАБОТКА КЛИКОВ ---
 let mousePos = { x: 1070, y: 325 };
 
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -76,7 +75,6 @@ canvas.addEventListener('mouseup', (e) => {
     }
 });
 
-// --- КЛАСС ВИРТУАЛЬНОГО ДЖОЙСТИКА (MOBILE TOUCH) ---
 class VirtualJoystick {
     constructor(canvas) {
         this.canvas = canvas;
@@ -199,13 +197,10 @@ class VirtualJoystick {
 
 const joystick = new VirtualJoystick(canvas);
 
-// --- НАСТРОЙКИ СЛОЖНОСТИ И КАРТОЧЕК ---
 const DIFFICULTY_SETTINGS = {
     novice: { name: 'Новичок', aiSpeed: 1.2, aiAccuracy: 0.5, maxReward: 20000, cardTier: 'gold' },
-    pro: { name: 'Профессионал', aiSpeed: 1.5, aiAccuracy: 0.7, maxReward: 50000, cardTier: 'champions' },
     world_class: { name: 'Мировой Класс', aiSpeed: 1.8, aiAccuracy: 0.85, maxReward: 90000, cardTier: 'toty' },
-    legend: { name: 'Легенда', aiSpeed: 2.1, aiAccuracy: 0.94, maxReward: 140000, cardTier: 'chaos' },
-    ultimate: { name: 'ULTIMATE', aiSpeed: 2.5, aiAccuracy: 0.98, maxReward: 100000, cardTier: 'ballondor' }
+    ultimate: { name: 'ULTIMATE', aiSpeed: 2.5, aiAccuracy: 0.98, maxReward: 140000, cardTier: 'ballondor' }
 };
 
 const BOT_CARD_POOLS = {
@@ -216,26 +211,12 @@ const BOT_CARD_POOLS = {
         { name: 'Elcan', rating: 92, pos: 'RW', folder: 'Gold', file: 'Elcan-92.png', ability: 'ghost' },
         { name: 'Turgay', rating: 92, pos: 'ST', folder: 'Gold', file: 'Turqay-92.png', ability: 'power_shot' }
     ],
-    champions: [
-        { name: 'Bugday', rating: 90, pos: 'GK', folder: 'Champions', file: 'Bugday-90.png', ability: 'magnet' },
-        { name: 'Nazrin', rating: 88, pos: 'DF', folder: 'Champions', file: 'Nazrin-88.png', ability: 'freeze' },
-        { name: 'Tuncay', rating: 91, pos: 'DF', folder: 'Champions', file: 'Tuncay-91.png', ability: 'push' },
-        { name: 'Elcan', rating: 96, pos: 'RW', folder: 'Champions', file: 'Elcan-96.png', ability: 'ghost' },
-        { name: 'Turgay', rating: 96, pos: 'ST', folder: 'Champions', file: 'Turqay-96.png', ability: 'power_shot' }
-    ],
     toty: [
         { name: 'Bugday', rating: 95, pos: 'GK', folder: 'Toty', file: 'Bugday-95.png', ability: 'magnet' },
         { name: 'Nazrin', rating: 91, pos: 'DF', folder: 'Toty', file: 'Nazrin-91.png', ability: 'freeze' },
         { name: 'Tuncay', rating: 97, pos: 'DF', folder: 'Toty', file: 'Tuncay-97.png', ability: 'push' },
         { name: 'Elcan', rating: 97, pos: 'RW', folder: 'Toty', file: 'Elcan-97.png', ability: 'ghost' },
         { name: 'Turgay', rating: 97, pos: 'ST', folder: 'Toty', file: 'Turgay-97.png', ability: 'power_shot' }
-    ],
-    chaos: [
-        { name: 'Bugday', rating: 99, pos: 'GK', folder: 'CHAOS', file: 'Bugday-99.png', ability: 'magnet' },
-        { name: 'Nazrin', rating: 99, pos: 'DF', folder: 'CHAOS', file: 'Nazrin-99.png', ability: 'freeze' },
-        { name: 'Tuncay', rating: 99, pos: 'DF', folder: 'CHAOS', file: 'Tuncay-99.png', ability: 'push' },
-        { name: 'Elcan', rating: 99, pos: 'RW', folder: 'CHAOS', file: 'Elcan-99.png', ability: 'ghost' },
-        { name: 'Turgay', rating: 99, pos: 'ST', folder: 'CHAOS', file: 'Turgay-99.png', ability: 'power_shot' }
     ],
     ballondor: [
         { name: 'Bugday', rating: 105, pos: 'GK', folder: 'GoldenStars', file: 'Bugday-105.png', ability: 'magnet' },
@@ -247,7 +228,7 @@ const BOT_CARD_POOLS = {
 };
 
 const currentDiffKey = localStorage.getItem('rush_difficulty') || 'novice';
-const currentDiff = DIFFICULTY_SETTINGS[currentDiffKey];
+const currentDiff = DIFFICULTY_SETTINGS[currentDiffKey] || DIFFICULTY_SETTINGS.novice;
 
 function getVerifiedSquad() {
     let squad = [];
@@ -273,10 +254,13 @@ function getVerifiedSquad() {
 const userPlayersData = getVerifiedSquad();
 const botPlayersData = BOT_CARD_POOLS[currentDiff.cardTier];
 
-const HALF_DURATION = 240;
-let matchSeconds = 0;
+// --- НАСТРОЙКИ ВРЕМЕНИ И ТАЙМЕРА (8 реальных минут = 90 игровых минут) ---
+const TOTAL_REAL_SECONDS = 480; // 8 минут (480 сек)
+const HALF_REAL_SECONDS = 240;  // 4 минуты на тайм
+let realElapsedSeconds = 0;
+
 let currentHalf = 1;
-let matchInterval;
+let matchInterval = null;
 let halftimeInterval = null;
 let homeScore = 0;
 let awayScore = 0;
@@ -316,7 +300,6 @@ function isBallInPenaltyBox() {
     return leftBox || rightBox;
 }
 
-// --- КЛАСС ИГРОКА ---
 class Player {
     constructor(x, y, data, isHome, role, number, basePos) {
         this.x = x;
@@ -537,7 +520,6 @@ function drawSkillEffects() {
     }
 }
 
-// --- ПРИЦЕЛИВАНИЕ КУРСОРОМ МЫШИ И ОТРИСОВКА ЗАКРУЧЕННОЙ ТРАЕКТОРИИ ---
 function getCurrentAimAngle(player) {
     if (joystick.active && (Math.abs(joystick.input.x) > 0.08 || Math.abs(joystick.input.y) > 0.08)) {
         return Math.atan2(joystick.input.y, joystick.input.x);
@@ -545,7 +527,6 @@ function getCurrentAimAngle(player) {
     return Math.atan2(mousePos.y - player.y, mousePos.x - player.x);
 }
 
-// --- ОТРИСОВКА ПЛАВНОЙ БАНАНОВОЙ ТРАЕКТОРИИ (SMOOTH BANANA SHOT) ---
 function drawAimingTrajectory() {
     if (!isChargingShot || !ball.owner || ball.owner !== activeUserPlayer) return;
 
@@ -567,7 +548,6 @@ function drawAimingTrajectory() {
     const startX = player.x;
     const startY = player.y;
 
-    // Финальная точка прицела (куда указывает курсор / целится игрок)
     const targetX = startX + Math.cos(aimAngle) * maxDist;
     const targetY = startY + Math.sin(aimAngle) * maxDist;
 
@@ -575,33 +555,22 @@ function drawAimingTrajectory() {
     ctx.moveTo(startX, startY);
 
     if (isElcan || isTurgay) {
-        // Сторона закрутки: зависит от направления прицеливания (или фиксированная)
         let curveDir = (aimAngle < 0) ? -1 : 1; 
-        
-        // Сила изгиба (вынос дуги в сторону)
         let curveOffset = isElcan ? 130 : 80;
-
-        // Находим середину между игроком и целью
         let midX = (startX + targetX) / 2;
         let midY = (startY + targetY) / 2;
-
-        // Перпендикулярный угол для создания выпуклой дуги "банана"
         let perpAngle = aimAngle + (Math.PI / 2) * curveDir;
 
-        // Контрольная точка смещена в сторону от прямой
         let controlX = midX + Math.cos(perpAngle) * curveOffset;
         let controlY = midY + Math.sin(perpAngle) * curveOffset;
 
-        // Рисуем одну цельную плавную дугу от ног до цели
         ctx.quadraticCurveTo(controlX, controlY, targetX, targetY);
     } else {
-        // Прямой удар без подкрутки
         ctx.lineTo(targetX, targetY);
     }
 
     ctx.stroke();
 
-    // Маркер цели ровно в точке назначения (куда прилетит мяч)
     ctx.setLineDash([]);
     ctx.beginPath();
     ctx.arc(targetX, targetY, 14 + Math.sin(Date.now() * 0.01) * 3, 0, Math.PI * 2);
@@ -1505,12 +1474,12 @@ function showHalftimeOverlay() {
         document.body.appendChild(overlay);
     }
 
-    let remainingTime = 60;
+    let remainingTime = 15;
     overlay.style.display = 'flex';
     overlay.innerHTML = `
         <div style="background:#111827;padding:35px 50px;border-radius:20px;border:3px solid #00d2ff;text-align:center;box-shadow:0 0 30px rgba(0,210,255,0.5);max-width:420px;width:90%;">
-            <h2 style="font-size:36px;margin:0 0 10px;color:#00d2ff;letter-spacing:1px;">ПЕРЕРЫВ</h2>
-            <p style="font-size:20px;margin:15px 0 25px;color:#e2e8f0;">Игра начнётся через: <b id="ht-sec" style="color:#ffff00;font-size:28px;">60</b> сек.</p>
+            <h2 style="font-size:36px;margin:0 0 10px;color:#00d2ff;letter-spacing:1px;">ПЕРЕРЫВ (45')</h2>
+            <p style="font-size:20px;margin:15px 0 25px;color:#e2e8f0;">Второй тайм через: <b id="ht-sec" style="color:#ffff00;font-size:28px;">15</b> сек.</p>
             <button id="btn-resume-match" style="background:#00ff88;color:#000;border:none;padding:14px 32px;font-size:20px;font-weight:900;border-radius:10px;cursor:pointer;width:100%;box-shadow:0 0 15px rgba(0,255,136,0.4);transition:transform 0.1s;">ПРОДОЛЖИТЬ ИГРУ</button>
         </div>
     `;
@@ -1539,30 +1508,37 @@ function resumeFromHalftime() {
     resetPositions('away');
 }
 
+// --- ТАЙМЕР ОТСЧИТЫВАЕТ 90 ИГРОВЫХ МИНУТ ЗА 8 РЕАЛЬНЫХ МИНУТ ---
 function updateTimerUI() {
     const timerEl = document.getElementById('match-timer');
     if (!timerEl) return;
-    const mins = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
-    const secs = (matchSeconds % 60).toString().padStart(2, '0');
-    timerEl.innerText = `${mins}:${secs}`;
+
+    let inGameTotalMinutes = Math.min(90, Math.floor((realElapsedSeconds / TOTAL_REAL_SECONDS) * 90));
+    let displayMins = inGameTotalMinutes.toString().padStart(2, '0');
+    
+    let virtualSecs = Math.floor(((realElapsedSeconds / TOTAL_REAL_SECONDS) * 90 * 60) % 60);
+    let displaySecs = virtualSecs.toString().padStart(2, '0');
+
+    timerEl.innerText = `${displayMins}:${displaySecs}'`;
 }
 
 function startTimer() {
     matchInterval = setInterval(() => {
         if (gameState !== 'PLAYING') return;
 
-        matchSeconds++;
+        realElapsedSeconds++;
         updateTimerUI();
 
-        if (matchSeconds >= HALF_DURATION && currentHalf === 1) {
+        if (realElapsedSeconds >= HALF_REAL_SECONDS && currentHalf === 1) {
             showHalftimeOverlay();
-        } else if (matchSeconds >= HALF_DURATION * 2 && currentHalf === 2) {
+        } else if (realElapsedSeconds >= TOTAL_REAL_SECONDS && currentHalf === 2) {
             clearInterval(matchInterval);
             finishMatch();
         }
     }, 1000);
 }
 
+// --- НАГРАДА ЗА ПОРАЖЕНИЕ = 0 CY ---
 function finishMatch() {
     gameState = 'FINISHED';
     let reward = 0;
@@ -1571,15 +1547,14 @@ function finishMatch() {
     } else if (homeScore === awayScore) {
         reward = Math.floor(currentDiff.maxReward * 0.4);
     } else {
-        reward = Math.floor(currentDiff.maxReward * 0.1);
+        reward = 0; // За поражение монет не даём!
     }
 
     updateBalance(reward);
-    alert(`Матч окончен!\nСчет: ${homeScore} - ${awayScore}\nНаграда: ${reward} монет`);
+    alert(`Матч окончен!\nИтоговый счет: ${homeScore} - ${awayScore}\nНаграда: ${reward} CY`);
     window.location.href = 'index.html';
 }
 
-// --- СИСТЕМА УПРАВЛЕНИЯ КЛАВИАТУРОЙ ---
 function setupControls() {
     window.addEventListener('keydown', (e) => {
         keys[e.code] = true;
