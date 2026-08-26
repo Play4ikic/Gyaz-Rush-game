@@ -8,6 +8,198 @@ function updateBalance(amount) {
 const canvas = document.getElementById('pitchCanvas');
 const ctx = canvas.getContext('2d');
 
+// --- ГЛОБАЛЬНОЕ ОТСЛЕЖИВАНИЕ МЫШИ И ОБРАБОТКА КЛИКОВ ---
+let mousePos = { x: 1070, y: 325 };
+
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    mousePos.x = (e.clientX - rect.left) * scaleX;
+    mousePos.y = (e.clientY - rect.top) * scaleY;
+});
+
+canvas.addEventListener('mousedown', (e) => {
+    if (e.button === 0) { 
+        if (isChargingPass) { 
+            isChargingPass = false; 
+            const bar = document.getElementById('power-bar-container');
+            if (bar) bar.style.display = 'none';
+        }
+        startShotCharge();
+    } else if (e.button === 2) { 
+        if (isChargingShot) { 
+            isChargingShot = false; 
+            const bar = document.getElementById('power-bar-container');
+            if (bar) bar.style.display = 'none';
+        }
+
+        if (ball.owner === activeUserPlayer) {
+            if (gameState === 'KICKOFF') {
+                if (kickoffState.team === 'home') executeKickoffPass('home');
+                return;
+            }
+
+            const player = activeUserPlayer;
+            let passAngle = Math.atan2(mousePos.y - player.y, mousePos.x - player.x);
+
+            player.facingAngle = passAngle;
+            player.catchCooldown = Date.now() + 400;
+
+            ball.x = player.x + Math.cos(passAngle) * (player.radius + 12);
+            ball.y = player.y + Math.sin(passAngle) * (player.radius + 12);
+            ball.owner = null;
+
+            let powerSpeed = 18; 
+
+            ball.vx = Math.cos(passAngle) * powerSpeed;
+            ball.vy = Math.sin(passAngle) * powerSpeed;
+            ball.isElcanShot = false;
+            ball.curveForce = 0;
+            ball.curveFrames = 0;
+        } else {
+            let clickedTeammate = homeTeam.find(p => Math.hypot(p.x - mousePos.x, p.y - mousePos.y) <= p.radius + 22);
+            if (clickedTeammate) {
+                activeUserPlayer = clickedTeammate;
+            } else {
+                switchUserPlayer();
+            }
+        }
+    }
+});
+
+canvas.addEventListener('mouseup', (e) => {
+    if (e.button === 0) { 
+        releaseShot();
+    }
+});
+
+// --- КЛАСС ВИРТУАЛЬНОГО ДЖОЙСТИКА (MOBILE TOUCH) ---
+class VirtualJoystick {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.touchId = null;
+        this.active = false;
+        this.baseX = 130;
+        this.baseY = canvas.height - 130;
+        this.maxRadius = 65;
+        this.stickRadius = 30;
+        this.stickX = this.baseX;
+        this.stickY = this.baseY;
+        this.input = { x: 0, y: 0 };
+
+        this.initListeners();
+    }
+
+    initListeners() {
+        const getTouchPos = (touch) => {
+            const rect = this.canvas.getBoundingClientRect();
+            const scaleX = this.canvas.width / rect.width;
+            const scaleY = this.canvas.height / rect.height;
+            return {
+                x: (touch.clientX - rect.left) * scaleX,
+                y: (touch.clientY - rect.top) * scaleY
+            };
+        };
+
+        this.canvas.addEventListener('touchstart', (e) => {
+            if (this.active) return;
+            for (let touch of e.changedTouches) {
+                const pos = getTouchPos(touch);
+                if (pos.x < this.canvas.width / 2) {
+                    this.touchId = touch.identifier;
+                    this.active = true;
+                    this.baseX = pos.x;
+                    this.baseY = pos.y;
+                    this.updateStick(pos.x, pos.y);
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            if (!this.active) return;
+            for (let touch of e.changedTouches) {
+                if (touch.identifier === this.touchId) {
+                    const pos = getTouchPos(touch);
+                    this.updateStick(pos.x, pos.y);
+                    e.preventDefault();
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        const handleTouchEnd = (e) => {
+            if (!this.active) return;
+            for (let touch of e.changedTouches) {
+                if (touch.identifier === this.touchId) {
+                    this.reset();
+                    break;
+                }
+            }
+        };
+
+        this.canvas.addEventListener('touchend', handleTouchEnd);
+        this.canvas.addEventListener('touchcancel', handleTouchEnd);
+    }
+
+    updateStick(touchX, touchY) {
+        const dx = touchX - this.baseX;
+        const dy = touchY - this.baseY;
+        const distance = Math.hypot(dx, dy);
+
+        if (distance === 0) {
+            this.reset();
+            return;
+        }
+
+        const clampedDistance = Math.min(distance, this.maxRadius);
+        const angle = Math.atan2(dy, dx);
+
+        this.stickX = this.baseX + Math.cos(angle) * clampedDistance;
+        this.stickY = this.baseY + Math.sin(angle) * clampedDistance;
+
+        this.input.x = (Math.cos(angle) * clampedDistance) / this.maxRadius;
+        this.input.y = (Math.sin(angle) * clampedDistance) / this.maxRadius;
+    }
+
+    reset() {
+        this.active = false;
+        this.touchId = null;
+        this.stickX = this.baseX;
+        this.stickY = this.baseY;
+        this.input = { x: 0, y: 0 };
+    }
+
+    draw(ctx) {
+        if (!this.active) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.baseX, this.baseY, this.maxRadius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.strokeStyle = 'rgba(0, 210, 255, 0.5)';
+        ctx.lineWidth = 3;
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(this.stickX, this.stickY, this.stickRadius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 210, 255, 0.7)';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#00d2ff';
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+const joystick = new VirtualJoystick(canvas);
+
+// --- НАСТРОЙКИ СЛОЖНОСТИ И КАРТОЧЕК ---
 const DIFFICULTY_SETTINGS = {
     novice: { name: 'Новичок', aiSpeed: 1.2, aiAccuracy: 0.5, maxReward: 20000, cardTier: 'gold' },
     pro: { name: 'Профессионал', aiSpeed: 1.5, aiAccuracy: 0.7, maxReward: 50000, cardTier: 'champions' },
@@ -69,7 +261,7 @@ function getVerifiedSquad() {
             squad = Array.isArray(raw) ? raw : [];
         }
     } catch(e) {}
-    
+
     let filtered = squad.filter(p => p !== null && typeof p === 'object');
     const defaultNames = ['Elcan', 'Turgay', 'Nazrin', 'Bugday', 'Tuncay'];
     while (filtered.length < 5) {
@@ -88,18 +280,27 @@ let matchInterval;
 let halftimeInterval = null;
 let homeScore = 0;
 let awayScore = 0;
-let gameState = 'KICKOFF'; 
+let gameState = 'KICKOFF';
 
 let kickoffState = { active: true, team: 'home', timerEnd: 0 };
-const ball = { x: 550, y: 325, vx: 0, vy: 0, radius: 8, friction: 0.96, owner: null };
+const ball = {
+    x: 550,
+    y: 325,
+    vx: 0,
+    vy: 0,
+    radius: 8,
+    friction: 0.96,
+    owner: null,
+    curveForce: 0,
+    curveFrames: 0,
+    isElcanShot: false,
+    curveDir: 1,
+    curveGrowth: 0
+};
 
 let lastTouchPlayer = null;
 let skillCooldown = 0;
-
-// Общий командный кулдаун способностей ботов (10 секунд на ВСЮ команду)
 let botTeamAbilityCooldown = 0;
-
-const joystickDir = { x: 0, y: 0 };
 const keys = {};
 
 let isChargingShot = false;
@@ -109,6 +310,13 @@ let passPower = 0;
 let passPressStartTime = 0;
 let botPassCooldown = 0;
 
+function isBallInPenaltyBox() {
+    const leftBox = ball.x >= 30 && ball.x <= 195 && ball.y >= 160 && ball.y <= 490;
+    const rightBox = ball.x >= 905 && ball.x <= 1070 && ball.y >= 160 && ball.y <= 490;
+    return leftBox || rightBox;
+}
+
+// --- КЛАСС ИГРОКА ---
 class Player {
     constructor(x, y, data, isHome, role, number, basePos) {
         this.x = x;
@@ -118,7 +326,7 @@ class Player {
         this.vx = 0;
         this.vy = 0;
         this.facingAngle = isHome ? 0 : Math.PI;
-        this.radius = 34; 
+        this.radius = 34;
         this.data = data || {};
         this.isHome = isHome;
         this.role = role;
@@ -132,6 +340,7 @@ class Player {
         this.isGhostUntil = 0;
         this.tackleCooldown = 0;
         this.holdStartTime = 0;
+        this.catchCooldown = 0;
         this.hasImg = false;
 
         if (this.data && this.data.file) {
@@ -142,7 +351,10 @@ class Player {
     }
 
     get speed() {
-        return this.baseSpeed * this.speedBoost;
+        const now = Date.now();
+        const isGhost = now < this.isGhostUntil;
+        const ghostMultiplier = isGhost ? 1.45 : 1.0;
+        return this.baseSpeed * this.speedBoost * ghostMultiplier;
     }
 
     draw(isActive) {
@@ -160,7 +372,7 @@ class Player {
         if (now < this.stunnedUntil) {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius + 6, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.45)';
+            ctx.fillStyle = 'rgba(0, 210, 255, 0.55)';
             ctx.fill();
         }
 
@@ -237,7 +449,9 @@ class Player {
         this.x += this.vx;
         this.y += this.vy;
 
-        if (Math.hypot(this.vx, this.vy) > 0.2) {
+        if (this === activeUserPlayer && (ball.owner === this || isChargingShot || isChargingPass)) {
+            this.facingAngle = getCurrentAimAngle(this);
+        } else if (Math.hypot(this.vx, this.vy) > 0.2) {
             this.facingAngle = Math.atan2(this.vy, this.vx);
         }
 
@@ -246,11 +460,11 @@ class Player {
 
         if (this.role === 'GK') {
             if (this.isHome) {
-                this.x = Math.max(35 + this.radius, Math.min(220 - this.radius, this.x));
-                this.y = Math.max(200 + this.radius, Math.min(450 - this.radius, this.y));
+                this.x = Math.max(35 + this.radius, Math.min(240 - this.radius, this.x));
+                this.y = Math.max(180 + this.radius, Math.min(470 - this.radius, this.y));
             } else {
-                this.x = Math.max(880 + this.radius, Math.min(1065 - this.radius, this.x));
-                this.y = Math.max(200 + this.radius, Math.min(450 - this.radius, this.y));
+                this.x = Math.max(860 + this.radius, Math.min(1065 - this.radius, this.x));
+                this.y = Math.max(180 + this.radius, Math.min(470 - this.radius, this.y));
             }
         } else {
             this.x = Math.max(35 + this.radius, Math.min(1065 - this.radius, this.x));
@@ -323,6 +537,90 @@ function drawSkillEffects() {
     }
 }
 
+// --- ПРИЦЕЛИВАНИЕ КУРСОРОМ МЫШИ И ОТРИСОВКА ЗАКРУЧЕННОЙ ТРАЕКТОРИИ ---
+function getCurrentAimAngle(player) {
+    if (joystick.active && (Math.abs(joystick.input.x) > 0.08 || Math.abs(joystick.input.y) > 0.08)) {
+        return Math.atan2(joystick.input.y, joystick.input.x);
+    }
+    return Math.atan2(mousePos.y - player.y, mousePos.x - player.x);
+}
+
+// --- ОТРИСОВКА ПЛАВНОЙ БАНАНОВОЙ ТРАЕКТОРИИ (SMOOTH BANANA SHOT) ---
+function drawAimingTrajectory() {
+    if (!isChargingShot || !ball.owner || ball.owner !== activeUserPlayer) return;
+
+    const player = activeUserPlayer;
+    const aimAngle = getCurrentAimAngle(player);
+    const powerPercent = shotPower;
+    const maxDist = (powerPercent / 100 * 360 + 120);
+
+    ctx.save();
+    ctx.setLineDash([10, 8]);
+    ctx.lineWidth = 3.5;
+    ctx.strokeStyle = '#ff4400';
+
+    const pData = player.data || {};
+    const rawName = String(pData.name || pData.cardName || '').toLowerCase();
+    const isElcan = rawName.includes('elcan') || rawName.includes('eljan') || pData.ability === 'ghost';
+    const isTurgay = rawName.includes('turgay') || rawName.includes('turqay') || pData.ability === 'power_shot';
+
+    const startX = player.x;
+    const startY = player.y;
+
+    // Финальная точка прицела (куда указывает курсор / целится игрок)
+    const targetX = startX + Math.cos(aimAngle) * maxDist;
+    const targetY = startY + Math.sin(aimAngle) * maxDist;
+
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+
+    if (isElcan || isTurgay) {
+        // Сторона закрутки: зависит от направления прицеливания (или фиксированная)
+        let curveDir = (aimAngle < 0) ? -1 : 1; 
+        
+        // Сила изгиба (вынос дуги в сторону)
+        let curveOffset = isElcan ? 130 : 80;
+
+        // Находим середину между игроком и целью
+        let midX = (startX + targetX) / 2;
+        let midY = (startY + targetY) / 2;
+
+        // Перпендикулярный угол для создания выпуклой дуги "банана"
+        let perpAngle = aimAngle + (Math.PI / 2) * curveDir;
+
+        // Контрольная точка смещена в сторону от прямой
+        let controlX = midX + Math.cos(perpAngle) * curveOffset;
+        let controlY = midY + Math.sin(perpAngle) * curveOffset;
+
+        // Рисуем одну цельную плавную дугу от ног до цели
+        ctx.quadraticCurveTo(controlX, controlY, targetX, targetY);
+    } else {
+        // Прямой удар без подкрутки
+        ctx.lineTo(targetX, targetY);
+    }
+
+    ctx.stroke();
+
+    // Маркер цели ровно в точке назначения (куда прилетит мяч)
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.arc(targetX, targetY, 14 + Math.sin(Date.now() * 0.01) * 3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 68, 0, 0.4)';
+    ctx.strokeStyle = '#ff9900';
+    ctx.lineWidth = 2.5;
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(targetX - 8, targetY); ctx.lineTo(targetX + 8, targetY);
+    ctx.moveTo(targetX, targetY - 8); ctx.lineTo(targetX, targetY + 8);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.restore();
+}
+
 function triggerSpecialSkill() {
     const now = Date.now();
     if (!activeUserPlayer || now < skillCooldown) return;
@@ -332,15 +630,22 @@ function triggerSpecialSkill() {
     let activated = false;
 
     if (rawName.includes('elcan') || rawName.includes('eljan') || pData.ability === 'ghost') {
-        activeUserPlayer.isGhostUntil = now + 1000;
-        createSkillEffect(activeUserPlayer, 'ПРИЗРАК (1s)!', '#00ffff');
+        activeUserPlayer.isGhostUntil = now + 1500;
+        createSkillEffect(activeUserPlayer, 'ПРИЗРАК + УСКОРЕНИЕ!', '#00ffff');
         activated = true;
     } else if (rawName.includes('turqay') || rawName.includes('turgay')) {
         if (ball.owner === activeUserPlayer) {
+            let aimAngle = getCurrentAimAngle(activeUserPlayer);
+            activeUserPlayer.facingAngle = aimAngle;
+            activeUserPlayer.catchCooldown = now + 400;
+            ball.x = activeUserPlayer.x + Math.cos(aimAngle) * (activeUserPlayer.radius + 12);
+            ball.y = activeUserPlayer.y + Math.sin(aimAngle) * (activeUserPlayer.radius + 12);
             ball.owner = null;
-            let angle = Math.atan2(325 - activeUserPlayer.y, 1070 - activeUserPlayer.x);
-            ball.vx = Math.cos(angle) * 36;
-            ball.vy = Math.sin(angle) * 36;
+            ball.vx = Math.cos(aimAngle) * 38;
+            ball.vy = Math.sin(aimAngle) * 38;
+            ball.isElcanShot = false;
+            ball.curveForce = 0;
+            ball.curveFrames = 0;
             createSkillEffect(activeUserPlayer, 'ПУШЕЧНЫЙ УДАР!', '#ff9900');
             activated = true;
         }
@@ -370,10 +675,13 @@ function triggerSpecialSkill() {
         createSkillEffect(activeUserPlayer, 'ТОЛЧОК!', '#ff3366');
         activated = true;
     } else if (rawName.includes('bugday')) {
-        if (Math.hypot(activeUserPlayer.x - ball.x, activeUserPlayer.y - ball.y) < 320) {
+        if (isBallInPenaltyBox() && Math.hypot(activeUserPlayer.x - ball.x, activeUserPlayer.y - ball.y) < 320) {
             ball.owner = activeUserPlayer;
             lastTouchPlayer = activeUserPlayer;
             ball.vx = 0; ball.vy = 0;
+            ball.isElcanShot = false;
+            ball.curveForce = 0;
+            ball.curveFrames = 0;
             createSkillEffect(activeUserPlayer, 'МАГНИТ!', '#ffff00');
             activated = true;
         }
@@ -385,10 +693,8 @@ function triggerSpecialSkill() {
     }
 }
 
-// ИСПОЛЬЗОВАНИЕ СПОСОБНОСТЕЙ БОТАМИ С ЕДИНЫМ КУЛДАУНОМ 10 СЕКУНД НА КОМАНДУ
 function triggerBotAbility(bot) {
     const now = Date.now();
-    // Проверка глобального кулдауна команды ботов (10 секунд)
     if (now < botTeamAbilityCooldown || now < bot.stunnedUntil) return;
 
     const pData = bot.data || {};
@@ -397,17 +703,24 @@ function triggerBotAbility(bot) {
     let activated = false;
 
     if (rawName.includes('elcan') || ability === 'ghost') {
-        if (homeTeam.some(p => Math.hypot(p.x - bot.x, p.y - bot.y) < 90)) {
-            bot.isGhostUntil = now + 1000;
-            createSkillEffect(bot, 'ПРИЗРАК!', '#00ffff');
+        if (homeTeam.some(p => Math.hypot(p.x - bot.x, p.y - bot.y) < 120)) {
+            bot.isGhostUntil = now + 1500;
+            createSkillEffect(bot, 'ПРИЗРАК + УСКОРЕНИЕ!', '#00ffff');
             activated = true;
         }
     } else if (rawName.includes('turgay') || ability === 'power_shot') {
         if (ball.owner === bot && bot.x < 480) {
-            ball.owner = null;
             let angle = Math.atan2(325 - bot.y, 30 - bot.x);
-            ball.vx = Math.cos(angle) * 34;
-            ball.vy = Math.sin(angle) * 34;
+            bot.facingAngle = angle;
+            bot.catchCooldown = now + 400;
+            ball.x = bot.x + Math.cos(angle) * (bot.radius + 12);
+            ball.y = bot.y + Math.sin(angle) * (bot.radius + 12);
+            ball.owner = null;
+            ball.vx = Math.cos(angle) * 36;
+            ball.vy = Math.sin(angle) * 36;
+            ball.isElcanShot = false;
+            ball.curveForce = 0;
+            ball.curveFrames = 0;
             createSkillEffect(bot, 'ПУШЕЧНЫЙ УДАР!', '#ff9900');
             activated = true;
         }
@@ -431,17 +744,19 @@ function triggerBotAbility(bot) {
             activated = true;
         }
     } else if (rawName.includes('bugday') || ability === 'magnet') {
-        if (Math.hypot(bot.x - ball.x, bot.y - ball.y) < 260 && !ball.owner) {
+        if (isBallInPenaltyBox() && Math.hypot(bot.x - ball.x, bot.y - ball.y) < 260 && !ball.owner) {
             ball.owner = bot;
             lastTouchPlayer = bot;
             ball.vx = 0; ball.vy = 0;
+            ball.isElcanShot = false;
+            ball.curveForce = 0;
+            ball.curveFrames = 0;
             createSkillEffect(bot, 'МАГНИТ!', '#ffff00');
             activated = true;
         }
     }
 
     if (activated) {
-        // Установка кулдауна 10 секунд ДЛЯ ВСЕЙ КОМАНДЫ БОТОВ
         botTeamAbilityCooldown = now + 10000;
         playSkillSound();
     }
@@ -500,6 +815,7 @@ function resolvePlayerCollisions() {
 }
 
 function switchUserPlayer() {
+    if (ball.owner === activeUserPlayer) return;
     let currentIndex = homeTeam.indexOf(activeUserPlayer);
     let nextIndex = (currentIndex + 1) % homeTeam.length;
     activeUserPlayer = homeTeam[nextIndex];
@@ -524,132 +840,147 @@ function executeTackle(player) {
     const now = Date.now();
     if (now < player.tackleCooldown || now < player.stunnedUntil) return;
 
-    player.tackleCooldown = now + 1200;
+    player.tackleCooldown = now + 15000;
     let angle = player.facingAngle;
-    player.vx = Math.cos(angle) * 13;
-    player.vy = Math.sin(angle) * 13;
+    player.vx = Math.cos(angle) * 15;
+    player.vy = Math.sin(angle) * 15;
 
     const opponents = player.isHome ? awayTeam : homeTeam;
     opponents.forEach(opp => {
         if (opp.role === 'GK' && ball.owner === opp) return;
-        if (now < opp.isGhostUntil) return; 
+        if (now < opp.isGhostUntil) return;
 
-        if (Math.hypot(opp.x - player.x, opp.y - player.y) < 56) {
-            opp.stunnedUntil = now + 1600;
+        if (Math.hypot(opp.x - player.x, opp.y - player.y) < 60) {
+            opp.stunnedUntil = now + 1000;
+            createSkillEffect(opp, 'ЗАМОРОЗЕН!', '#00d2ff');
             if (ball.owner === opp) {
                 ball.owner = player;
                 lastTouchPlayer = player;
+                ball.isElcanShot = false;
+                ball.curveForce = 0;
+                ball.curveFrames = 0;
                 if (player.isHome) activeUserPlayer = player;
             }
         }
     });
 }
 
-// СБАЛАНСИРОВАННЫЙ ВРАТАРЬ (С ЕСТЕСТВЕННЫМИ ОШИБКАМИ И ЗАДЕРЖКОЙ)
+function clearanceKick(gk) {
+    const targetX = gk.isHome ? 1070 : 30;
+    const targetY = 325 + (Math.random() * 160 - 80);
+
+    const angle = Math.atan2(targetY - gk.y, targetX - gk.x);
+    const clearancePower = 20;
+
+    gk.facingAngle = angle;
+    gk.catchCooldown = Date.now() + 600;
+
+    ball.x = gk.x + Math.cos(angle) * (gk.radius + 12);
+    ball.y = gk.y + Math.sin(angle) * (gk.radius + 12);
+    ball.owner = null;
+
+    ball.vx = Math.cos(angle) * clearancePower;
+    ball.vy = Math.sin(angle) * clearancePower;
+    ball.isElcanShot = false;
+    ball.curveForce = 0;
+    ball.curveFrames = 0;
+
+    createSkillEffect(gk, 'ВЫНОС!', '#ffffff');
+}
+
 function updateGK(gk) {
     const now = Date.now();
 
+    if (gk.isHome) {
+        gk.holdStartTime = 0;
+        gk.update();
+        return;
+    }
+
     if (ball.owner === gk) {
         if (!gk.holdStartTime) gk.holdStartTime = now;
-        if (now - gk.holdStartTime > 3000) {
-            ball.owner = null;
-            if (!gk.isHome) {
-                let openTeammates = awayTeam.filter(p => p !== gk && now > p.stunnedUntil);
-                if (openTeammates.length > 0) {
-                    let target = openTeammates[Math.floor(Math.random() * openTeammates.length)];
-                    let angle = Math.atan2(target.y - gk.y, target.x - gk.x);
-                    ball.vx = Math.cos(angle) * 15;
-                    ball.vy = Math.sin(angle) * 15;
-                } else {
-                    ball.vx = -16;
-                    ball.vy = (Math.random() - 0.5) * 8;
-                }
-            } else {
-                let randomAngle = (Math.random() - 0.5) * 0.8; 
-                ball.vx = Math.cos(randomAngle) * 20;
-                ball.vy = Math.sin(randomAngle) * 20;
-            }
+        if (now - gk.holdStartTime > 800) {
+            clearanceKick(gk);
             gk.holdStartTime = 0;
         }
+        gk.update();
         return;
     } else {
         gk.holdStartTime = 0;
     }
 
-    if (gk.isHome && activeUserPlayer === gk) return;
+    const goalCenterY = 325;
+    const goalTopY = 170;
+    const goalBottomY = 480;
 
-    let goalCenterY = 325;
-    let goalTopY = 250;
-    let goalBottomY = 400;
+    const ballSpeed = Math.hypot(ball.vx, ball.vy);
+    const distToBall = Math.hypot(gk.x - ball.x, gk.y - ball.y);
 
-    let ballSpeed = Math.hypot(ball.vx, ball.vy);
-    let distToBall = Math.hypot(gk.x - ball.x, gk.y - ball.y);
+    let baseLineX = 1025;
+    let maxAdvanceX = 925;
+    let advanceRatio = Math.max(0, Math.min(1, (ball.x - 780) / 250));
 
-    // Вратарь следит за мячом по высоте ворот
-    let goalYTarget = goalCenterY + (ball.y - goalCenterY) * 0.55;
+    let targetX = baseLineX - advanceRatio * (baseLineX - maxAdvanceX);
+    let goalYTarget = goalCenterY + (ball.y - goalCenterY) * 0.65;
     goalYTarget = Math.max(goalTopY + gk.radius, Math.min(goalBottomY - gk.radius, goalYTarget));
 
-    let isShotHeadingToGoal = false;
-    if (!gk.isHome && ball.vx > 3.5 && ball.x > 520) {
-        isShotHeadingToGoal = true;
-    } else if (gk.isHome && ball.vx < -3.5 && ball.x < 580) {
-        isShotHeadingToGoal = true;
-    }
+    let shuffleY = Math.sin(now * 0.008) * 18;
+    let shuffleX = Math.cos(now * 0.006) * 10;
+
+    let isShotHeadingToGoal = (ball.vx > 3.0 && ball.x > 500);
 
     if (isShotHeadingToGoal) {
-        // Умеренная скорость реакции вратаря (не моментальный телепорт)
-        let steps = (gk.isHome ? (gk.x - ball.x) : (ball.x - gk.x)) / (Math.abs(ball.vx) + 0.1);
+        let steps = (ball.x - gk.x) / (Math.abs(ball.vx) + 0.1);
         let predictedY = ball.y + ball.vy * Math.max(0, steps);
-        
-        // Погрешность прыжка для дальних и быстрых ударов
-        let errorMargin = (ballSpeed > 18) ? (Math.random() - 0.5) * 35 : 0;
-        predictedY = Math.max(goalTopY + 10, Math.min(goalBottomY - 10, predictedY + errorMargin));
+        predictedY = Math.max(goalTopY, Math.min(goalBottomY, predictedY));
 
-        let interceptX = gk.isHome ? 85 : 1015;
-        let reactionSpeed = gk.speed * (gk.isHome ? 1.5 : 1.7 * currentDiff.aiSpeed);
-
-        let dx = interceptX - gk.x;
+        let dx = targetX - gk.x;
         let dy = predictedY - gk.y;
         let d = Math.hypot(dx, dy) || 1;
+        let reactSpeed = gk.speed * 1.8 * currentDiff.aiSpeed;
 
-        gk.vx = (dx / d) * reactionSpeed;
-        gk.vy = (dy / d) * reactionSpeed;
-    } else if (distToBall < 130 && !ball.owner) {
-        // Выход из ворот при близкой угрозе
+        gk.vx = (dx / d) * reactSpeed;
+        gk.vy = (dy / d) * reactSpeed;
+    } else if (distToBall < 160 && !ball.owner && now > gk.catchCooldown) {
         let dx = ball.x - gk.x;
         let dy = ball.y - gk.y;
         let d = Math.hypot(dx, dy) || 1;
-        let chargeSpeed = gk.speed * 1.3;
+        let chargeSpeed = gk.speed * 1.4;
 
         gk.vx = (dx / d) * chargeSpeed;
         gk.vy = (dy / d) * chargeSpeed;
     } else {
-        // Занятие позиции в створе
-        let targetX = gk.isHome ? 80 : 1020;
-        let dx = targetX - gk.x;
-        let dy = goalYTarget - gk.y;
+        let finalTargetX = targetX + shuffleX;
+        let finalTargetY = goalYTarget + shuffleY;
 
-        gk.vx = dx * 0.18;
-        gk.vy = dy * 0.22;
+        let dx = finalTargetX - gk.x;
+        let dy = finalTargetY - gk.y;
+
+        gk.vx = dx * 0.22;
+        gk.vy = dy * 0.25;
     }
 
-    // Захват/сейв мяча с учетом скорости удара
-    let catchRadius = (ballSpeed > 22) ? (gk.radius + 10) : (gk.radius + 22);
-    if (distToBall < catchRadius && !ball.owner) {
+    let catchRadius = (ballSpeed > 22) ? (gk.radius + 12) : (gk.radius + 26);
+    if (distToBall < catchRadius && !ball.owner && now > gk.catchCooldown) {
         if (ballSpeed > 24) {
-            // Очень сильный удар вратарь отбивает (рикошет), а не берет в руки
-            ball.vx = -ball.vx * 0.5;
-            ball.vy = (Math.random() - 0.5) * 12;
+            ball.vx = -ball.vx * 0.45;
+            ball.vy = (Math.random() - 0.5) * 14;
+            ball.isElcanShot = false;
+            ball.curveForce = 0;
+            ball.curveFrames = 0;
             createSkillEffect(gk, 'СЕЙВ!', '#ffffff');
         } else {
             ball.owner = gk;
             lastTouchPlayer = gk;
-            ball.vx = 0; 
-            ball.vy = 0;
+            ball.vx = 0; ball.vy = 0;
+            ball.isElcanShot = false;
+            ball.curveForce = 0;
+            ball.curveFrames = 0;
             gk.holdStartTime = now;
-            if (gk.isHome) activeUserPlayer = gk;
         }
     }
+
+    gk.update();
 }
 
 function updateAI() {
@@ -685,23 +1016,50 @@ function updateAI() {
     let botField = awayTeam.filter(p => p.role !== 'GK' && now > p.stunnedUntil);
     let presser = null;
     let minDist = Infinity;
-    
+
     botField.forEach(b => {
         let d = Math.hypot(b.x - ball.x, b.y - ball.y);
         if (d < minDist) { minDist = d; presser = b; }
     });
 
     botField.forEach(bot => {
-        // Запрос на способность
         triggerBotAbility(bot);
 
         if (ball.owner === bot) {
             if (bot.x < 380 && Math.random() < 0.07 * currentDiff.aiAccuracy) {
-                ball.owner = null;
-                let goalY = 270 + Math.random() * 110;
+                let goalY = 210 + Math.random() * 230;
                 let angle = Math.atan2(goalY - bot.y, 30 - bot.x);
-                ball.vx = Math.cos(angle) * 18;
-                ball.vy = Math.sin(angle) * 18;
+                bot.facingAngle = angle;
+                bot.catchCooldown = now + 400;
+
+                ball.x = bot.x + Math.cos(angle) * (bot.radius + 12);
+                ball.y = bot.y + Math.sin(angle) * (bot.radius + 12);
+                ball.owner = null;
+
+                ball.vx = Math.cos(angle) * 22;
+                ball.vy = Math.sin(angle) * 22;
+
+                const pData = bot.data || {};
+                const rawName = String(pData.name || pData.cardName || '').toLowerCase();
+                const isElcan = rawName.includes('elcan') || rawName.includes('eljan') || pData.ability === 'ghost';
+                const isTurgay = rawName.includes('turgay') || rawName.includes('turqay') || pData.ability === 'power_shot';
+                let curveDir = (angle < 0) ? -1 : 1;
+
+                if (isElcan) {
+                    ball.isElcanShot = true;
+                    ball.curveDir = curveDir;
+                    ball.curveForce = 0;
+                    ball.curveGrowth = 0.028;
+                    ball.curveFrames = 50;
+                } else if (isTurgay) {
+                    ball.isElcanShot = false;
+                    ball.curveForce = curveDir * 0.55;
+                    ball.curveFrames = 35;
+                } else {
+                    ball.isElcanShot = false;
+                    ball.curveForce = (Math.random() - 0.5) * 0.2;
+                    ball.curveFrames = 20;
+                }
                 return;
             }
 
@@ -710,9 +1068,18 @@ function updateAI() {
                 if (openTeammates.length > 0) {
                     let target = openTeammates[Math.floor(Math.random() * openTeammates.length)];
                     let angle = Math.atan2(target.y - bot.y, target.x - bot.x);
+                    bot.facingAngle = angle;
+                    bot.catchCooldown = now + 400;
+
+                    ball.x = bot.x + Math.cos(angle) * (bot.radius + 12);
+                    ball.y = bot.y + Math.sin(angle) * (bot.radius + 12);
                     ball.owner = null;
+
                     ball.vx = Math.cos(angle) * 14;
                     ball.vy = Math.sin(angle) * 14;
+                    ball.isElcanShot = false;
+                    ball.curveForce = 0;
+                    ball.curveFrames = 0;
                     botPassCooldown = now + 900;
                     return;
                 }
@@ -761,9 +1128,18 @@ function executeKickoffPass(team) {
     let target = teammates[0];
 
     let angle = Math.atan2(target.y - kicker.y, target.x - kicker.x);
+    kicker.facingAngle = angle;
+    kicker.catchCooldown = Date.now() + 400;
+
+    ball.x = kicker.x + Math.cos(angle) * (kicker.radius + 12);
+    ball.y = kicker.y + Math.sin(angle) * (kicker.radius + 12);
     ball.owner = null;
+
     ball.vx = Math.cos(angle) * 13;
     ball.vy = Math.sin(angle) * 13;
+    ball.isElcanShot = false;
+    ball.curveForce = 0;
+    ball.curveFrames = 0;
 }
 
 function startPassCharge() {
@@ -792,34 +1168,23 @@ function releasePass() {
 
     if (ball.owner !== activeUserPlayer) return;
 
-    const holdDuration = Date.now() - passPressStartTime;
+    const player = activeUserPlayer;
+    let passAngle = getCurrentAimAngle(player);
 
-    if (holdDuration < 220 && passPower < 15) {
-        let teammates = homeTeam.filter(p => p !== activeUserPlayer);
-        if (teammates.length > 0) {
-            let target = teammates[0];
-            let minDist = Infinity;
-            teammates.forEach(p => {
-                let d = Math.hypot(p.x - activeUserPlayer.x, p.y - activeUserPlayer.y);
-                if (d < minDist) { minDist = d; target = p; }
-            });
+    player.facingAngle = passAngle;
+    player.catchCooldown = Date.now() + 400;
 
-            let angle = Math.atan2(target.y - activeUserPlayer.y, target.x - activeUserPlayer.x);
-            ball.owner = null;
-            ball.vx = Math.cos(angle) * 14;
-            ball.vy = Math.sin(angle) * 14;
-        }
-    } else {
-        ball.owner = null;
-        let powerSpeed = (passPower / 100) * 14 + 10;
-        let passAngle = activeUserPlayer.facingAngle;
-        if (Math.abs(joystickDir.x) > 0.1 || Math.abs(joystickDir.y) > 0.1) {
-            passAngle = Math.atan2(joystickDir.y, joystickDir.x);
-        }
+    ball.x = player.x + Math.cos(passAngle) * (player.radius + 12);
+    ball.y = player.y + Math.sin(passAngle) * (player.radius + 12);
+    ball.owner = null;
 
-        ball.vx = Math.cos(passAngle) * powerSpeed;
-        ball.vy = Math.sin(passAngle) * powerSpeed;
-    }
+    let powerSpeed = (passPower / 100) * 14 + 10;
+
+    ball.vx = Math.cos(passAngle) * powerSpeed;
+    ball.vy = Math.sin(passAngle) * powerSpeed;
+    ball.isElcanShot = false;
+    ball.curveForce = 0;
+    ball.curveFrames = 0;
 }
 
 function startShotCharge() {
@@ -838,12 +1203,46 @@ function releaseShot() {
     if (bar) bar.style.display = 'none';
 
     if (ball.owner === activeUserPlayer) {
+        const player = activeUserPlayer;
+        let shotAngle = getCurrentAimAngle(player);
+
+        player.facingAngle = shotAngle;
+        player.catchCooldown = Date.now() + 400;
+
+        ball.x = player.x + Math.cos(shotAngle) * (player.radius + 12);
+        ball.y = player.y + Math.sin(shotAngle) * (player.radius + 12);
         ball.owner = null;
-        let pwr = (shotPower / 100) * 18 + 8;
-        let angle = Math.atan2(325 - activeUserPlayer.y, 1070 - activeUserPlayer.x);
-        
-        ball.vx = Math.cos(angle) * pwr;
-        ball.vy = Math.sin(angle) * pwr;
+
+        let pwr = (shotPower / 100) * 26 + 12;
+
+        if (shotPower > 70) {
+            createSkillEffect(player, 'ПУШЕЧНЫЙ УДАР!', '#ff4400');
+        }
+
+        ball.vx = Math.cos(shotAngle) * pwr;
+        ball.vy = Math.sin(shotAngle) * pwr;
+
+        const pData = player.data || {};
+        const rawName = String(pData.name || pData.cardName || '').toLowerCase();
+        const isElcan = rawName.includes('elcan') || rawName.includes('eljan') || pData.ability === 'ghost';
+        const isTurgay = rawName.includes('turgay') || rawName.includes('turqay') || pData.ability === 'power_shot';
+        let curveDir = (shotAngle < 0) ? -1 : 1;
+
+        if (isElcan) {
+            ball.isElcanShot = true;
+            ball.curveDir = curveDir;
+            ball.curveForce = 0;
+            ball.curveGrowth = 0.028;
+            ball.curveFrames = 50;
+        } else if (isTurgay) {
+            ball.isElcanShot = false;
+            ball.curveForce = curveDir * 0.55;
+            ball.curveFrames = 35;
+        } else {
+            ball.isElcanShot = false;
+            ball.curveForce = (Math.random() - 0.5) * 0.18;
+            ball.curveFrames = 22;
+        }
     }
 }
 
@@ -853,8 +1252,8 @@ function gameLoop() {
             executeKickoffPass('home');
         }
     } else if (gameState === 'PLAYING') {
-        let moveX = joystickDir.x;
-        let moveY = joystickDir.y;
+        let moveX = joystick.input.x;
+        let moveY = joystick.input.y;
 
         if (keys['KeyW'] || keys['ArrowUp']) moveY = -1;
         if (keys['KeyS'] || keys['ArrowDown']) moveY = 1;
@@ -875,7 +1274,26 @@ function gameLoop() {
             ball.x = ball.owner.x + Math.cos(ball.owner.facingAngle) * distOffset;
             ball.y = ball.owner.y + Math.sin(ball.owner.facingAngle) * distOffset;
             ball.vx = 0; ball.vy = 0;
+            ball.isElcanShot = false;
+            ball.curveForce = 0;
+            ball.curveFrames = 0;
         } else {
+            if (ball.curveFrames > 0) {
+                const currentSpeed = Math.hypot(ball.vx, ball.vy);
+                let currentAngle = Math.atan2(ball.vy, ball.vx);
+
+                if (ball.isElcanShot) {
+                    ball.curveForce += ball.curveGrowth * ball.curveDir;
+                    currentAngle += ball.curveForce * 0.04;
+                } else {
+                    currentAngle += ball.curveForce * 0.04;
+                }
+
+                ball.vx = Math.cos(currentAngle) * currentSpeed;
+                ball.vy = Math.sin(currentAngle) * currentSpeed;
+                ball.curveFrames--;
+            }
+
             ball.x += ball.vx;
             ball.y += ball.vy;
             ball.vx *= ball.friction;
@@ -883,19 +1301,24 @@ function gameLoop() {
 
             autoSwitchToClosestPlayer();
 
+            const now = Date.now();
             [...homeTeam, ...awayTeam].forEach(p => {
-                if (Date.now() < p.stunnedUntil) return;
+                if (now < p.stunnedUntil || now < p.catchCooldown) return;
                 let d = Math.hypot(p.x - ball.x, p.y - ball.y);
                 if (d < p.radius + 12) {
                     ball.owner = p;
                     lastTouchPlayer = p;
+                    ball.isElcanShot = false;
+                    ball.curveForce = 0;
+                    ball.curveFrames = 0;
                     if (p.isHome) activeUserPlayer = p;
                 }
             });
 
             if (ball.y < 35 || ball.y > 615) ball.vy *= -1;
+
             if (ball.x < 35 || ball.x > 1065) {
-                if (ball.y < 250 || ball.y > 400) {
+                if (ball.y < 200 || ball.y > 450) {
                     ball.vx *= -1;
                 } else {
                     if (ball.x < 35) handleGoal('away');
@@ -943,10 +1366,10 @@ function render() {
     ctx.strokeRect(905, 160, 165, 330);
 
     ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    ctx.fillRect(10, 250, 20, 150);
-    ctx.strokeRect(10, 250, 20, 150);
-    ctx.fillRect(1070, 250, 20, 150);
-    ctx.strokeRect(1070, 250, 20, 150);
+    ctx.fillRect(10, 200, 20, 250);
+    ctx.strokeRect(10, 200, 20, 250);
+    ctx.fillRect(1070, 200, 20, 250);
+    ctx.strokeRect(1070, 200, 20, 250);
 
     homeTeam.forEach(p => p.draw(p === activeUserPlayer));
     awayTeam.forEach(p => p.draw(false));
@@ -964,7 +1387,9 @@ function render() {
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
+    drawAimingTrajectory();
     drawSkillEffects();
+    joystick.draw(ctx);
 }
 
 function handleGoal(scoringTeam) {
@@ -1019,35 +1444,36 @@ function handleGoal(scoringTeam) {
 
 function resetPositions(kickoffTeam = 'home') {
     ball.x = 550; ball.y = 325; ball.vx = 0; ball.vy = 0;
+    ball.isElcanShot = false; ball.curveForce = 0; ball.curveFrames = 0;
     lastTouchPlayer = null;
 
     if (kickoffTeam === 'home') {
         homeTeam[3].x = 540; homeTeam[3].y = 325;
-        homeTeam[0].x = 70;  homeTeam[0].y = 325; 
-        homeTeam[1].x = 240; homeTeam[1].y = 180; 
-        homeTeam[2].x = 240; homeTeam[2].y = 470; 
-        homeTeam[4].x = 410; homeTeam[4].y = 325; 
+        homeTeam[0].x = 70;  homeTeam[0].y = 325;
+        homeTeam[1].x = 240; homeTeam[1].y = 180;
+        homeTeam[2].x = 240; homeTeam[2].y = 470;
+        homeTeam[4].x = 410; homeTeam[4].y = 325;
 
-        awayTeam[0].x = 1030; awayTeam[0].y = 325; 
-        awayTeam[1].x = 840;  awayTeam[1].y = 180; 
-        awayTeam[2].x = 840;  awayTeam[2].y = 470; 
-        awayTeam[3].x = 670;  awayTeam[3].y = 250; 
-        awayTeam[4].x = 670;  awayTeam[4].y = 400; 
+        awayTeam[0].x = 1030; awayTeam[0].y = 325;
+        awayTeam[1].x = 840;  awayTeam[1].y = 180;
+        awayTeam[2].x = 840;  awayTeam[2].y = 470;
+        awayTeam[3].x = 670;  awayTeam[3].y = 250;
+        awayTeam[4].x = 670;  awayTeam[4].y = 400;
 
         ball.owner = homeTeam[3];
         activeUserPlayer = homeTeam[3];
     } else {
         awayTeam[3].x = 560; awayTeam[3].y = 325;
-        awayTeam[0].x = 1030; awayTeam[0].y = 325; 
-        awayTeam[1].x = 840;  awayTeam[1].y = 180; 
-        awayTeam[2].x = 840;  awayTeam[2].y = 470; 
-        awayTeam[4].x = 680;  awayTeam[4].y = 325; 
+        awayTeam[0].x = 1030; awayTeam[0].y = 325;
+        awayTeam[1].x = 840;  awayTeam[1].y = 180;
+        awayTeam[2].x = 840;  awayTeam[2].y = 470;
+        awayTeam[4].x = 680;  awayTeam[4].y = 325;
 
-        homeTeam[0].x = 70;  homeTeam[0].y = 325; 
-        homeTeam[1].x = 240; homeTeam[1].y = 180; 
-        homeTeam[2].x = 240; homeTeam[2].y = 470; 
-        homeTeam[3].x = 430; homeTeam[3].y = 250; 
-        homeTeam[4].x = 430; homeTeam[4].y = 400; 
+        homeTeam[0].x = 70;  homeTeam[0].y = 325;
+        homeTeam[1].x = 240; homeTeam[1].y = 180;
+        homeTeam[2].x = 240; homeTeam[2].y = 470;
+        homeTeam[3].x = 430; homeTeam[3].y = 250;
+        homeTeam[4].x = 430; homeTeam[4].y = 400;
 
         ball.owner = awayTeam[3];
         activeUserPlayer = homeTeam[3];
@@ -1059,7 +1485,7 @@ function resetPositions(kickoffTeam = 'home') {
 
     [...homeTeam, ...awayTeam].forEach(p => {
         p.vx = 0; p.vy = 0;
-        p.stunnedUntil = 0; p.isGhostUntil = 0; p.speedBoost = 1.0; p.holdStartTime = 0;
+        p.stunnedUntil = 0; p.isGhostUntil = 0; p.speedBoost = 1.0; p.holdStartTime = 0; p.catchCooldown = 0;
     });
 
     gameState = 'KICKOFF';
@@ -1153,20 +1579,20 @@ function finishMatch() {
     window.location.href = 'index.html';
 }
 
+// --- СИСТЕМА УПРАВЛЕНИЯ КЛАВИАТУРОЙ ---
 function setupControls() {
     window.addEventListener('keydown', (e) => {
         keys[e.code] = true;
-        if (e.code === 'Digit8' || e.code === 'Numpad8') startShotCharge();
-        if (e.code === 'Digit4' || e.code === 'Numpad4') startPassCharge();
-        if (e.code === 'Digit5' || e.code === 'Numpad5' || e.code === 'Space' || e.code === 'KeyE' || e.code === 'ShiftLeft') triggerSpecialSkill();
-        if (e.code === 'Digit6' || e.code === 'Numpad6' || e.code === 'KeyQ') switchUserPlayer();
-        if (e.code === 'Digit2' || e.code === 'Numpad2') executeTackle(activeUserPlayer);
+        if (e.code === 'Space') triggerSpecialSkill(); 
+        if (e.code === 'ShiftLeft') executeTackle(activeUserPlayer); 
+        if (e.code === 'CapsLock') {
+            e.preventDefault();
+            switchUserPlayer(); 
+        }
     });
 
     window.addEventListener('keyup', (e) => {
         keys[e.code] = false;
-        if (e.code === 'Digit8' || e.code === 'Numpad8') releaseShot();
-        if (e.code === 'Digit4' || e.code === 'Numpad4') releasePass();
     });
 
     const btnShot = document.getElementById('btn-shot');
