@@ -209,7 +209,7 @@ const BOT_CARD_POOLS = {
         { name: 'Selim', rating: 68, pos: 'CB', folder: 'Gold', file: 'Selim-68.png' },
         { name: 'Nazrin', rating: 82, pos: 'CB', folder: 'Gold', file: 'Nazrin-82.png', ability: 'freeze' },
         { name: 'Elcan', rating: 92, pos: 'RW', folder: 'Gold', file: 'Elcan-92.png', ability: 'ghost' },
-        { name: 'Turgay', rating: 92, pos: 'ST', folder: 'Gold', file: 'Turqay-92.png', ability: 'power_shot' }
+        { name: 'Turqay', rating: 92, pos: 'ST', folder: 'Gold', file: 'Turqay-92.png', ability: 'power_shot' }
     ],
     toty: [
         { name: 'Bugday', rating: 95, pos: 'GK', folder: 'Toty', file: 'Bugday-95.png', ability: 'magnet' },
@@ -1513,11 +1513,10 @@ function updateTimerUI() {
     const timerEl = document.getElementById('match-timer');
     if (!timerEl) return;
 
-    let inGameTotalMinutes = Math.min(90, Math.floor((realElapsedSeconds / TOTAL_REAL_SECONDS) * 90));
-    let displayMins = inGameTotalMinutes.toString().padStart(2, '0');
-    
-    let virtualSecs = Math.floor(((realElapsedSeconds / TOTAL_REAL_SECONDS) * 90 * 60) % 60);
-    let displaySecs = virtualSecs.toString().padStart(2, '0');
+    let inGameTotalSeconds = Math.min(5400, (realElapsedSeconds / TOTAL_REAL_SECONDS) * 5400);
+
+    let displayMins = Math.floor(inGameTotalSeconds / 60).toString().padStart(2, '0');
+    let displaySecs = Math.floor(inGameTotalSeconds % 60).toString().padStart(2, '0');
 
     timerEl.innerText = `${displayMins}:${displaySecs}'`;
 }
